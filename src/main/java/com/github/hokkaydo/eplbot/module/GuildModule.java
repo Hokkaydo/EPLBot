@@ -2,12 +2,13 @@ package com.github.hokkaydo.eplbot.module;
 
 import com.github.hokkaydo.eplbot.Main;
 import net.dv8tion.jda.api.entities.Guild;
+import org.jetbrains.annotations.NotNull;
 
-public abstract class GuildModule implements Module {
+public abstract class GuildModule extends Module {
 
     private final Long guildId;
 
-    public GuildModule(Guild guild) {
+    public GuildModule(@NotNull Guild guild) {
         this.guildId = guild.getIdLong();
     }
 

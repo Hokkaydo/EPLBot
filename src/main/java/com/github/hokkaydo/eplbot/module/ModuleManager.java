@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public class ModuleManager {
@@ -45,6 +46,14 @@ public class ModuleManager {
     public void enableModule(@NotNull Module module) {
         module.enable();
     }
+    public boolean isGlobalModuleEnabled(String name) {
+        return globalModules.stream().filter(m -> m.getName().equals(name)).findFirst().orElseThrow().isEnabled();
+    }
+
+    public boolean isGuildModuleEnabled(Long guildId, String name) {
+        return guildModules.stream().filter(m -> m.getGuildId().equals(guildId) && m.getName().equals(name)).findFirst().orElseThrow().isEnabled();
+    }
+
 
     public void disableGlobalModule(String name) {
         getGlobalModuleByName(name, GlobalModule.class).ifPresent(this::disableModule);
@@ -60,6 +69,25 @@ public class ModuleManager {
 
     public void enableGuildModule(String name, Long guildId) {
         getGuildModuleByName(name, guildId, GuildModule.class).ifPresent(this::enableModule);
+    }
+
+    public void enableGlobalModules(List<String> modules) {
+        modules.forEach(this::enableGlobalModule);
+    }
+
+    public void enableGuildModules(Long guildId, List<String> modules) {
+        guildModules.stream()
+                .filter(module -> module.getGuildId().equals(guildId))
+                .filter(module -> modules.contains(module.getName()))
+                .forEach(Module::enable);
+    }
+
+    public List<String> getGlobalModuleNames() {
+        return globalModules.stream().map(Module::getName).toList();
+    }
+
+    public List<String> getGuildModuleNames() {
+        return guildModules.stream().map(Module::getName).distinct().toList();
     }
 
 }
