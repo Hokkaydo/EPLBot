@@ -1,17 +1,11 @@
 package com.github.hokkaydo.eplbot;
 
 import io.github.cdimascio.dotenv.Dotenv;
-import io.github.cdimascio.dotenv.internal.DotenvReader;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
-import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 
 public class Main {
 
