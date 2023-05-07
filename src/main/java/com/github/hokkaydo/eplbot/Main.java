@@ -3,6 +3,7 @@ package com.github.hokkaydo.eplbot;
 import com.github.hokkaydo.eplbot.module.GlobalModule;
 import com.github.hokkaydo.eplbot.module.GuildModule;
 import com.github.hokkaydo.eplbot.module.ModuleManager;
+import com.github.hokkaydo.eplbot.module.autopin.AutoPinModule;
 import io.github.cdimascio.dotenv.Dotenv;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
@@ -19,11 +20,11 @@ import java.util.Map;
 public class Main {
 
     private static JDA jda;
+    private static ModuleManager moduleManager;
 
     public static void main(String[] args) throws InterruptedException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
         final String token = Dotenv.load().get("DISCORD_BOT_TOKEN");
-        final ModuleManager moduleManager = new ModuleManager();
-        registerModules(moduleManager);
+        moduleManager = new ModuleManager();
         Config.load();
         Strings.load();
         jda = JDABuilder.createDefault(token)
@@ -42,6 +43,7 @@ public class Main {
                         .map(Map.Entry::getKey)
                         .toList()
         );
+        registerModules(moduleManager);
         jda.getGuilds().forEach(guild ->
                                         moduleManager.enableGuildModules(
                                                 guild.getIdLong(),
@@ -58,15 +60,15 @@ public class Main {
     }
 
     private static void registerModules(ModuleManager moduleManager) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
-        List<Class<GlobalModule>> globalModules = Arrays.asList();
-        List<Class<GuildModule>> guildModules = Arrays.asList();
+        List<Class<? extends GlobalModule>> globalModules = Arrays.asList();
+        List<Class<? extends GuildModule>> guildModules = Arrays.asList(AutoPinModule.class);
 
-        for (Class<GlobalModule> globalModuleClazz : globalModules) {
+        for (Class<? extends GlobalModule> globalModuleClazz : globalModules) {
             GlobalModule module = globalModuleClazz.getDeclaredConstructor().newInstance();
             moduleManager.addGlobalModule(module);
         }
 
-        for (Class<GuildModule> guildModuleClazz : guildModules) {
+        for (Class<? extends GuildModule> guildModuleClazz : guildModules) {
             for (Guild guild : jda.getGuilds()) {
                 GuildModule module = guildModuleClazz.getDeclaredConstructor(Guild.class).newInstance(guild);
                 moduleManager.addGuildModule(module);
@@ -76,5 +78,8 @@ public class Main {
 
     public static JDA getJDA() {
         return jda;
+    }
+    public static ModuleManager getModuleManager() {
+        return moduleManager;
     }
 }

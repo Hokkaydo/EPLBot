@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -14,7 +15,21 @@ public class Config {
 
     private static final String CONFIG_PATH = "./config";
 
-    private static final Map<String, ConfigurationParser<Object>> DEFAULT_CONFIGURATION = Map.of();
+    private static final Map<String, ConfigurationParser> DEFAULT_CONFIGURATION = Map.of(
+            "PIN_REACTION_NAME", new ConfigurationParser(
+                    "\uD83D\uDCCC",
+                    Object::toString,
+                    o -> o,
+                    "Nom de la réaction"
+            ),
+            "PIN_REACTION_THRESHOLD", new ConfigurationParser(
+                    1,
+                    Object::toString,
+                    Integer::parseInt,
+                    "Nombre entier"
+            ),
+            "autopin", new ConfigurationParser(true, Object::toString, Boolean::valueOf, "Booléen" )
+    );
     private static final Map<String, Object> GLOBAL_CONFIGURATION = new HashMap<>();
     private static final Map<Long, Map<String, Object>> GUILD_CONFIGURATION = new HashMap<>();
 
@@ -63,11 +78,11 @@ public class Config {
     }
 
     public static boolean getGlobalModuleStatus(String moduleName) {
-        return (boolean)GLOBAL_CONFIGURATION.getOrDefault(moduleName, DEFAULT_CONFIGURATION.get(moduleName));
+        return (boolean)GLOBAL_CONFIGURATION.getOrDefault(moduleName, Optional.ofNullable(DEFAULT_CONFIGURATION.get(moduleName)).map(ConfigurationParser::defaultValue).orElse(false));
     }
 
     public static boolean getGuildModuleStatus(Long guildId, String moduleName) {
-        return (boolean)GUILD_CONFIGURATION.getOrDefault(guildId, new HashMap<>()).getOrDefault(moduleName, DEFAULT_CONFIGURATION.get(moduleName));
+        return (boolean)GUILD_CONFIGURATION.getOrDefault(guildId, new HashMap<>()).getOrDefault(moduleName, Optional.ofNullable(DEFAULT_CONFIGURATION.get(moduleName)).map(ConfigurationParser::defaultValue).orElse(false));
     }
 
     public static Map<String, Boolean> getGlobalModulesStatus(List<String> moduleNames) {
@@ -123,9 +138,9 @@ public class Config {
     }
 
 
-    private record ConfigurationParser<T>(Function<T, String> toConfig,
-                                          Function<String, T> fromConfig,
-                                          T defaultValue,
-                                          String format) {}
+    private record ConfigurationParser(Object defaultValue,
+                                       Function<Object, String> toConfig,
+                                       Function<String, Object> fromConfig,
+                                       String format) {}
 
 }

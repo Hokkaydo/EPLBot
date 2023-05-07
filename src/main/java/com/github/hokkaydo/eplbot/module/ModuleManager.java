@@ -46,13 +46,16 @@ public class ModuleManager {
         module.enable();
     }
     public boolean isGlobalModuleEnabled(String name) {
-        return globalModules.stream().filter(m -> m.getName().equals(name)).findFirst().orElseThrow().isEnabled();
+        return globalModules.stream().filter(m -> m.getName().equals(name)).findFirst().map(Module::isEnabled).orElse(false);
     }
 
     public boolean isGuildModuleEnabled(Long guildId, String name) {
-        return guildModules.stream().filter(m -> m.getGuildId().equals(guildId) && m.getName().equals(name)).findFirst().orElseThrow().isEnabled();
+        return guildModules.stream().filter(m -> m.getGuildId().equals(guildId) && m.getName().equals(name)).findFirst().map(Module::isEnabled).orElse(false);
     }
 
+    public boolean isGlobalModule(String name) {
+        return globalModules.stream().anyMatch(m -> m.getName().equals(name));
+    }
 
     public void disableGlobalModule(String name) {
         getGlobalModuleByName(name, GlobalModule.class).ifPresent(this::disableModule);

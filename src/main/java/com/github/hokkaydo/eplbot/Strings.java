@@ -18,6 +18,7 @@ public class Strings {
         InputStream stream = Strings.class.getClassLoader().getResourceAsStream("strings.json");
         assert stream != null;
         JSONObject object = new JSONObject(new JSONTokener(stream));
+        if(object.isEmpty()) return;
         JSONArray names = object.names();
         for (int i = 0; i < names.length(); i++) {
             String key = names.getString(i);
