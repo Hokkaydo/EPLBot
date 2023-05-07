@@ -1,5 +1,6 @@
 package com.github.hokkaydo.eplbot;
 
+import com.github.hokkaydo.eplbot.command.CommandManager;
 import com.github.hokkaydo.eplbot.module.GlobalModule;
 import com.github.hokkaydo.eplbot.module.GuildModule;
 import com.github.hokkaydo.eplbot.module.ModuleManager;
@@ -21,10 +22,12 @@ public class Main {
 
     private static JDA jda;
     private static ModuleManager moduleManager;
+    private static CommandManager commandManager;
 
     public static void main(String[] args) throws InterruptedException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
         final String token = Dotenv.load().get("DISCORD_BOT_TOKEN");
         moduleManager = new ModuleManager();
+        commandManager = new CommandManager();
         Config.load();
         Strings.load();
         jda = JDABuilder.createDefault(token)
@@ -81,5 +84,9 @@ public class Main {
     }
     public static ModuleManager getModuleManager() {
         return moduleManager;
+    }
+
+    public static CommandManager getCommandManager() {
+        return commandManager;
     }
 }
