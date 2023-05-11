@@ -13,8 +13,8 @@ public abstract class GuildModule extends Module {
 
     private final Long guildId;
 
-    public GuildModule(@NotNull Guild guild) {
-        this.guildId = guild.getIdLong();
+    public GuildModule(@NotNull Long guildId) {
+        this.guildId = guildId;
     }
 
     public Long getGuildId() {
@@ -28,8 +28,8 @@ public abstract class GuildModule extends Module {
     @Override
     public void enable() {
         super.enable();
-        jdaCommandIds.forEach(id -> Main.getCommandManager().removeCommand(id));
-        jdaCommandIds.addAll(Main.getCommandManager().addGuildCommand(getGuildId(), getCommands()));
+        jdaCommandIds.clear();
+        Main.getCommandManager().addGuildCommand(getGuildId(), getCommands(), jdaCommandIds);
     }
 
     @Override

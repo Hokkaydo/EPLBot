@@ -12,7 +12,7 @@ public abstract class Module {
     public abstract String getName();
     public void disable() {
         this.enabled = false;
-        Main.getJDA().addEventListener(getListeners().toArray());
+        Main.getJDA().removeEventListener(getListeners().toArray());
     }
     public void enable() {
         this.enabled = true;

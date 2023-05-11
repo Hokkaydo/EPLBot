@@ -5,6 +5,7 @@ import com.github.hokkaydo.eplbot.module.GlobalModule;
 import com.github.hokkaydo.eplbot.module.GuildModule;
 import com.github.hokkaydo.eplbot.module.ModuleManager;
 import com.github.hokkaydo.eplbot.module.autopin.AutoPinModule;
+import com.github.hokkaydo.eplbot.module.configuration.ConfigurationModule;
 import io.github.cdimascio.dotenv.Dotenv;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
@@ -15,6 +16,7 @@ import net.dv8tion.jda.api.utils.cache.CacheFlag;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -35,6 +37,7 @@ public class Main {
                       .disableCache(CacheFlag.MEMBER_OVERRIDES, CacheFlag.VOICE_STATE)
                       .setBulkDeleteSplittingEnabled(false)
                       .setActivity(Activity.watching("you"))
+                      .addEventListeners(commandManager)
                       .build();
         jda.awaitReady();
 
@@ -63,8 +66,8 @@ public class Main {
     }
 
     private static void registerModules(ModuleManager moduleManager) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
-        List<Class<? extends GlobalModule>> globalModules = Arrays.asList();
-        List<Class<? extends GuildModule>> guildModules = Arrays.asList(AutoPinModule.class);
+        List<Class<? extends GlobalModule>> globalModules = Collections.emptyList();
+        List<Class<? extends GuildModule>> guildModules = Arrays.asList(AutoPinModule.class, ConfigurationModule.class);
 
         for (Class<? extends GlobalModule> globalModuleClazz : globalModules) {
             GlobalModule module = globalModuleClazz.getDeclaredConstructor().newInstance();
@@ -73,7 +76,7 @@ public class Main {
 
         for (Class<? extends GuildModule> guildModuleClazz : guildModules) {
             for (Guild guild : jda.getGuilds()) {
-                GuildModule module = guildModuleClazz.getDeclaredConstructor(Guild.class).newInstance(guild);
+                GuildModule module = guildModuleClazz.getDeclaredConstructor(Long.class).newInstance(guild.getIdLong());
                 moduleManager.addGuildModule(module);
             }
         }

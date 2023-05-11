@@ -1,6 +1,6 @@
 package com.github.hokkaydo.eplbot.module;
 
-import net.dv8tion.jda.api.entities.Guild;
+import com.github.hokkaydo.eplbot.Config;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -22,8 +22,8 @@ public class ModuleManager {
         guildModules.add(module);
     }
 
-    public List<GuildModule> getGuildModules(Guild guild) {
-        return guildModules.stream().filter(m -> m.getGuildId().equals(guild.getIdLong())).toList();
+    public List<GuildModule> getGuildModules(Long guildId) {
+        return guildModules.stream().filter(m -> m.getGuildId().equals(guildId)).toList();
     }
 
     public <T extends GuildModule> List<T> getGuildModule(@NotNull Class<T> clazz) {
@@ -59,18 +59,22 @@ public class ModuleManager {
 
     public void disableGlobalModule(String name) {
         getGlobalModuleByName(name, GlobalModule.class).ifPresent(this::disableModule);
+        Config.disableGlobalModule(name);
     }
 
     public void disableGuildModule(String name, Long guildId) {
         getGuildModuleByName(name, guildId, GuildModule.class).ifPresent(this::disableModule);
+        Config.disableGuildModule(guildId, name);
     }
 
     public void enableGlobalModule(String name) {
         getGlobalModuleByName(name, GlobalModule.class).ifPresent(this::enableModule);
+        Config.enableGlobalModule(name);
     }
 
     public void enableGuildModule(String name, Long guildId) {
         getGuildModuleByName(name, guildId, GuildModule.class).ifPresent(this::enableModule);
+        Config.enableGuildModule(guildId, name);
     }
 
     public void enableGlobalModules(List<String> modules) {

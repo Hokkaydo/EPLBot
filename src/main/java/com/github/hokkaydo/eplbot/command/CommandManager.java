@@ -6,11 +6,17 @@ import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
+import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class CommandManager extends ListenerAdapter {
@@ -21,17 +27,20 @@ public class CommandManager extends ListenerAdapter {
         Main.getJDA().deleteCommandById(commandId).queue(v -> commands.remove(commandId));
     }
 
-    public List<Long> addGuildCommand(Long guildId, List<Command> commands) {
+    public void addGuildCommand(Long guildId, List<Command> commands, List<Long> addedCommandIds) {
         Guild guild = Main.getJDA().getGuildById(guildId);
-        if(guild == null) return Collections.emptyList();
-        List<SlashCommandData> data = toCommandData(commands);
-        Map<Long, Command> ids = guild.retrieveCommands().flatMap(list -> {
-                    list.forEach(cmd -> data.add(SlashCommandData.fromCommand(cmd)));
-                    return guild.updateCommands().addCommands(data).map(l -> mapWithIds(l, commands));
-                })
-                .complete();
-        this.commands.putAll(ids);
-        return Arrays.asList(ids.keySet().toArray(new Long[0]));
+        if(guild == null) return;
+        List<SlashCommandData> data = new ArrayList<>(toCommandData(commands));
+        List<net.dv8tion.jda.api.interactions.commands.Command> list = guild.retrieveCommands().complete();
+        list.stream()
+                .filter(command -> this.commands.values().stream().anyMatch(c -> c.getName().equals(command.getName())))
+                .filter(command -> commands.stream().noneMatch(c -> c.getName().equals(command.getName())))
+                .forEach(cmd -> data.add(SlashCommandData.fromCommand(cmd)));
+        guild.updateCommands().addCommands(data).map(l -> mapWithIds(l, commands)).queue(ids -> {
+                    this.commands.clear();
+                    this.commands.putAll(ids);
+                    addedCommandIds.addAll(ids.entrySet().stream().filter(e -> commands.stream().anyMatch(c -> e.getValue().getName().equals(c.getName()))).map(Map.Entry::getKey).toList());
+                });
     }
 
     private Map<Long, Command> mapWithIds(List<net.dv8tion.jda.api.interactions.commands.Command> jdaCommands, List<Command> commands) {

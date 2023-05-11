@@ -1,9 +1,7 @@
 package com.github.hokkaydo.eplbot.module.autopin;
 
-import com.github.hokkaydo.eplbot.Main;
 import com.github.hokkaydo.eplbot.command.Command;
 import com.github.hokkaydo.eplbot.module.GuildModule;
-import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,9 +12,9 @@ public class AutoPinModule extends GuildModule {
 
     private final AutoPinListener listener;
 
-    public AutoPinModule(@NotNull Guild guild) {
-        super(guild);
-        listener = new AutoPinListener(guild.getIdLong());
+    public AutoPinModule(@NotNull Long guildId) {
+        super(guildId);
+        listener = new AutoPinListener(getGuildId());
     }
 
 

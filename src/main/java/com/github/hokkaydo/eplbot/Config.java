@@ -28,7 +28,7 @@ public class Config {
                     Integer::parseInt,
                     "Nombre entier"
             ),
-            "autopin", new ConfigurationParser(true, Object::toString, Boolean::valueOf, "Booléen" )
+            "configuration", new ConfigurationParser(true, Object::toString, Boolean::valueOf, "Booléen")
     );
     private static final Map<String, Object> GLOBAL_CONFIGURATION = new HashMap<>();
     private static final Map<Long, Map<String, Object>> GUILD_CONFIGURATION = new HashMap<>();
@@ -130,7 +130,7 @@ public class Config {
                 GLOBAL_CONFIGURATION.put(key, v);
             }else {
                 if(!GUILD_CONFIGURATION.containsKey(guildId)) {
-                    GUILD_CONFIGURATION.put(guildId, Map.copyOf(DEFAULT_CONFIGURATION));
+                    GUILD_CONFIGURATION.put(guildId, new HashMap<>(DEFAULT_CONFIGURATION.entrySet().stream().map(e -> Map.entry(e.getKey(),e.getValue().defaultValue)).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))));
                 }
                 GUILD_CONFIGURATION.get(guildId).put(key, DEFAULT_CONFIGURATION.get(key).fromConfig.apply(v));
             }
