@@ -40,13 +40,13 @@ public class Main {
             Activity.playing("démontrer que l²(N) est un honnête espace de fonctions"),
             Activity.playing("calculer le meilleur angle d'artillerie par Newton-Raphson"),
             Activity.streaming("#PoissonPower", "https://youtu.be/580gEIVVKe8"),
-            Activity.competing("LEPL1502 - WeeStiti"),
-            Activity.listening("les FEZZZZZZZ - https://www.youtube.com/watch?v=1lGx2a1AdE0"),
+            Activity.listening("les FEZZZZZZZ"),
             Activity.playing("comprendre la doc de Oz2"),
-            Activity.watching("les SINFs faire des bêtises (comme d'hab)"),
-            Activity.watching("la mousse descendre dans sa chope"),
-            Activity.watching("ses résistances griller et ses transistors brûler sur son circuit"),
-            Activity.watching("ChatGPT avec compassion pour tout le travail qu'il doit fournir pendant le blocus des étudiants")
+            Activity.playing("à observer les SINFs faire des bêtises (comme d'hab)"),
+            Activity.playing("regarder la mousse descendre dans sa chope"),
+            Activity.playing("déprimer devant ses résistances grillées et ses transistors brûlés sur son circuit"),
+            Activity.playing("avoir pitié de ChatGPT pour tout le travail qu'il doit fournir pendant le blocus des étudiants"),
+            Activity.competing("Affond 13h")
     );
 
     public static void main(String[] args) throws InterruptedException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
@@ -81,7 +81,7 @@ public class Main {
         launchPeriodicStatusUpdate();
     }
 
-    private static void registerModules(ModuleManager moduleManager) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+    private static void registerModules(ModuleManager moduleManager) {
         List<Class<? extends Module>> modules = Arrays.asList(
                 AutoPinModule.class,
                 MirrorModule.class,
