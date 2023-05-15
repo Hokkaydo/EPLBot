@@ -28,7 +28,11 @@ public class Strings {
     private static final String STRING_NOT_FOUND = "Erreur de traduction. Veuillez la signaler à la modération";
 
     public static String getString(String key) {
-        return STRINGS_MAP.getOrDefault(key, STRING_NOT_FOUND);
+        if(!STRINGS_MAP.containsKey(key)) {
+            System.err.printf("Missing string : %s\n", key);
+            return STRING_NOT_FOUND;
+        }
+        return STRINGS_MAP.get(key);
     }
 
 }

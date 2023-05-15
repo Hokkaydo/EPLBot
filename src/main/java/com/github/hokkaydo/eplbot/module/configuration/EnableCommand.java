@@ -23,7 +23,7 @@ public class EnableCommand implements Command {
     public void executeCommand(CommandContext context) {
         OptionMapping featureOption = context.options().get(0);
         if(featureOption == null) return;
-        Main.getModuleManager().enableGuildModule(featureOption.getAsString(), guildId);
+        Main.getModuleManager().enableModule(featureOption.getAsString(), guildId);
         context.replyCallbackAction().setContent("Enabled `" + featureOption.getAsString() + "` :white_check_mark:").queue();
     }
 
@@ -42,7 +42,7 @@ public class EnableCommand implements Command {
         return List.of(
                 new OptionData(OptionType.STRING, "feature", Strings.getString("COMMAND_ENABLE_ARG_FEATURE_DESCRIPTION"), true)
                         .addChoices(Main.getModuleManager()
-                                            .getGuildModules(guildId)
+                                            .getModules(guildId)
                                             .stream()
                                             .map(Module::getName)
                                             .map(n -> new net.dv8tion.jda.api.interactions.commands.Command.Choice(n, n))

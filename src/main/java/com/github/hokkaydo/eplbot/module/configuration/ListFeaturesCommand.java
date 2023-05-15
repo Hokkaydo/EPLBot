@@ -20,7 +20,7 @@ public class ListFeaturesCommand implements Command {
     @Override
     public void executeCommand(CommandContext context) {
         context.replyCallbackAction().setContent(
-                Main.getModuleManager().getGuildModules(guildId)
+                Main.getModuleManager().getModules(guildId)
                         .stream()
                         .map(feature -> "`" + feature.getName() + "`: " + (feature.isEnabled() ? ":white_check_mark:" : ":x:"))
                         .reduce((s1, s2) -> s1 + "\n" + s2)

@@ -1,11 +1,11 @@
 package com.github.hokkaydo.eplbot;
 
 import com.github.hokkaydo.eplbot.command.CommandManager;
-import com.github.hokkaydo.eplbot.module.GlobalModule;
-import com.github.hokkaydo.eplbot.module.GuildModule;
+import com.github.hokkaydo.eplbot.module.Module;
 import com.github.hokkaydo.eplbot.module.ModuleManager;
 import com.github.hokkaydo.eplbot.module.autopin.AutoPinModule;
 import com.github.hokkaydo.eplbot.module.configuration.ConfigurationModule;
+import com.github.hokkaydo.eplbot.module.mirror.MirrorModule;
 import io.github.cdimascio.dotenv.Dotenv;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
@@ -16,7 +16,6 @@ import net.dv8tion.jda.api.utils.cache.CacheFlag;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -41,21 +40,13 @@ public class Main {
                       .build();
         jda.awaitReady();
 
-        moduleManager.enableGlobalModules(
-                Config.getGlobalModulesStatus(moduleManager.getGlobalModuleNames())
-                        .entrySet()
-                        .stream()
-                        .filter(Map.Entry::getValue)
-                        .map(Map.Entry::getKey)
-                        .toList()
-        );
         registerModules(moduleManager);
         jda.getGuilds().forEach(guild ->
-                                        moduleManager.enableGuildModules(
+                                        moduleManager.enableModules(
                                                 guild.getIdLong(),
                                                 Config.getGuildModulesStatus(
                                                                 guild.getIdLong(),
-                                                                moduleManager.getGuildModuleNames())
+                                                                moduleManager.getModuleNames())
                                                         .entrySet()
                                                         .stream()
                                                         .filter(Map.Entry::getValue)
@@ -66,18 +57,12 @@ public class Main {
     }
 
     private static void registerModules(ModuleManager moduleManager) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
-        List<Class<? extends GlobalModule>> globalModules = Collections.emptyList();
-        List<Class<? extends GuildModule>> guildModules = Arrays.asList(AutoPinModule.class, ConfigurationModule.class);
+        List<Class<? extends Module>> modules = Arrays.asList(AutoPinModule.class, ConfigurationModule.class, MirrorModule.class);
 
-        for (Class<? extends GlobalModule> globalModuleClazz : globalModules) {
-            GlobalModule module = globalModuleClazz.getDeclaredConstructor().newInstance();
-            moduleManager.addGlobalModule(module);
-        }
-
-        for (Class<? extends GuildModule> guildModuleClazz : guildModules) {
+        for (Class<? extends Module> moduleClazz : modules) {
             for (Guild guild : jda.getGuilds()) {
-                GuildModule module = guildModuleClazz.getDeclaredConstructor(Long.class).newInstance(guild.getIdLong());
-                moduleManager.addGuildModule(module);
+                Module module = moduleClazz.getDeclaredConstructor(Long.class).newInstance(guild.getIdLong());
+                moduleManager.addModule(module);
             }
         }
     }

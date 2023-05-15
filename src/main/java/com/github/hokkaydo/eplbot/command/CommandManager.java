@@ -2,74 +2,68 @@ package com.github.hokkaydo.eplbot.command;
 
 import com.github.hokkaydo.eplbot.Main;
 import com.github.hokkaydo.eplbot.Strings;
-import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
-import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 public class CommandManager extends ListenerAdapter {
 
-    private final Map<Long, Command> commands = new HashMap<>();
-    public void removeCommand(Long commandId) {
-        if(!commands.containsKey(commandId)) return;
-        Main.getJDA().deleteCommandById(commandId).queue(v -> commands.remove(commandId));
+    private final Map<Long, Map<Class<? extends Command>, Boolean>> commandStatus = new HashMap<>();
+    private final Map<Long, Map<String, Command>> commands = new HashMap<>();
+    public void disableCommands(Long guildId, List<? extends Class<? extends Command>> commands) {
+        if(!this.commandStatus.containsKey(guildId)) return;
+        Map<Class<? extends Command>, Boolean> commandStatus = this.commandStatus.get(guildId);
+        for (Class<? extends Command> command : commands) {
+            commandStatus.put(command, false);
+        }
+        this.commandStatus.put(guildId, commandStatus);
     }
 
-    public void addGuildCommand(Long guildId, List<Command> commands, List<Long> addedCommandIds) {
-        Guild guild = Main.getJDA().getGuildById(guildId);
-        if(guild == null) return;
-        List<SlashCommandData> data = new ArrayList<>(toCommandData(commands));
-        List<net.dv8tion.jda.api.interactions.commands.Command> list = guild.retrieveCommands().complete();
-        list.stream()
-                .filter(command -> this.commands.values().stream().anyMatch(c -> c.getName().equals(command.getName())))
-                .filter(command -> commands.stream().noneMatch(c -> c.getName().equals(command.getName())))
-                .forEach(cmd -> data.add(SlashCommandData.fromCommand(cmd)));
-        guild.updateCommands().addCommands(data).map(l -> mapWithIds(l, commands)).queue(ids -> {
-                    this.commands.clear();
-                    this.commands.putAll(ids);
-                    addedCommandIds.addAll(ids.entrySet().stream().filter(e -> commands.stream().anyMatch(c -> e.getValue().getName().equals(c.getName()))).map(Map.Entry::getKey).toList());
-                });
+    public void enableCommands(Long guildId, List<? extends Class<? extends Command>> commands) {
+        Map<Class<? extends Command>, Boolean> commandStatus = this.commandStatus.getOrDefault(guildId, new HashMap<>());
+        for (Class<? extends Command> command : commands) {
+            commandStatus.put(command, true);
+        }
+        this.commandStatus.put(guildId, commandStatus);
     }
 
-    private Map<Long, Command> mapWithIds(List<net.dv8tion.jda.api.interactions.commands.Command> jdaCommands, List<Command> commands) {
-        return jdaCommands.stream()
-                .filter(c -> commands.stream().anyMatch(cmd -> cmd.getName().equals(c.getName())))
-                .map(c -> Map.entry(c.getIdLong(), commands.stream().filter(cmd -> cmd.getName().equals(c.getName())).findFirst().get()))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-    }
-
-    private List<SlashCommandData> toCommandData(List<Command> commands) {
-        return commands.stream().map(cmd -> Commands.slash(cmd.getName(), cmd.getDescription().get())
-                .addOptions(cmd.getOptions())
-                .setDefaultPermissions(cmd.adminOnly() ? DefaultMemberPermissions.DISABLED : DefaultMemberPermissions.ENABLED)).toList();
-    }
-
-    public List<Long> addGlobalCommand(List<Command> commands) {
-        List<SlashCommandData> data = toCommandData(commands);
-        Map<Long, Command> ids = Main.getJDA().retrieveCommands().flatMap(list -> {
-                    list.forEach(cmd -> data.add(SlashCommandData.fromCommand(cmd)));
-                    return Main.getJDA().updateCommands().addCommands(data).map(l -> mapWithIds(l, commands));
-                })
-                .complete();
-        this.commands.putAll(ids);
-        return Arrays.asList(ids.keySet().toArray(new Long[0]));
+    public void addCommands(Long guildId, List<Command> commands) {
+        Map<String, Command> guildCommands = this.commands.getOrDefault(guildId, new HashMap<>());
+        for (Command command : commands) {
+            guildCommands.put(command.getName(), command);
+        }
+        Optional.ofNullable(Main.getJDA().getGuildById(guildId))
+                .ifPresent(guild -> guild.updateCommands().addCommands(guildCommands.values()
+                                                                               .stream()
+                                                                               .map(cmd -> Commands.slash(cmd.getName(), cmd.getDescription().get())
+                                                                                                   .addOptions(cmd.getOptions())
+                                                                                                   .setDefaultPermissions(cmd.adminOnly() ? DefaultMemberPermissions.DISABLED : DefaultMemberPermissions.ENABLED))
+                                                                               .toList())
+                                            .queue()
+                );
+        this.commands.put(guildId, guildCommands);
     }
 
 
     @Override
     public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent event) {
-        if(!commands.containsKey(event.getCommandIdLong())) return;
-        Command command = commands.get(event.getCommandIdLong());
+        if(!event.isGuildCommand() || event.getGuild() == null) return;
+        if(!commandStatus.containsKey(event.getGuild().getIdLong())) return;
+        Command command = commands.get(event.getGuild().getIdLong()).get(event.getFullCommandName());
+        if(command == null) return;
+
+        if(!commandStatus.get(event.getGuild().getIdLong()).getOrDefault(command.getClass(), false)) {
+            event.reply(Strings.getString("COMMAND_DISABLED")).setEphemeral(true).queue();
+            return;
+        }
+
         if(!command.validateChannel(event.getMessageChannel())) {
             event.reply(Strings.getString("COMMAND_WRONG_CHANNEL")).setEphemeral(true).queue();
             return;
@@ -85,4 +79,5 @@ public class CommandManager extends ListenerAdapter {
                 event.deferReply(command.ephemeralReply())
         ));
     }
+
 }

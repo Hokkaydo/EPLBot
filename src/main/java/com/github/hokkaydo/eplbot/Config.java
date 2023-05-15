@@ -28,7 +28,9 @@ public class Config {
                     Integer::parseInt,
                     "Nombre entier"
             ),
-            "configuration", new ConfigurationParser(true, Object::toString, Boolean::valueOf, "Booléen")
+            "configuration", new ConfigurationParser(true, Object::toString, Boolean::valueOf, "Booléen"),
+            "autopin", new ConfigurationParser(false, Object::toString, Boolean::valueOf, "Booléen"),
+            "mirror", new ConfigurationParser(false, Object::toString, Boolean::valueOf, "Booléen")
     );
     private static final Map<String, Object> GLOBAL_CONFIGURATION = new HashMap<>();
     private static final Map<Long, Map<String, Object>> GUILD_CONFIGURATION = new HashMap<>();
@@ -108,6 +110,7 @@ public class Config {
         prop.setProperty(k, DEFAULT_CONFIGURATION.get(key).toConfig.apply(value));
         try(FileOutputStream output = new FileOutputStream(CONFIG_PATH)){
             prop.store(output, "");
+            System.out.println(prop);
         } catch(IOException e) {
             throw new IllegalStateException("Could not save config file");
         }
@@ -133,6 +136,7 @@ public class Config {
                     GUILD_CONFIGURATION.put(guildId, new HashMap<>(DEFAULT_CONFIGURATION.entrySet().stream().map(e -> Map.entry(e.getKey(),e.getValue().defaultValue)).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))));
                 }
                 GUILD_CONFIGURATION.get(guildId).put(key, DEFAULT_CONFIGURATION.get(key).fromConfig.apply(v));
+                System.out.println(GUILD_CONFIGURATION);
             }
         });
     }

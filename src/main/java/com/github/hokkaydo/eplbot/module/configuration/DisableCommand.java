@@ -23,7 +23,7 @@ public class DisableCommand implements Command {
     public void executeCommand(CommandContext context) {
         OptionMapping featureOption = context.options().get(0);
         if(featureOption == null) return;
-        Main.getModuleManager().disableGuildModule(featureOption.getAsString(), guildId);
+        Main.getModuleManager().disableModule(featureOption.getAsString(), guildId);
         context.replyCallbackAction().setContent("Disabled `" + featureOption.getAsString() + "` :x:").queue();
     }
 
@@ -42,7 +42,7 @@ public class DisableCommand implements Command {
         return List.of(
                 new OptionData(OptionType.STRING, "feature", Strings.getString("COMMAND_DISABLE_ARG_FEATURE_DESCRIPTION"), true)
                         .addChoices(Main.getModuleManager()
-                                            .getGuildModules(guildId)
+                                            .getModules(guildId)
                                             .stream()
                                             .map(Module::getName)
                                             .map(n -> new net.dv8tion.jda.api.interactions.commands.Command.Choice(n, n))
