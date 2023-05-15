@@ -28,7 +28,7 @@ public class MirrorListCommand implements Command {
         if(channelAOption.isEmpty()) return;
         MessageChannel channelA = Main.getJDA().getChannelById(MessageChannel.class, channelAOption.get().getAsString());
         if(channelA == null) {
-            context.replyCallbackAction().setContent(Strings.getString("COMMAND_MIRRORLIST_INVALID_CHANNEL").formatted(channelAOption.get().getAsString())).queue();
+            context.replyCallbackAction().setContent(Strings.getString("COMMAND_MIRROR_INVALID_CHANNEL").formatted(channelAOption.get().getAsString())).queue();
             return;
         }
         List<MirrorManager.Mirror> mirrors = mirrorManager.getLinks(channelA);

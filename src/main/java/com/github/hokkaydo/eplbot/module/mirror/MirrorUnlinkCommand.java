@@ -27,15 +27,15 @@ public class MirrorUnlinkCommand implements Command {
         MessageChannel channelA = Main.getJDA().getChannelById(MessageChannel.class, channelAOption.get().getAsString());
         MessageChannel channelB = Main.getJDA().getChannelById(MessageChannel.class, channelBOption.get().getAsString());
         if(channelA == null) {
-            context.replyCallbackAction().setContent(Strings.getString("COMMAND_MIRRORUNLINK_INVALID_CHANNEL").formatted(channelAOption.get().getAsString())).queue();
+            context.replyCallbackAction().setContent(Strings.getString("COMMAND_MIRROR_INVALID_CHANNEL").formatted(channelAOption.get().getAsString())).queue();
             return;
         }
         if(channelB == null) {
-            context.replyCallbackAction().setContent(Strings.getString("COMMAND_MIRRORUNLINK_INVALID_CHANNEL").formatted(channelBOption.get().getAsString())).queue();
+            context.replyCallbackAction().setContent(Strings.getString("COMMAND_MIRROR_INVALID_CHANNEL").formatted(channelBOption.get().getAsString())).queue();
             return;
         }
         if(!mirrorManager.existsLink(channelA, channelB)) {
-            context.replyCallbackAction().setContent(Strings.getString("COMMAND_MIRRORUBLINK_LINK_DOESNT_EXISTS").formatted(channelA.getAsMention(), channelB.getAsMention())).queue();
+            context.replyCallbackAction().setContent(Strings.getString("COMMAND_MIRRORUNLINK_LINK_DOESNT_EXISTS").formatted(channelA.getAsMention(), channelB.getAsMention())).queue();
             return;
         }
         mirrorManager.destroyLink(channelA, channelB);

@@ -40,7 +40,7 @@ public class EnableCommand implements Command {
     @Override
     public List<OptionData> getOptions() {
         return List.of(
-                new OptionData(OptionType.STRING, "feature", Strings.getString("COMMAND_ENABLE_ARG_FEATURE_DESCRIPTION"), true)
+                new OptionData(OptionType.STRING, "feature", Strings.getString("COMMAND_ENABLE_OPTION_FEATURE_DESCRIPTION"), true)
                         .addChoices(Main.getModuleManager()
                                             .getModules(guildId)
                                             .stream()

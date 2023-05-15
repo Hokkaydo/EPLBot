@@ -24,12 +24,30 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class Main {
 
     private static JDA jda;
     private static ModuleManager moduleManager;
     private static CommandManager commandManager;
+
+    private static final List<Activity> status = List.of(
+            Activity.playing("bâtir des ponts (solides) entre nous et le ciel"),
+            Activity.playing("démontrer que l²(N) est un honnête espace de fonctions"),
+            Activity.playing("calculer le meilleur angle d'artillerie par Newton-Raphson"),
+            Activity.streaming("#PoissonPower", "https://youtu.be/580gEIVVKe8"),
+            Activity.competing("LEPL1502 - WeeStiti"),
+            Activity.listening("les FEZZZZZZZ - https://www.youtube.com/watch?v=1lGx2a1AdE0"),
+            Activity.playing("comprendre la doc de Oz2"),
+            Activity.watching("les SINFs faire des bêtises (comme d'hab)"),
+            Activity.watching("la mousse descendre dans sa chope"),
+            Activity.watching("ses résistances griller et ses transistors brûler sur son circuit"),
+            Activity.watching("ChatGPT avec compassion pour tout le travail qu'il doit fournir pendant le blocus des étudiants")
+    );
 
     public static void main(String[] args) throws InterruptedException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
         final String token = Dotenv.load().get("DISCORD_BOT_TOKEN");
@@ -41,7 +59,7 @@ public class Main {
                       .enableIntents(GatewayIntent.MESSAGE_CONTENT)
                       .disableCache(CacheFlag.MEMBER_OVERRIDES, CacheFlag.VOICE_STATE)
                       .setBulkDeleteSplittingEnabled(false)
-                      .setActivity(Activity.watching("you"))
+                      .setActivity(Activity.playing("compter les moutons"))
                       .addEventListeners(commandManager)
                       .build();
         jda.awaitReady();
@@ -60,6 +78,7 @@ public class Main {
                                                         .toList()
                                         )
         );
+        launchPeriodicStatusUpdate();
     }
 
     private static void registerModules(ModuleManager moduleManager) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
@@ -88,6 +107,12 @@ public class Main {
             }).toList());
         }
         commandManager.addGlobalCommands(globalCommands);
+    }
+
+    private static void launchPeriodicStatusUpdate() {
+        ScheduledExecutorService service = Executors.newScheduledThreadPool(1);
+        Random random = new Random();
+        service.scheduleAtFixedRate(() -> jda.getPresence().setActivity(status.get(random.nextInt(status.size()))),26*6, 26*6, TimeUnit.SECONDS); // 2min30
     }
 
     public static JDA getJDA() {

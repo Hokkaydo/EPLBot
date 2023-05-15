@@ -28,11 +28,11 @@ public class MirrorLinkCommand implements Command {
         MessageChannel channelA = Main.getJDA().getChannelById(MessageChannel.class, channelAOption.get().getAsString());
         MessageChannel channelB = Main.getJDA().getChannelById(MessageChannel.class, channelBOption.get().getAsString());
         if(channelA == null) {
-            context.replyCallbackAction().setContent(Strings.getString("COMMAND_MIRRORLINK_INVALID_CHANNEL").formatted(channelAOption.get().getAsString())).queue();
+            context.replyCallbackAction().setContent(Strings.getString("COMMAND_MIRROR_INVALID_CHANNEL").formatted(channelAOption.get().getAsString())).queue();
             return;
         }
         if(channelB == null) {
-            context.replyCallbackAction().setContent(Strings.getString("COMMAND_MIRRORLINK_INVALID_CHANNEL").formatted(channelBOption.get().getAsString())).queue();
+            context.replyCallbackAction().setContent(Strings.getString("COMMAND_MIRROR_INVALID_CHANNEL").formatted(channelBOption.get().getAsString())).queue();
             return;
         }
         if(mirrorManager.existsLink(channelA, channelB)) {
