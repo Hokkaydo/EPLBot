@@ -4,6 +4,7 @@ import com.github.hokkaydo.eplbot.command.CommandManager;
 import com.github.hokkaydo.eplbot.module.Module;
 import com.github.hokkaydo.eplbot.module.ModuleManager;
 import com.github.hokkaydo.eplbot.module.autopin.AutoPinModule;
+import com.github.hokkaydo.eplbot.module.basic.BasicCommandModule;
 import com.github.hokkaydo.eplbot.module.configuration.ConfigurationModule;
 import com.github.hokkaydo.eplbot.module.mirror.MirrorModule;
 import com.github.hokkaydo.eplbot.module.quote.QuoteModule;
@@ -59,7 +60,7 @@ public class Main {
     }
 
     private static void registerModules(ModuleManager moduleManager) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
-        List<Class<? extends Module>> modules = Arrays.asList(AutoPinModule.class, ConfigurationModule.class, MirrorModule.class, QuoteModule.class, RssModule.class);
+        List<Class<? extends Module>> modules = Arrays.asList(AutoPinModule.class, ConfigurationModule.class, MirrorModule.class, QuoteModule.class, RssModule.class, BasicCommandModule.class);
 
         for (Class<? extends Module> moduleClazz : modules) {
             for (Guild guild : jda.getGuilds()) {
