@@ -8,6 +8,7 @@ import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -78,6 +79,13 @@ public class CommandManager extends ListenerAdapter {
                 event.getHook(),
                 event.deferReply(command.ephemeralReply())
         ));
+    }
+
+    public List<Command> getCommands(Long guildId) {
+        return new ArrayList<>(commands.getOrDefault(guildId, new HashMap<>()).values());
+    }
+    public boolean isEnabled(Long guild, Class<? extends Command> commandClazz) {
+        return commandStatus.getOrDefault(guild, new HashMap<>()).getOrDefault(commandClazz, false);
     }
 
 }
