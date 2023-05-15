@@ -1,5 +1,6 @@
 package com.github.hokkaydo.eplbot;
 
+import com.github.hokkaydo.eplbot.command.Command;
 import com.github.hokkaydo.eplbot.command.CommandManager;
 import com.github.hokkaydo.eplbot.module.Module;
 import com.github.hokkaydo.eplbot.module.ModuleManager;
@@ -19,6 +20,7 @@ import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -63,20 +65,29 @@ public class Main {
     private static void registerModules(ModuleManager moduleManager) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
         List<Class<? extends Module>> modules = Arrays.asList(
                 AutoPinModule.class,
-                ConfigurationModule.class,
                 MirrorModule.class,
                 QuoteModule.class,
                 RssModule.class,
                 BasicCommandModule.class,
-                ConfessionModule.class
+                ConfessionModule.class,
+                ConfigurationModule.class
         );
-
-        for (Class<? extends Module> moduleClazz : modules) {
-            for (Guild guild : jda.getGuilds()) {
-                Module module = moduleClazz.getDeclaredConstructor(Long.class).newInstance(guild.getIdLong());
-                moduleManager.addModule(module);
-            }
+        List<Command> globalCommands = new ArrayList<>();
+        for (Guild guild : jda.getGuilds()) {
+            moduleManager.addModules(modules.stream().map(clazz -> {
+                try {
+                    return clazz.getDeclaredConstructor(Long.class).newInstance(guild.getIdLong());
+                } catch (InstantiationException | NoSuchMethodException | InvocationTargetException |
+                         IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                }
+            }).map(o -> (Module)o).peek(m -> {
+                if(m.getClass().equals(ConfessionModule.class)) {
+                    globalCommands.add(m.getCommands().get(0));
+                }
+            }).toList());
         }
+        commandManager.addGlobalCommands(globalCommands);
     }
 
     public static JDA getJDA() {

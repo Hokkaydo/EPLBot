@@ -18,6 +18,9 @@ public class CommandManager extends ListenerAdapter {
 
     private final Map<Long, Map<Class<? extends Command>, Boolean>> commandStatus = new HashMap<>();
     private final Map<Long, Map<String, Command>> commands = new HashMap<>();
+    private final Map<String, Command> globalCommands = new HashMap<>();
+    private final Map<Class<? extends Command>, Boolean> globalCommandStatus = new HashMap<>();
+
     public void disableCommands(Long guildId, List<? extends Class<? extends Command>> commands) {
         if(!this.commandStatus.containsKey(guildId)) return;
         Map<Class<? extends Command>, Boolean> commandStatus = this.commandStatus.get(guildId);
@@ -33,6 +36,18 @@ public class CommandManager extends ListenerAdapter {
             commandStatus.put(command, true);
         }
         this.commandStatus.put(guildId, commandStatus);
+    }
+
+    public void disableGlobalCommands(List<? extends Class<? extends Command>> commands) {
+        for (Class<? extends Command> command : commands) {
+            this.globalCommandStatus.put(command, false);
+        }
+    }
+
+    public void enableGlobalCommands(List<? extends Class<? extends Command>> commands) {
+        for (Class<? extends Command> command : commands) {
+            this.globalCommandStatus.put(command, true);
+        }
     }
 
     public void addCommands(Long guildId, List<Command> commands) {
@@ -55,14 +70,28 @@ public class CommandManager extends ListenerAdapter {
 
     @Override
     public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent event) {
-        if(!event.isGuildCommand() || event.getGuild() == null) return;
-        if(!commandStatus.containsKey(event.getGuild().getIdLong())) return;
-        Command command = commands.get(event.getGuild().getIdLong()).get(event.getFullCommandName());
-        if(command == null) return;
-
-        if(!commandStatus.get(event.getGuild().getIdLong()).getOrDefault(command.getClass(), false)) {
-            event.reply(Strings.getString("COMMAND_DISABLED")).setEphemeral(true).queue();
-            return;
+        Command command;
+        if(!event.isGuildCommand() || event.getGuild() == null) {
+            command = globalCommands.get(event.getFullCommandName());
+            if(command == null) {
+                event.reply(Strings.getString("COMMAND_NOT_FOUND")).setEphemeral(true).queue();
+                return;
+            }
+            if(!globalCommandStatus.getOrDefault(command.getClass(), false)) {
+                event.reply(Strings.getString("COMMAND_DISABLED")).setEphemeral(true).queue();
+                return;
+            }
+        }else {
+            if(event.getGuild() == null) return;
+            command = commands.get(event.getGuild().getIdLong()).get(event.getFullCommandName());
+            if(command == null) {
+                event.reply(Strings.getString("COMMAND_NOT_FOUND")).setEphemeral(true).queue();
+                return;
+            }
+            if(!commandStatus.get(event.getGuild().getIdLong()).getOrDefault(command.getClass(), false)) {
+                event.reply(Strings.getString("COMMAND_DISABLED")).setEphemeral(true).queue();
+                return;
+            }
         }
 
         if(!command.validateChannel(event.getMessageChannel())) {
@@ -86,6 +115,18 @@ public class CommandManager extends ListenerAdapter {
     }
     public boolean isEnabled(Long guild, Class<? extends Command> commandClazz) {
         return commandStatus.getOrDefault(guild, new HashMap<>()).getOrDefault(commandClazz, false);
+    }
+
+    public void addGlobalCommands(List<Command> commands) {
+        globalCommands.clear();
+        commands.forEach(c -> globalCommands.put(c.getName(), c));
+
+        Main.getJDA().updateCommands().addCommands(commands.stream()
+                                                           .map(cmd -> Commands.slash(cmd.getName(), cmd.getDescription().get())
+                                                                               .addOptions(cmd.getOptions())
+                                                                               .setDefaultPermissions(cmd.adminOnly() ? DefaultMemberPermissions.DISABLED : DefaultMemberPermissions.ENABLED))
+                                                           .toList())
+                .queue();
     }
 
 }

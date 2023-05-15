@@ -1,5 +1,6 @@
 package com.github.hokkaydo.eplbot.module.confession;
 
+import com.github.hokkaydo.eplbot.Main;
 import com.github.hokkaydo.eplbot.command.Command;
 import com.github.hokkaydo.eplbot.module.Module;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -28,7 +29,19 @@ public class ConfessionModule extends Module {
 
     @Override
     public List<ListenerAdapter> getListeners() {
-        return Collections.emptyList();
+        return Collections.singletonList(confessionCommand);
+    }
+
+    @Override
+    public void enable() {
+        Main.getJDA().addEventListener(getListeners().toArray());
+        Main.getCommandManager().enableGlobalCommands(getCommands().stream().map(Command::getClass).toList());
+    }
+
+    @Override
+    public void disable() {
+        Main.getJDA().removeEventListener(getListeners().toArray());
+        Main.getCommandManager().disableGlobalCommands(getCommands().stream().map(Command::getClass).toList());
     }
 
 }

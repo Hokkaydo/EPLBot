@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class Config {
@@ -17,6 +18,7 @@ public class Config {
     private static final String CONFIG_PATH = "./config";
 
     private static final String IDENTIFIER_UNDER_STRING_FORM = "Identifiant sous forme de chaîne de caractères";
+    private static final Supplier<ConfigurationParser> MODULE_DISABLED = () -> new ConfigurationParser(false, Object::toString, Boolean::valueOf, "Booléen");
     private static final Map<String, ConfigurationParser> DEFAULT_CONFIGURATION = new HashMap<>(Map.of(
             "PIN_REACTION_NAME", new ConfigurationParser(
                     "\uD83D\uDCCC",
@@ -86,8 +88,16 @@ public class Config {
                         Object::toString,
                         s -> s,
                         IDENTIFIER_UNDER_STRING_FORM
-                ),
-                "configuration", new ConfigurationParser(true, Object::toString, Boolean::valueOf, "Booléen")
+                )
+        ));
+        DEFAULT_CONFIGURATION.putAll(Map.of(
+                "configuration", new ConfigurationParser(true, Object::toString, Boolean::valueOf, "Booléen"),
+                "autopin", MODULE_DISABLED.get(),
+                "rss", MODULE_DISABLED.get(),
+                "mirror", MODULE_DISABLED.get(),
+                "confession", MODULE_DISABLED.get(),
+                "basiccommands", MODULE_DISABLED.get(),
+                "quote", MODULE_DISABLED.get()
         ));
     }
     private static final Map<Long, Map<String, Object>> GUILD_CONFIGURATION = new HashMap<>();
@@ -101,7 +111,7 @@ public class Config {
         return DEFAULT_CONFIGURATION.get(key).format;
     }
 
-    public static void updateGuildValue(Long guildId, String key, Object value) {
+    public static void updateValue(Long guildId, String key, Object value) {
         if(!DEFAULT_CONFIGURATION.containsKey(key)) return;
         if(!GUILD_CONFIGURATION.containsKey(guildId))
             GUILD_CONFIGURATION.put(guildId, new HashMap<>());
@@ -109,12 +119,12 @@ public class Config {
         saveValue(guildId, key, value);
     }
 
-    public static void disableGuildModule(Long guildId, String key) {
-        updateGuildValue(guildId, key, false);
+    public static void disableModule(Long guildId, String key) {
+        updateValue(guildId, key, false);
     }
 
-    public static void enableGuildModule(Long guildId, String key) {
-        updateGuildValue(guildId, key, true);
+    public static void enableModule(Long guildId, String key) {
+        updateValue(guildId, key, true);
     }
 
     public static boolean getModuleStatus(Long guildId, String moduleName) {
