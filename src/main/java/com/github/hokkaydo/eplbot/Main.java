@@ -6,6 +6,7 @@ import com.github.hokkaydo.eplbot.module.ModuleManager;
 import com.github.hokkaydo.eplbot.module.autopin.AutoPinModule;
 import com.github.hokkaydo.eplbot.module.configuration.ConfigurationModule;
 import com.github.hokkaydo.eplbot.module.mirror.MirrorModule;
+import com.github.hokkaydo.eplbot.module.quote.QuoteModule;
 import io.github.cdimascio.dotenv.Dotenv;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
@@ -57,7 +58,7 @@ public class Main {
     }
 
     private static void registerModules(ModuleManager moduleManager) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
-        List<Class<? extends Module>> modules = Arrays.asList(AutoPinModule.class, ConfigurationModule.class, MirrorModule.class);
+        List<Class<? extends Module>> modules = Arrays.asList(AutoPinModule.class, ConfigurationModule.class, MirrorModule.class, QuoteModule.class);
 
         for (Class<? extends Module> moduleClazz : modules) {
             for (Guild guild : jda.getGuilds()) {
