@@ -48,7 +48,7 @@ public class Main {
         jda.getGuilds().forEach(guild ->
                                         moduleManager.enableModules(
                                                 guild.getIdLong(),
-                                                Config.getGuildModulesStatus(
+                                                Config.getModulesStatus(
                                                                 guild.getIdLong(),
                                                                 moduleManager.getModuleNames())
                                                         .entrySet()
