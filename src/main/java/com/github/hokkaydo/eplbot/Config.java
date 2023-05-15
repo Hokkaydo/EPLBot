@@ -1,5 +1,6 @@
 package com.github.hokkaydo.eplbot;
 
+import java.awt.*;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -15,7 +16,8 @@ public class Config {
 
     private static final String CONFIG_PATH = "./config";
 
-    private static final Map<String, ConfigurationParser> DEFAULT_CONFIGURATION = Map.of(
+    private static final String IDENTIFIER_UNDER_STRING_FORM = "Identifiant sous forme de chaîne de caractères";
+    private static final Map<String, ConfigurationParser> DEFAULT_CONFIGURATION = new HashMap<>(Map.of(
             "PIN_REACTION_NAME", new ConfigurationParser(
                     "\uD83D\uDCCC",
                     Object::toString,
@@ -28,17 +30,67 @@ public class Config {
                     Integer::parseInt,
                     "Nombre entier"
             ),
-            "configuration", new ConfigurationParser(true, Object::toString, Boolean::valueOf, "Booléen"),
-            "autopin", new ConfigurationParser(false, Object::toString, Boolean::valueOf, "Booléen"),
-            "mirror", new ConfigurationParser(false, Object::toString, Boolean::valueOf, "Booléen")
-    );
-    private static final Map<String, Object> GLOBAL_CONFIGURATION = new HashMap<>();
-    private static final Map<Long, Map<String, Object>> GUILD_CONFIGURATION = new HashMap<>();
-
-
-    public static <T> T getGlobalValue(String key) {
-        return (T)GLOBAL_CONFIGURATION.getOrDefault(key, DEFAULT_CONFIGURATION.get(key).defaultValue);
+            "ADMIN_CHANNEL_ID", new ConfigurationParser(
+                    1,
+                    Object::toString,
+                    Integer::parseInt,
+                    "Nombre entier"
+            ),
+            "CONFESSION_CHANNEL_ID", new ConfigurationParser(
+                    "1096874480267169974",
+                    Object::toString,
+                    s -> s,
+                    IDENTIFIER_UNDER_STRING_FORM
+            ),
+            "CONFESSION_VALIDATION_CHANNEL_ID", new ConfigurationParser(
+                    "1096378039027388436",
+                    Object::toString,
+                    s -> s,
+                    IDENTIFIER_UNDER_STRING_FORM
+            ),
+            "CONFESSION_EMBED_COLOR", new ConfigurationParser(
+                    Color.decode("#3498DB"),
+                    c -> Integer.toString(((Color)c).getRGB(), 16),
+                    Color::decode,
+                    "RGB sous forme hexadécimale : Ex #FFFFFF = Blanc"
+            )
+    ));
+    static {
+        DEFAULT_CONFIGURATION.putAll(Map.of(
+                "RSS_FEEDS", new ConfigurationParser(
+                        List.of("https://www.developpez.com/index/rss"),
+                        Object::toString,
+                        s -> List.of(s.split(";")),
+                        "Liste de liens séparés par `;`"
+                ),
+                "RSS_FEEDS_CHANNEL_ID", new ConfigurationParser(
+                        "1096874480267169974",
+                        Object::toString,
+                        s -> s,
+                        IDENTIFIER_UNDER_STRING_FORM
+                ),
+                "RSS_FEEDS_COLOR", new ConfigurationParser(
+                        Color.YELLOW,
+                        c -> Integer.toString(((Color)c).getRGB(), 16),
+                        Color::decode,
+                        "RGB sous forme hexadécimale : Ex #FFFFFF = Blanc"
+                ),
+                "RSS_UPDATE_PERIOD", new ConfigurationParser(
+                        15L,
+                        Object::toString,
+                        Long::parseLong,
+                        "Nombre entier"
+                ),
+                "ADMIN_CHANNEL_ID", new ConfigurationParser(
+                        "1096365022944448543",
+                        Object::toString,
+                        s -> s,
+                        IDENTIFIER_UNDER_STRING_FORM
+                ),
+                "configuration", new ConfigurationParser(true, Object::toString, Boolean::valueOf, "Booléen")
+        ));
     }
+    private static final Map<Long, Map<String, Object>> GUILD_CONFIGURATION = new HashMap<>();
 
     public static <T> T getGuildValue(Long guildId, String key) {
         return (T)GUILD_CONFIGURATION.getOrDefault(guildId, new HashMap<>()).getOrDefault(key, DEFAULT_CONFIGURATION.get(key).defaultValue);
@@ -47,12 +99,6 @@ public class Config {
     public static String getValueFormat(String key) {
         if(!DEFAULT_CONFIGURATION.containsKey(key)) return "KEY_ERROR";
         return DEFAULT_CONFIGURATION.get(key).format;
-    }
-
-    public static void updateGlobalValue(String key, Object value) {
-        if(!DEFAULT_CONFIGURATION.containsKey(key)) return;
-        GLOBAL_CONFIGURATION.put(key, value);
-        saveValue(0L, key, value);
     }
 
     public static void updateGuildValue(Long guildId, String key, Object value) {
@@ -71,30 +117,13 @@ public class Config {
         updateGuildValue(guildId, key, true);
     }
 
-    public static void disableGlobalModule(String key) {
-        updateGlobalValue(key, false);
-    }
-
-    public static void enableGlobalModule(String key) {
-        updateGlobalValue(key, true);
-    }
-
-    public static boolean getGlobalModuleStatus(String moduleName) {
-        return (boolean)GLOBAL_CONFIGURATION.getOrDefault(moduleName, Optional.ofNullable(DEFAULT_CONFIGURATION.get(moduleName)).map(ConfigurationParser::defaultValue).orElse(false));
-    }
-
-    public static boolean getGuildModuleStatus(Long guildId, String moduleName) {
+    public static boolean getModuleStatus(Long guildId, String moduleName) {
         return (boolean)GUILD_CONFIGURATION.getOrDefault(guildId, new HashMap<>()).getOrDefault(moduleName, Optional.ofNullable(DEFAULT_CONFIGURATION.get(moduleName)).map(ConfigurationParser::defaultValue).orElse(false));
     }
 
-    public static Map<String, Boolean> getGlobalModulesStatus(List<String> moduleNames) {
+    public static Map<String, Boolean> getModulesStatus(Long guildId, List<String> moduleNames) {
         return moduleNames.stream()
-                       .map(name -> Map.entry(name, getGlobalModuleStatus(name)))
-                       .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-    }
-    public static Map<String, Boolean> getGuildModulesStatus(Long guildId, List<String> moduleNames) {
-        return moduleNames.stream()
-                       .map(name -> Map.entry(name, getGuildModuleStatus(guildId, name)))
+                       .map(name -> Map.entry(name, getModuleStatus(guildId, name)))
                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
@@ -128,14 +157,10 @@ public class Config {
             String key = keySplit[1];
             Long guildId = Long.parseLong(keySplit[0]);
             if(!DEFAULT_CONFIGURATION.containsKey(key)) return;
-            if(guildId == 0) {
-                GLOBAL_CONFIGURATION.put(key, v);
-            }else {
-                if(!GUILD_CONFIGURATION.containsKey(guildId)) {
-                    GUILD_CONFIGURATION.put(guildId, new HashMap<>(DEFAULT_CONFIGURATION.entrySet().stream().map(e -> Map.entry(e.getKey(),e.getValue().defaultValue)).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))));
-                }
-                GUILD_CONFIGURATION.get(guildId).put(key, DEFAULT_CONFIGURATION.get(key).fromConfig.apply(v));
+            if(!GUILD_CONFIGURATION.containsKey(guildId)) {
+                GUILD_CONFIGURATION.put(guildId, new HashMap<>(DEFAULT_CONFIGURATION.entrySet().stream().map(e -> Map.entry(e.getKey(),e.getValue().defaultValue)).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))));
             }
+            GUILD_CONFIGURATION.get(guildId).put(key, DEFAULT_CONFIGURATION.get(key).fromConfig.apply(v));
         });
     }
 
