@@ -42,9 +42,6 @@ public class ModuleManager {
 
     public void enableModule(String name, Long guildId) {
         getModuleByName(name, guildId, Module.class).ifPresent(Module::enable);
-        System.out.println("modules " + modules);
-        System.out.println("enabling " + getModuleByName(name, guildId, Module.class));
-        System.out.println("enabled " + name);
         Config.enableGuildModule(guildId, name);
     }
 

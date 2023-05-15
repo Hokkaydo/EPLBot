@@ -110,7 +110,6 @@ public class Config {
         prop.setProperty(k, DEFAULT_CONFIGURATION.get(key).toConfig.apply(value));
         try(FileOutputStream output = new FileOutputStream(CONFIG_PATH)){
             prop.store(output, "");
-            System.out.println(prop);
         } catch(IOException e) {
             throw new IllegalStateException("Could not save config file");
         }
@@ -136,7 +135,6 @@ public class Config {
                     GUILD_CONFIGURATION.put(guildId, new HashMap<>(DEFAULT_CONFIGURATION.entrySet().stream().map(e -> Map.entry(e.getKey(),e.getValue().defaultValue)).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))));
                 }
                 GUILD_CONFIGURATION.get(guildId).put(key, DEFAULT_CONFIGURATION.get(key).fromConfig.apply(v));
-                System.out.println(GUILD_CONFIGURATION);
             }
         });
     }

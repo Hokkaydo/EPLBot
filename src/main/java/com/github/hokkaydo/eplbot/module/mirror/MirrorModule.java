@@ -29,7 +29,6 @@ public class MirrorModule extends Module {
 
     @Override
     public List<Command> getCommands() {
-        System.out.println("called getcommands");
         return List.of(mirrorListCommand, mirrorLinkCommand, mirrorUnlinkCommand);
     }
 
