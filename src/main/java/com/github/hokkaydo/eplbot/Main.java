@@ -50,7 +50,10 @@ public class Main {
     );
 
     public static void main(String[] args) throws InterruptedException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
-        final String token = Dotenv.load().get("DISCORD_BOT_TOKEN");
+        String token = null;
+        if(args.length > 0) token = args[0];
+        if(token == null) token = Dotenv.load().get("DISCORD_BOT_TOKEN");
+        if(token == null) throw new IllegalStateException("No token specified !");
         moduleManager = new ModuleManager();
         commandManager = new CommandManager();
         Config.load();
