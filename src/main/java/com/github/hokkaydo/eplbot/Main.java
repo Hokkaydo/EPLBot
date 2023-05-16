@@ -98,11 +98,13 @@ public class Main {
                 AutoPinModule.class
         );
         for(Long guildId : List.of(EPL_DISCORD_ID, TEST_DISCORD_ID)) {
+            System.out.println("Registering EPL modules for " + jda.getGuildById(guildId).getName());
             List<Command> guildCommands = new ArrayList<>();
             moduleManager.addModules(eplModules.stream()
                                              .map(clazz -> instantiate(clazz, guildId))
                                              .map(o -> (Module)o)
                                              .peek(m -> {
+                                                 System.out.println("\t" + m.getName());
                                                          if(!m.getClass().equals(ConfessionModule.class)) {
                                                              guildCommands.addAll(m.getCommands());
                                                          }
@@ -110,17 +112,22 @@ public class Main {
                                              ).toList()
             );
             Main.getCommandManager().addCommands(guildId, guildCommands);
+            System.out.println("\n");
         }
 
         for (Long guildId : List.of(EPL_DISCORD_ID, TEST_DISCORD_ID, SINF_DISCORD_ID)) {
+            System.out.println("Registering global modules for " + jda.getGuildById(guildId).getName());
+
             List<Command> guildCommands = new ArrayList<>();
             moduleManager.addModules(globalModules.stream()
                                              .map(clazz -> instantiate(clazz, guildId))
                                              .map(o -> (Module)o)
+                                             .peek(m -> System.out.println("\t" + m.getName()))
                                              .peek(m -> guildCommands.addAll(m.getCommands()))
                                              .toList()
             );
             Main.getCommandManager().addCommands(guildId, guildCommands);
+            System.out.println("\n");
         }
         getModuleManager().getModuleByName("confession", EPL_DISCORD_ID, ConfessionModule.class).ifPresent(m -> commandManager.addGlobalCommands(m.getCommands()));
 
