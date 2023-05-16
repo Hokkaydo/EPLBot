@@ -15,6 +15,7 @@ import io.github.cdimascio.dotenv.Dotenv;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
 
@@ -98,7 +99,9 @@ public class Main {
                 AutoPinModule.class
         );
         for(Long guildId : List.of(EPL_DISCORD_ID, TEST_DISCORD_ID)) {
-            System.out.println("Registering EPL modules for " + jda.getGuildById(guildId).getName());
+            Guild guild = jda.getGuildById(guildId);
+            if(guild == null) continue;
+            System.out.println("Registering EPL modules for " + guild.getName());
             List<Command> guildCommands = new ArrayList<>();
             moduleManager.addModules(eplModules.stream()
                                              .map(clazz -> instantiate(clazz, guildId))
@@ -116,8 +119,9 @@ public class Main {
         }
 
         for (Long guildId : List.of(EPL_DISCORD_ID, TEST_DISCORD_ID, SINF_DISCORD_ID)) {
-            System.out.println("Registering global modules for " + jda.getGuildById(guildId).getName());
-
+            Guild guild = jda.getGuildById(guildId);
+            if(guild == null) continue;
+            System.out.println("Registering global modules for " + guild.getName());
             List<Command> guildCommands = new ArrayList<>();
             moduleManager.addModules(globalModules.stream()
                                              .map(clazz -> instantiate(clazz, guildId))
