@@ -34,6 +34,9 @@ public class Main {
     private static JDA jda;
     private static ModuleManager moduleManager;
     private static CommandManager commandManager;
+    private static final Long EPL_DISCORD_ID = 517720163223601153L;
+    private static final Long TEST_DISCORD_ID = 353965348539727872L;
+    private static final Long SINF_DISCORD_ID = 492762354111479828L;
 
     private static final List<Activity> status = List.of(
             Activity.playing("bâtir des ponts (solides) entre nous et le ciel"),
@@ -85,33 +88,49 @@ public class Main {
     }
 
     private static void registerModules(ModuleManager moduleManager) {
-        List<Class<? extends Module>> modules = Arrays.asList(
-                AutoPinModule.class,
+        List<Class<? extends Module>> globalModules = Arrays.asList(
                 MirrorModule.class,
+                ConfigurationModule.class
+        );
+        List<Class<? extends Module>> eplModules = Arrays.asList(
                 QuoteModule.class,
                 RssModule.class,
                 BasicCommandModule.class,
                 ConfessionModule.class,
-                ConfigurationModule.class
+                AutoPinModule.class
         );
         List<Command> globalCommands = new ArrayList<>();
+        for(Long guildId : List.of(EPL_DISCORD_ID, TEST_DISCORD_ID)) {
+            moduleManager.addModules(eplModules.stream()
+                                             .map(clazz -> instantiate(clazz, guildId))
+                                             .map(o -> (Module)o)
+                                             .peek(m -> {
+                                                         if(m.getClass().equals(ConfessionModule.class)) {
+                                                             globalCommands.add(m.getCommands().get(0));
+                                                         }
+                                                     }
+                                             ).toList()
+            );
+        }
+
         for (Guild guild : jda.getGuilds()) {
-            moduleManager.addModules(modules.stream().map(clazz -> {
-                try {
-                    return clazz.getDeclaredConstructor(Long.class).newInstance(guild.getIdLong());
-                } catch (InstantiationException | NoSuchMethodException | InvocationTargetException |
-                         IllegalAccessException e) {
-                    throw new RuntimeException(e);
-                }
-            }).map(o -> (Module)o).peek(m -> {
-                if(m.getClass().equals(ConfessionModule.class)) {
-                    globalCommands.add(m.getCommands().get(0));
-                }
-            }).toList());
+            moduleManager.addModules(globalModules.stream()
+                                             .map(clazz -> instantiate(clazz, guild.getIdLong()))
+                                             .map(o -> (Module)o)
+                                             .toList()
+            );
         }
         commandManager.addGlobalCommands(globalCommands);
     }
 
+    private static <T> T instantiate(Class<T> clazz, Long guildId) {
+        try {
+            return clazz.getDeclaredConstructor(Long.class).newInstance(guildId);
+        } catch (InstantiationException | NoSuchMethodException | InvocationTargetException |
+                 IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
     private static void launchPeriodicStatusUpdate() {
         ScheduledExecutorService service = Executors.newScheduledThreadPool(1);
         Random random = new Random();

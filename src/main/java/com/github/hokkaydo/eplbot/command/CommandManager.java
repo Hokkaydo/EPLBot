@@ -31,6 +31,7 @@ public class CommandManager extends ListenerAdapter {
     }
 
     public void enableCommands(Long guildId, List<? extends Class<? extends Command>> commands) {
+        if(guildId != 517720163223601153L && guildId != 353965348539727872L) return;
         Map<Class<? extends Command>, Boolean> commandStatus = this.commandStatus.getOrDefault(guildId, new HashMap<>());
         for (Class<? extends Command> command : commands) {
             commandStatus.put(command, true);
@@ -51,6 +52,7 @@ public class CommandManager extends ListenerAdapter {
     }
 
     public void addCommands(Long guildId, List<Command> commands) {
+        if(guildId != 517720163223601153L && guildId != 353965348539727872L) return;
         Map<String, Command> guildCommands = this.commands.getOrDefault(guildId, new HashMap<>());
         for (Command command : commands) {
             guildCommands.put(command.getName(), command);
