@@ -7,7 +7,6 @@ import com.github.hokkaydo.eplbot.Strings;
 import com.github.hokkaydo.eplbot.command.Command;
 import com.github.hokkaydo.eplbot.command.CommandContext;
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.entities.channel.concrete.PrivateChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.entities.emoji.Emoji;

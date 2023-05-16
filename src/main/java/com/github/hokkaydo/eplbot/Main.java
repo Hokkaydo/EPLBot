@@ -15,17 +15,14 @@ import io.github.cdimascio.dotenv.Dotenv;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
-import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -37,7 +34,7 @@ public class Main {
     private static ModuleManager moduleManager;
     private static CommandManager commandManager;
     private static final Long EPL_DISCORD_ID = 517720163223601153L;
-    private static final Long TEST_DISCORD_ID = 353965348539727872L;
+    private static final Long TEST_DISCORD_ID = 1108141461498777722L;
     private static final Long SINF_DISCORD_ID = 492762354111479828L;
 
     private static final List<Activity> status = List.of(
