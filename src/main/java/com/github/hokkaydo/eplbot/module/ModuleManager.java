@@ -1,8 +1,6 @@
 package com.github.hokkaydo.eplbot.module;
 
 import com.github.hokkaydo.eplbot.Config;
-import com.github.hokkaydo.eplbot.Main;
-import com.github.hokkaydo.eplbot.command.Command;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -14,12 +12,9 @@ public class ModuleManager {
     private final List<Module> modules = new ArrayList<>();
 
     public void addModules(List<Module> modules) {
-        List<Command> commands = modules.stream()
-                                         .filter(module -> getModuleByName(module.getName(), module.getGuildId(), module.getClass()).isEmpty())
-                                         .peek(this.modules::add)
-                                         .map(Module::getCommands)
-                                         .reduce(new ArrayList<>(), (a, b) -> {a.addAll(b); return a;});
-        Main.getCommandManager().addCommands(modules.get(0).getGuildId(), commands);
+        modules.stream()
+                .filter(module -> getModuleByName(module.getName(), module.getGuildId(), module.getClass()).isEmpty())
+                .forEach(this.modules::add);
     }
 
     public List<Module> getModules(Long guildId) {

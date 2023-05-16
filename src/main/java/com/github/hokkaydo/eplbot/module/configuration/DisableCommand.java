@@ -23,6 +23,10 @@ public class DisableCommand implements Command {
     public void executeCommand(CommandContext context) {
         OptionMapping featureOption = context.options().get(0);
         if(featureOption == null) return;
+        if(featureOption.getAsString().equals("configuration")) {
+            context.replyCallbackAction().setContent("Mais t'es complètement zinzin ma parole").queue();
+            return;
+        }
         Main.getModuleManager().disableModule(featureOption.getAsString(), guildId);
         context.replyCallbackAction().setContent("Disabled `" + featureOption.getAsString() + "` :x:").queue();
     }

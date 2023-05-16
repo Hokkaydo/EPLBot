@@ -121,7 +121,7 @@ public class ConfessionCommand extends ListenerAdapter implements Command {
 
     @Override
     public boolean validateChannel(MessageChannel channel) {
-        return channel instanceof PrivateChannel;
+        return true;
     }
 
     @Override

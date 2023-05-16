@@ -50,5 +50,6 @@
   "COMMAND_CLEAR_AMOUNT_POSITIVE": "Le nombre de messages à supprimer doit être positif",
   "COMMAND_HELP_DESCRIPTION": "Permet d'afficher l'aide relative aux commandes",
   "COMMAND_CLEAR_BETWEEN_DESCRIPTION": "Permet de supprimer tous les messages compris les messages a et b.",
-  "COMMAND_MIRRORUNLINK_DESCRIPTION": "Permet de détruire un lien précédemment créé"
+  "COMMAND_MIRRORUNLINK_DESCRIPTION": "Permet de détruire un lien précédemment créé",
+  "COMMAND_WRONG_CHANNEL": "Canal invalide."
 }

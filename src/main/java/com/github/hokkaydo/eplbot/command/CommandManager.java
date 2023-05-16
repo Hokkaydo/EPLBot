@@ -5,6 +5,7 @@ import com.github.hokkaydo.eplbot.Strings;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
+import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,15 +58,7 @@ public class CommandManager extends ListenerAdapter {
         for (Command command : commands) {
             guildCommands.put(command.getName(), command);
         }
-        Optional.ofNullable(Main.getJDA().getGuildById(guildId))
-                .ifPresent(guild -> guild.updateCommands().addCommands(guildCommands.values()
-                                                                               .stream()
-                                                                               .map(cmd -> Commands.slash(cmd.getName(), cmd.getDescription().get())
-                                                                                                   .addOptions(cmd.getOptions())
-                                                                                                   .setDefaultPermissions(cmd.adminOnly() ? DefaultMemberPermissions.DISABLED : DefaultMemberPermissions.ENABLED))
-                                                                               .toList())
-                                            .queue()
-                );
+        Optional.ofNullable(Main.getJDA().getGuildById(guildId)).ifPresent(guild -> guild.updateCommands().addCommands(guildCommands.values().stream().map(this::mapToCommandData).toList()).queue());
         this.commands.put(guildId, guildCommands);
     }
 
@@ -122,13 +115,13 @@ public class CommandManager extends ListenerAdapter {
     public void addGlobalCommands(List<Command> commands) {
         globalCommands.clear();
         commands.forEach(c -> globalCommands.put(c.getName(), c));
+        Main.getJDA().updateCommands().addCommands(commands.stream().map(this::mapToCommandData).toList()).queue();
+    }
 
-        Main.getJDA().updateCommands().addCommands(commands.stream()
-                                                           .map(cmd -> Commands.slash(cmd.getName(), cmd.getDescription().get())
-                                                                               .addOptions(cmd.getOptions())
-                                                                               .setDefaultPermissions(cmd.adminOnly() ? DefaultMemberPermissions.DISABLED : DefaultMemberPermissions.ENABLED))
-                                                           .toList())
-                .queue();
+    private CommandData mapToCommandData(Command cmd) {
+        return Commands.slash(cmd.getName(), cmd.getDescription().get())
+                .addOptions(cmd.getOptions())
+                .setDefaultPermissions(cmd.adminOnly() ? DefaultMemberPermissions.DISABLED : DefaultMemberPermissions.ENABLED);
     }
 
 }
