@@ -26,7 +26,7 @@ public class BasicCommandModule extends Module {
 
     @Override
     public String getName() {
-        return "basiccomands";
+        return "basiccommands";
     }
 
     @Override

@@ -10,7 +10,7 @@ import java.util.List;
 
 public abstract class Module {
 
-    private boolean enabled = false;
+    protected boolean enabled = false;
 
     private final Long guildId;
 

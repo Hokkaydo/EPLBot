@@ -133,7 +133,7 @@ public class Main {
             Main.getCommandManager().addCommands(guildId, guildCommands);
             System.out.println("\n");
         }
-        getModuleManager().getModuleByName("confession", EPL_DISCORD_ID, ConfessionModule.class).ifPresent(m -> commandManager.addGlobalCommands(m.getCommands()));
+        getModuleManager().getModuleByName("confession", TEST_DISCORD_ID, ConfessionModule.class).ifPresent(m -> commandManager.addGlobalCommands(m.getCommands()));
 
     }
 

@@ -51,5 +51,7 @@
   "COMMAND_HELP_DESCRIPTION": "Permet d'afficher l'aide relative aux commandes",
   "COMMAND_CLEAR_BETWEEN_DESCRIPTION": "Permet de supprimer tous les messages compris les messages a et b.",
   "COMMAND_MIRRORUNLINK_DESCRIPTION": "Permet de détruire un lien précédemment créé",
-  "COMMAND_WRONG_CHANNEL": "Canal invalide."
+  "COMMAND_WRONG_CHANNEL": "Canal invalide.",
+  "COMMAND_NOT_FOUND": "Commande introuvable.",
+  "COMMAND_CLEAR_LAST_HELP": "Supprime les N derniers messages (N < 100)"
 }
