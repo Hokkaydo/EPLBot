@@ -19,7 +19,7 @@ public class Config {
 
     private static final String IDENTIFIER_UNDER_STRING_FORM = "Identifiant sous forme de chaîne de caractères";
     private static final Supplier<ConfigurationParser> MODULE_DISABLED = () -> new ConfigurationParser(false, Object::toString, Boolean::valueOf, "Booléen");
-    private static final Map<String, ConfigurationParser> DEFAULT_CONFIGURATION = new HashMap<>(Map.of(
+    public static final Map<String, ConfigurationParser> DEFAULT_CONFIGURATION = new HashMap<>(Map.of(
             "PIN_REACTION_NAME", new ConfigurationParser(
                     "\uD83D\uDCCC",
                     Object::toString,
@@ -111,6 +111,12 @@ public class Config {
         return DEFAULT_CONFIGURATION.get(key).format;
     }
 
+    public static boolean parseAndUpdate(Long guildId, String key, String value) {
+        if(!DEFAULT_CONFIGURATION.containsKey(key)) return false;
+        updateValue(guildId, key, DEFAULT_CONFIGURATION.get(key).toConfig.apply(value));
+        return true;
+    }
+
     public static void updateValue(Long guildId, String key, Object value) {
         if(!DEFAULT_CONFIGURATION.containsKey(key)) return;
         if(!GUILD_CONFIGURATION.containsKey(guildId))
@@ -175,7 +181,7 @@ public class Config {
     }
 
 
-    private record ConfigurationParser(Object defaultValue,
+    public record ConfigurationParser(Object defaultValue,
                                        Function<Object, String> toConfig,
                                        Function<String, Object> fromConfig,
                                        String format) {}

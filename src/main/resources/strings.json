@@ -53,5 +53,10 @@
   "COMMAND_MIRRORUNLINK_DESCRIPTION": "Permet de détruire un lien précédemment créé",
   "COMMAND_WRONG_CHANNEL": "Canal invalide.",
   "COMMAND_NOT_FOUND": "Commande introuvable.",
-  "COMMAND_CLEAR_LAST_HELP": "Supprime les N derniers messages (N < 100)"
+  "COMMAND_CLEAR_LAST_HELP": "Supprime les N derniers messages (N < 100)",
+  "COMMAND_CONFIG_DESCRIPTION": "Permet de modifier les différents paramètres relatifs au serveur.",
+  "COMMAND_CONFIG_OPTION_KEY_DESCRIPTION": "Nom de la variable à modifier",
+  "COMMAND_CONFIG_OPTION_VALUE_DESCRIPTION": "Valeur à modifier",
+  "COMMAND_CONFIG_UNKNOWN_VARIABLE": "Variable introuvable.",
+  "COMMAND_CONFIG_UPDATED": "Variable mise à jour."
 }
