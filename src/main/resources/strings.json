@@ -37,9 +37,9 @@
   "WARNING_RSS_CHANNEL_ID_INVALID": "Identifiant de canal d'envoi de flux RSS invalide ! Utilisez /config pour le modifier",
   "COMMAND_MIRRORUNLINK_LINK_DOESNT_EXISTS": "Aucun lien n'existe entre ces deux canaux",
   "COMMAND_MIRRORLINK_LINK_DESTROYED": "Le lien a bien été détruit",
-  "COMMAND_MIRROR_INVALID_CHANNEL": "Identifiant de canal invalide.",
+  "COMMAND_MIRROR_INVALID_CHANNEL": "Identifiant de canal %s invalide.",
   "COMMAND_MIRRORLIST_NO_MIRROR": "Aucun lien trouvé pour ce canal",
-  "COMMAND_MIRRORLINK_LINK_EXISTS": "Un lien existe déjà entre ces deux canaux",
+  "COMMAND_MIRRORLINK_LINK_EXISTS": "Un lien existe déjà entre %s et %s.",
   "ERROR_OCCURRED": "Une erreur est survenue.",
   "WARNING_CONFESSION_VALIDATION_CHANNEL_ID_INVALID": ":warning: L'identifiant du canal de validation de confession est invalide",
   "COMMAND_CONFESSION_SUBMITTED": "La confession a bien été envoyée",
@@ -58,5 +58,6 @@
   "COMMAND_CONFIG_OPTION_KEY_DESCRIPTION": "Nom de la variable à modifier",
   "COMMAND_CONFIG_OPTION_VALUE_DESCRIPTION": "Valeur à modifier",
   "COMMAND_CONFIG_UNKNOWN_VARIABLE": "Variable introuvable.",
-  "COMMAND_CONFIG_UPDATED": "Variable mise à jour."
+  "COMMAND_CONFIG_UPDATED": "Variable mise à jour.",
+  "COMMAND_MIRRORLINK_CREATED": "Lien créé entre %s et %s."
 }
