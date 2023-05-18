@@ -1,8 +1,10 @@
 package com.github.hokkaydo.eplbot.module.mirror;
 
+import com.github.hokkaydo.eplbot.Main;
 import com.github.hokkaydo.eplbot.MessageUtil;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.message.MessageDeleteEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
@@ -13,6 +15,12 @@ import net.dv8tion.jda.api.utils.FileUpload;
 import net.dv8tion.jda.api.utils.messages.MessageEditData;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -21,12 +29,14 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class MirrorManager extends ListenerAdapter {
 
+    private static final Path MIRROR_STORAGE_PATH = Path.of("mirrors");
     private final List<Mirror> mirrors = new ArrayList<>();
     private final List<MirroredMessages> mirroredMessages = new ArrayList<>();
 
     public void createLink(MessageChannel first, MessageChannel second) {
         if(existsLink(first, second)) return;
         mirrors.add(new Mirror(first, second));
+        storeMirrors();
     }
 
     public List<Mirror> getLinks(MessageChannel idLong) {
@@ -46,6 +56,7 @@ public class MirrorManager extends ListenerAdapter {
 
     public void destroyLink(MessageChannel first, MessageChannel second) {
         getLink(first, second).ifPresent(mirrors::remove);
+        storeMirrors();
     }
 
     @Override
@@ -104,6 +115,47 @@ public class MirrorManager extends ListenerAdapter {
                     mirrorE.mirrored.clear();
                     mirroredMessages.remove(mirrorE);
                 });
+    }
+
+    private boolean noMirrors = false;
+    public void loadLinks() {
+        if(noMirrors) return;
+        if(!Files.exists(MIRROR_STORAGE_PATH)) {
+            try {
+                Files.createFile(MIRROR_STORAGE_PATH);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            noMirrors = true;
+            return;
+        }
+        try(BufferedReader stream = new BufferedReader(new FileReader(MIRROR_STORAGE_PATH.toFile()))) {
+            String line;
+            while((line = stream.readLine()) != null) {
+                String[] s = line.split(";");
+                TextChannel a = Main.getJDA().getTextChannelById(s[0]);
+                TextChannel b = Main.getJDA().getTextChannelById(s[1]);
+                if(a == null || b == null) return;
+                if(existsLink(a, b)) return;
+                mirrors.add(new Mirror(a, b));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void storeMirrors() {
+        try(FileWriter stream = new FileWriter(MIRROR_STORAGE_PATH.toFile())) {
+            mirrors.forEach(m -> {
+                try {
+                    stream.append(m.first.getId()).append(";").append(String.valueOf(m.second.getIdLong())).append("\n");
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private record MirroredMessages(Message initial, List<Message> mirrored) {

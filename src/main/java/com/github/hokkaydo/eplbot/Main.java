@@ -18,8 +18,11 @@ import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -61,6 +64,10 @@ public class Main {
         if(token == null) throw new IllegalStateException("No token specified !");
         moduleManager = new ModuleManager();
         commandManager = new CommandManager();
+        Path path = Path.of(Main.PERSISTENCE_DIR_PATH);
+        if(!Files.exists(path))
+            Files.createDirectory(path);
+
         Config.load();
         Strings.load();
         jda = JDABuilder.createDefault(token)
@@ -136,7 +143,7 @@ public class Main {
             System.out.println("\n");
         }
         getModuleManager().getModuleByName("confession", TEST_DISCORD_ID, ConfessionModule.class).ifPresent(m -> commandManager.addGlobalCommands(m.getCommands()));
-
+        getModuleManager().getModule(MirrorModule.class).forEach(MirrorModule::loadMirrors);
     }
 
     private static <T> T instantiate(Class<T> clazz, Long guildId) {

@@ -17,6 +17,8 @@ import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -62,31 +64,28 @@ public class RssReader {
     }
 
     private void run(Long guildId) {
-        for(String url : Config.<List<String>>getGuildValue(guildId, "RSS_FEEDS")){
+        Map<String, Timestamp> lastDateMap = Config.getGuildState(guildId, "LAST_RSS_ARTICLE_DATE");
+        for(String url : Config.<List<String>>getGuildVariable(guildId, "RSS_FEEDS")){
             SortedSet<Article> results;
             try {
                 results = read(url);
             } catch (IOException | FeedException e) {
                 throw new IllegalStateException(e);
             }
+            Timestamp lastDate = lastDateMap.getOrDefault(url, Timestamp.from(Instant.MIN));
+            if(results.last().publishedDate().toInstant().isBefore(lastDate.toInstant()) || results.last().publishedDate().toInstant().equals(lastDate.toInstant())) return;
             for (Article result : results) {
                 if(articles.contains(result.hashCode())) continue;
                 articles.add(result.hashCode());
                 MessageEmbed embed = new EmbedBuilder()
                                              .setTitle(result.title())
-                                             .setDescription(result.description()
-                                                                     .replace("<b>", "")
-                                                                     .replace("</b>", "")
-                                                                     .replace("<br />", " ")
-                                                                     .replace("<br/>", "\n")
-                                             )
-                                             .addField("", result.link(), false)
+                                             .addField("", "[Voir](" + result.link() + ")", false)
                                              .setTimestamp(result.publishedDate().toInstant())
                                              .setThumbnail(result.imgURL())
                                              .setAuthor(URI.create(result.link()).getHost(), result.link())
-                                             .setColor(Config.getGuildValue(guildId, "RSS_FEEDS_COLOR"))
+                                             .setColor(Config.getGuildVariable(guildId, "RSS_FEEDS_COLOR"))
                                              .build();
-                TextChannel textChannel = Main.getJDA().getChannelById(TextChannel.class, Config.getGuildValue(guildId, "RSS_FEEDS_CHANNEL_ID"));
+                TextChannel textChannel = Main.getJDA().getChannelById(TextChannel.class, Config.getGuildVariable(guildId, "RSS_FEEDS_CHANNEL_ID"));
                 if(textChannel == null) {
                     MessageUtil.sendAdminMessage(Strings.getString("WARNING_RSS_CHANNEL_ID_INVALID"), guildId);
                     futures.get(guildId).cancel(true);
@@ -94,11 +93,13 @@ public class RssReader {
                 }
                 textChannel.sendMessageEmbeds(embed).queue();
             }
+            lastDateMap.put(url, Timestamp.from(results.last().publishedDate().toInstant()));
+            Config.updateValue(guildId, "LAST_RSS_ARTICLE_DATE", lastDateMap);
         }
     }
 
     public void launch(Long guildId) {
-        futures.put(guildId, service.scheduleAtFixedRate(() -> this.run(guildId), 1, Config.<Long>getGuildValue(guildId, "RSS_UPDATE_PERIOD"), TimeUnit.MINUTES));
+        futures.put(guildId, service.scheduleAtFixedRate(() -> this.run(guildId), 1, Config.<Long>getGuildVariable(guildId, "RSS_UPDATE_PERIOD"), TimeUnit.MINUTES));
     }
 
     public void stop(Long guildId) {

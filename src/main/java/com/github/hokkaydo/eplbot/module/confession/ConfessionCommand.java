@@ -40,7 +40,7 @@ public class ConfessionCommand extends ListenerAdapter implements Command {
     }
     @Override
     public void executeCommand(CommandContext context) {
-        TextChannel validationChannel = Main.getJDA().getChannelById(TextChannel.class, Config.getGuildValue(guildId, "CONFESSION_VALIDATION_CHANNEL_ID"));
+        TextChannel validationChannel = Main.getJDA().getChannelById(TextChannel.class, Config.getGuildVariable(guildId, "CONFESSION_VALIDATION_CHANNEL_ID"));
         if(validationChannel == null) {
             MessageUtil.sendAdminMessage(Strings.getString("WARNING_CONFESSION_VALIDATION_CHANNEL_ID_INVALID"), guildId);
             context.replyCallbackAction().setContent(Strings.getString("ERROR_OCCURRED")).queue();
@@ -53,7 +53,7 @@ public class ConfessionCommand extends ListenerAdapter implements Command {
 
         MessageCreateBuilder embedBuilder = MessageCreateBuilder.from(MessageCreateData.fromEmbeds(
                 new EmbedBuilder()
-                        .setColor(Config.getGuildValue(guildId, "CONFESSION_EMBED_COLOR"))
+                        .setColor(Config.getGuildVariable(guildId, "CONFESSION_EMBED_COLOR"))
                         .addField("Confession", confessionOption.get().getAsString(), true)
                         .setTimestamp(Instant.now())
                         .build()
@@ -70,7 +70,7 @@ public class ConfessionCommand extends ListenerAdapter implements Command {
     private void validateConfession(UUID uuid, Long guildId) {
         MessageCreateBuilder confession = pendingConfessions.get(uuid);
         if(confession == null) return;
-        TextChannel confessionChannel = Main.getJDA().getChannelById(TextChannel.class, Config.getGuildValue(guildId,"CONFESSION_CHANNEL_ID"));
+        TextChannel confessionChannel = Main.getJDA().getChannelById(TextChannel.class, Config.getGuildVariable(guildId,"CONFESSION_CHANNEL_ID"));
         if(confessionChannel == null) {
             MessageUtil.sendAdminMessage(Strings.getString("WARNING_CONFESSION_CHANNEL_ID_INVALID"), guildId);
             return;

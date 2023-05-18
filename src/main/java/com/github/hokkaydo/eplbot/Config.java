@@ -6,6 +6,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -59,6 +62,15 @@ public class Config {
                     "RGB sous forme hexadécimale : Ex #FFFFFF = Blanc"
             )
     ));
+
+    private static final Map<String, ConfigurationParser> DEFAULT_STATE = Map.of(
+            "LAST_RSS_ARTICLE_DATE", new ConfigurationParser(
+                    Map.of("https://www.developpez.com/index/rss", Timestamp.from(Instant.MIN)),
+                    m -> ((Map<String, Timestamp>) m).entrySet().stream().map(e -> e.getKey() + ";" + e.getValue()).reduce("", (a,b) ->  a + "," + b),
+                    s -> Arrays.stream(s.split(",")).map(a -> a.split(";")).map(a -> Map.entry(a[0], Timestamp.valueOf(a[1]))).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)),
+                    "Liste de paires Lien-Timestamp"
+            )
+    );
     static {
         DEFAULT_CONFIGURATION.putAll(Map.of(
                 "RSS_FEEDS", new ConfigurationParser(
@@ -103,9 +115,19 @@ public class Config {
         ));
     }
     private static final Map<Long, Map<String, Object>> GUILD_CONFIGURATION = new HashMap<>();
+    private static final Map<Long, Map<String, Object>> GUILD_STATE = new HashMap<>();
+    private static final Properties CONFIGURATION_PROPERTIES = new Properties();
 
-    public static <T> T getGuildValue(Long guildId, String key) {
-        return (T)GUILD_CONFIGURATION.getOrDefault(guildId, new HashMap<>()).getOrDefault(key, DEFAULT_CONFIGURATION.get(key).defaultValue);
+    public static <T> T getGuildVariable(Long guildId, String key) {
+        return getGuildValue(guildId, key, GUILD_CONFIGURATION, DEFAULT_CONFIGURATION);
+    }
+
+    public static <T> T getGuildState(Long guildId, String key) {
+        return getGuildValue(guildId, key, GUILD_STATE, DEFAULT_STATE);
+    }
+
+    private static <T> T getGuildValue(Long guildId, String key, Map<Long, Map<String, Object>> map, Map<String, ConfigurationParser> defaultMap) {
+        return (T)map.getOrDefault(guildId, new HashMap<>()).getOrDefault(key, defaultMap.get(key).defaultValue);
     }
 
     public static String getValueFormat(String key) {
@@ -120,7 +142,7 @@ public class Config {
     }
 
     public static void updateValue(Long guildId, String key, Object value) {
-        if(!DEFAULT_CONFIGURATION.containsKey(key)) return;
+        if(!DEFAULT_CONFIGURATION.containsKey(key)) throw new IllegalStateException("Configuration key not allowed");
         if(!GUILD_CONFIGURATION.containsKey(guildId))
             GUILD_CONFIGURATION.put(guildId, new HashMap<>());
         GUILD_CONFIGURATION.get(guildId).put(key, value);
@@ -146,40 +168,43 @@ public class Config {
     }
 
     private static void saveValue(Long guildId, String key, Object value) {
-        if(!DEFAULT_CONFIGURATION.containsKey(key)) throw new IllegalStateException("Configuration key not allowed");
-        Properties prop = new Properties();
-        try(FileInputStream input = new FileInputStream(CONFIG_PATH)){
-            prop.load(input);
-        } catch(IOException ignored) {
-            throw new IllegalStateException("Could not load config file");
-        }
         String k = (guildId == 0 ? "%" : "" ) + guildId + ";" + key;
-        prop.setProperty(k, DEFAULT_CONFIGURATION.get(key).toConfig.apply(value));
+        if(!DEFAULT_CONFIGURATION.containsKey(key)) {
+            if(!DEFAULT_STATE.containsKey(key)) return;
+            CONFIGURATION_PROPERTIES.setProperty(k, DEFAULT_STATE.get(key).toConfig.apply(value));
+        } else {
+            CONFIGURATION_PROPERTIES.setProperty(k, DEFAULT_CONFIGURATION.get(key).toConfig.apply(value));
+        }
         try(FileOutputStream output = new FileOutputStream(CONFIG_PATH)){
-            prop.store(output, "");
+            CONFIGURATION_PROPERTIES.store(output, "");
         } catch(IOException e) {
             throw new IllegalStateException("Could not save config file");
         }
     }
 
     protected static void load() throws IOException {
-        Properties prop = new Properties();
         Path path = Path.of(CONFIG_PATH);
         if(!Files.exists(path)) {
-            Files.createDirectory(Path.of(Main.PERSISTENCE_DIR_PATH));
             Files.createFile(path);
+            return;
         }
         try(FileInputStream stream = new FileInputStream(CONFIG_PATH)) {
-            prop.load(stream);
+            CONFIGURATION_PROPERTIES.load(stream);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        prop.forEach((a, b) -> {
+        CONFIGURATION_PROPERTIES.forEach((a, b) -> {
             String v = b.toString();
             String[] keySplit = a.toString().split(";");
             String key = keySplit[1];
             Long guildId = Long.parseLong(keySplit[0]);
-            if(!DEFAULT_CONFIGURATION.containsKey(key)) return;
+            if(!DEFAULT_CONFIGURATION.containsKey(key)) {
+                if(!DEFAULT_STATE.containsKey(key)) return;
+                if(!GUILD_STATE.containsKey(guildId))
+                    GUILD_STATE.put(guildId, new HashMap<>(DEFAULT_STATE.entrySet().stream().map(e -> Map.entry(e.getKey(),e.getValue().defaultValue)).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))));
+                GUILD_STATE.get(guildId).put(key, DEFAULT_STATE.get(key).fromConfig.apply(v));
+                return;
+            }
             if(!GUILD_CONFIGURATION.containsKey(guildId)) {
                 GUILD_CONFIGURATION.put(guildId, new HashMap<>(DEFAULT_CONFIGURATION.entrySet().stream().map(e -> Map.entry(e.getKey(),e.getValue().defaultValue)).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))));
             }

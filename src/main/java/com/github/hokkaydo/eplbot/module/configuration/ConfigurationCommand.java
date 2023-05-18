@@ -27,7 +27,7 @@ public class ConfigurationCommand implements Command {
         if(keyOption.isEmpty()) {
             context.replyCallbackAction().setContent(
                     Config.DEFAULT_CONFIGURATION.keySet().stream()
-                            .map(k ->  "`" + k + "`: " + Config.getGuildValue(guildId, k))
+                            .map(k ->  "`" + k + "`: " + Config.getGuildVariable(guildId, k))
                             .reduce((s1, s2) -> s1 + "\n" + s2)
                             .orElse("")
             ).queue();
@@ -37,7 +37,7 @@ public class ConfigurationCommand implements Command {
             context.replyCallbackAction().setContent(
                     Config.DEFAULT_CONFIGURATION.keySet().stream()
                             .filter(k -> k.equals(keyOption.get().getAsString()))
-                            .map(k -> "`" + k + "`: " + Config.getGuildValue(guildId, k))
+                            .map(k -> "`" + k + "`: " + Config.getGuildVariable(guildId, k))
                             .findFirst()
                             .orElse("")
             ).queue();

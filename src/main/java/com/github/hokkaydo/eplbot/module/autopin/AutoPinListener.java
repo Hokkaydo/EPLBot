@@ -17,11 +17,11 @@ public class AutoPinListener extends ListenerAdapter {
     @Override
     public void onMessageReactionAdd(@NotNull MessageReactionAddEvent event) {
         if(event.getGuild().getIdLong() != guildId) return;
-        if(!event.getReaction().getEmoji().getAsReactionCode().equals(Config.<String>getGuildValue(event.getGuild().getIdLong(), "PIN_REACTION_NAME"))) return;
+        if(!event.getReaction().getEmoji().getAsReactionCode().equals(Config.<String>getGuildVariable(event.getGuild().getIdLong(), "PIN_REACTION_NAME"))) return;
         event.getChannel().retrieveMessageById(event.getMessageId()).queue(message -> {
             MessageReaction reaction = message.getReaction(Emoji.fromFormatted(event.getReaction().getEmoji().getFormatted()));
             if(reaction == null) return;
-            if (reaction.getCount() >= Config.<Integer>getGuildValue(event.getGuild().getIdLong(), "PIN_REACTION_THRESHOLD")) {
+            if (reaction.getCount() >= Config.<Integer>getGuildVariable(event.getGuild().getIdLong(), "PIN_REACTION_THRESHOLD")) {
                 event.getChannel().asTextChannel().pinMessageById(event.getMessageIdLong()).queue();
             }
         });
