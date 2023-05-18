@@ -11,7 +11,6 @@ import java.util.List;
 
 public class MirrorModule extends Module {
 
-    private static final Path MIRROR_STORAGE_PATH = Path.of("mirrors");
 
     private static final MirrorManager mirrorManager = new MirrorManager();
     private final MirrorLinkCommand mirrorLinkCommand;
