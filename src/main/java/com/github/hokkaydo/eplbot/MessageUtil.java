@@ -9,7 +9,7 @@ public class MessageUtil {
     public static EmbedBuilder toEmbed(Message message) {
         return new EmbedBuilder()
                        .setAuthor(message.getAuthor().getAsTag(), message.getJumpUrl(), message.getAuthor().getAvatarUrl())
-                       .appendDescription(message.getContentDisplay())
+                       .appendDescription(message.getContentRaw())
                        .setTimestamp(message.getTimeCreated())
                        .setFooter(message.getGuild().getName() + " - #" + message.getChannel().getName(), Main.getJDA().getSelfUser().getAvatarUrl());
     }
