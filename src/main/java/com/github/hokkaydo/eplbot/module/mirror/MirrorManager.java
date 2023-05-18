@@ -2,7 +2,6 @@ package com.github.hokkaydo.eplbot.module.mirror;
 
 import com.github.hokkaydo.eplbot.Main;
 import com.github.hokkaydo.eplbot.MessageUtil;
-import com.sun.jdi.Mirror;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
@@ -66,6 +65,7 @@ public class MirrorManager extends ListenerAdapter {
     @Override
     public void onMessageReceived(@NotNull MessageReceivedEvent event) {
         if(event.getMessage().isEphemeral()) return;
+        if(event.getMessage().getType().isSystem()) return;
         AtomicReference<MessageCreateAction> action = new AtomicReference<>();
         mirrors.stream().filter(m -> m.has(event.getChannel())).forEach(mirror -> {
             MessageChannel other = mirror.other(event.getChannel());
