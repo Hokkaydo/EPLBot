@@ -4,6 +4,8 @@ import java.awt.*;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,7 +17,7 @@ import java.util.stream.Collectors;
 
 public class Config {
 
-    private static final String CONFIG_PATH = "./config";
+    private static final String CONFIG_PATH = "./persistence/config";
 
     private static final String IDENTIFIER_UNDER_STRING_FORM = "Identifiant sous forme de chaîne de caractères";
     private static final Supplier<ConfigurationParser> MODULE_DISABLED = () -> new ConfigurationParser(false, Object::toString, Boolean::valueOf, "Booléen");
@@ -160,8 +162,13 @@ public class Config {
         }
     }
 
-    protected static void load() {
+    protected static void load() throws IOException {
         Properties prop = new Properties();
+        Path path = Path.of(CONFIG_PATH);
+        if(!Files.exists(path)) {
+            Files.createDirectory(Path.of(Main.PERSISTENCE_DIR_PATH));
+            Files.createFile(path);
+        }
         try(FileInputStream stream = new FileInputStream(CONFIG_PATH)) {
             prop.load(stream);
         } catch (IOException e) {

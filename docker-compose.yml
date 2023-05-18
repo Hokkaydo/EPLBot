@@ -1,0 +1,9 @@
+services:
+    eplbot:
+        image: eplbot
+        volumes:
+            - persistence:/persistence
+        env_file:
+            -   variables.env
+volumes:
+    persistence:

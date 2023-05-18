@@ -11,7 +11,6 @@ import com.github.hokkaydo.eplbot.module.configuration.ConfigurationModule;
 import com.github.hokkaydo.eplbot.module.mirror.MirrorModule;
 import com.github.hokkaydo.eplbot.module.quote.QuoteModule;
 import com.github.hokkaydo.eplbot.module.rss.RssModule;
-import io.github.cdimascio.dotenv.Dotenv;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
@@ -19,6 +18,7 @@ import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,8 +35,9 @@ public class Main {
     private static ModuleManager moduleManager;
     private static CommandManager commandManager;
     private static final Long EPL_DISCORD_ID = 517720163223601153L;
-    private static final Long TEST_DISCORD_ID = 1108141461498777722L;
+    private static Long TEST_DISCORD_ID = 1108141461498777722L;
     private static final Long SINF_DISCORD_ID = 492762354111479828L;
+    public static String PERSISTENCE_DIR_PATH = "persistence";
 
     private static final List<Activity> status = List.of(
             Activity.playing("bâtir des ponts (solides) entre nous et le ciel"),
@@ -52,10 +53,11 @@ public class Main {
             Activity.competing("Affond 13h")
     );
 
-    public static void main(String[] args) throws InterruptedException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
-        String token = null;
-        if(args.length > 0) token = args[0];
-        if(token == null) token = Dotenv.load().get("DISCORD_BOT_TOKEN");
+    public static void main(String[] args) throws InterruptedException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException, IOException {
+        String token = System.getenv("DISCORD_BOT_TOKEN");
+        String testDiscordId = System.getenv("TEST_DISCORD_ID");
+        TEST_DISCORD_ID = testDiscordId == null ? 1108141461498777722L : Long.parseLong(testDiscordId);
+
         if(token == null) throw new IllegalStateException("No token specified !");
         moduleManager = new ModuleManager();
         commandManager = new CommandManager();
