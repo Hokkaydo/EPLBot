@@ -2,6 +2,7 @@ package com.github.hokkaydo.eplbot.module.mirror;
 
 import com.github.hokkaydo.eplbot.Main;
 import com.github.hokkaydo.eplbot.MessageUtil;
+import com.sun.jdi.Mirror;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
@@ -12,6 +13,7 @@ import net.dv8tion.jda.api.events.message.MessageUpdateEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
 import net.dv8tion.jda.api.utils.FileUpload;
+import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import net.dv8tion.jda.api.utils.messages.MessageEditData;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,10 +28,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Pattern;
 
 public class MirrorManager extends ListenerAdapter {
 
     private static final Path MIRROR_STORAGE_PATH = Path.of("mirrors");
+    private static final Pattern URL_PATTERN = Pattern.compile("^https?://(?:www\\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b[-a-zA-Z0-9()@:%_+.~#?&/=]*$");
     private final List<Mirror> mirrors = new ArrayList<>();
     private final List<MirroredMessages> mirroredMessages = new ArrayList<>();
 
@@ -70,8 +74,12 @@ public class MirrorManager extends ListenerAdapter {
                 return;
             }
             if(mirroredMessages.stream().anyMatch(mirrored -> mirrored.isMirror(event.getMessage()) && other.getId().equals(mirrored.initial.getChannel().getId()))) return;
-            MessageEmbed embed = MessageUtil.toEmbed(event.getMessage()).build();
-            action.set(other.sendMessageEmbeds(embed));
+            if(URL_PATTERN.matcher(event.getMessage().getContentRaw()).find()) {
+                action.set(other.sendMessage(MessageCreateData.fromMessage(event.getMessage())));
+            } else {
+                MessageEmbed embed = MessageUtil.toEmbed(event.getMessage()).build();
+                action.set(other.sendMessageEmbeds(embed));
+            }
             event.getMessage().getAttachments().stream()
                     .map(m -> new Tuple3<>(m.getFileName(), m.getProxy().download(), m.isSpoiler()))
                     .map(tuple3 -> tuple3.b()
