@@ -11,7 +11,7 @@ public class MessageUtil {
                        .setAuthor(message.getAuthor().getAsTag(), message.getJumpUrl(), message.getAuthor().getAvatarUrl())
                        .appendDescription(message.getContentRaw())
                        .setTimestamp(message.getTimeCreated())
-                       .setFooter(message.getGuild().getName() + " - #" + message.getChannel().getName(), Main.getJDA().getSelfUser().getAvatarUrl());
+                       .setFooter(message.getGuild().getName() + " - #" + message.getChannel().getName(), message.getGuild().getIconUrl());
     }
 
     private MessageUtil() {}
