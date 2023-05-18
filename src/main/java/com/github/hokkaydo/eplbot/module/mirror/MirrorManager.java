@@ -111,7 +111,13 @@ public class MirrorManager extends ListenerAdapter {
         mirroredMessages.stream()
                 .filter(mirror -> mirror.initial.getId().equals(event.getMessageId()))
                 .findFirst()
-                .ifPresent(mirrorE -> mirrorE.mirrored.forEach(mirror -> mirror.editMessage(MessageEditData.fromEmbeds(MessageUtil.toEmbed(event.getMessage()).build())).queue()));
+                .ifPresent(mirrorE -> mirrorE.mirrored.forEach(mirror -> {
+                    mirror.editMessage(MessageEditData.fromEmbeds(MessageUtil.toEmbed(event.getMessage()).build())).queue();
+                    if(event.getMessage().isPinned())
+                        mirror.pin().queue();
+                    else
+                        mirror.unpin().queue();
+                }));
     }
     @Override
     public void onMessageDelete(@NotNull MessageDeleteEvent event) {
