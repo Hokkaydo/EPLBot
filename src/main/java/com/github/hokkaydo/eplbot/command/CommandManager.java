@@ -2,6 +2,7 @@ package com.github.hokkaydo.eplbot.command;
 
 import com.github.hokkaydo.eplbot.Main;
 import com.github.hokkaydo.eplbot.Strings;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
@@ -51,13 +52,20 @@ public class CommandManager extends ListenerAdapter {
         }
     }
 
-    public void addCommands(Long guildId, List<Command> commands) {
-        Map<String, Command> guildCommands = this.commands.getOrDefault(guildId, new HashMap<>());
+    public void addCommands(Guild guild, List<Command> commands) {
+        Map<String, Command> guildCommands = this.commands.getOrDefault(guild.getIdLong(), new HashMap<>());
         for (Command command : commands) {
             guildCommands.put(command.getName(), command);
         }
-        Optional.ofNullable(Main.getJDA().getGuildById(guildId)).ifPresent(guild -> guild.updateCommands().addCommands(guildCommands.values().stream().map(this::mapToCommandData).toList()).queue());
-        this.commands.put(guildId, guildCommands);
+        guild.retrieveCommands().queue(s -> {
+            System.out.println(s);
+            System.out.println(commands);
+            System.out.println(s.size() + " " + commands.size());
+            if(s.size() == commands.size()) return;
+            System.out.println("postreturn");
+            guild.updateCommands().addCommands(guildCommands.values().stream().map(this::mapToCommandData).toList()).queue();
+        });
+        this.commands.put(guild.getIdLong(), guildCommands);
     }
 
 

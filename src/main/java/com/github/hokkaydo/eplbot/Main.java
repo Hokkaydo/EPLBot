@@ -24,6 +24,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -106,40 +107,37 @@ public class Main {
                 ConfessionModule.class,
                 AutoPinModule.class
         );
+        Map<Guild, List<Command>> guildCommands = new HashMap<>();
         for(Long guildId : List.of(EPL_DISCORD_ID, TEST_DISCORD_ID)) {
             Guild guild = jda.getGuildById(guildId);
             if(guild == null) continue;
-            System.out.println("Registering EPL modules for " + guild.getName());
-            List<Command> guildCommands = new ArrayList<>();
+            guildCommands.put(guild, new ArrayList<>());
             moduleManager.addModules(eplModules.stream()
                                              .map(clazz -> instantiate(clazz, guildId))
                                              .map(o -> (Module)o)
                                              .peek(m -> {
-                                                 System.out.println("\t" + m.getName());
                                                          if(!m.getClass().equals(ConfessionModule.class)) {
-                                                             guildCommands.addAll(m.getCommands());
+                                                             guildCommands.get(guild).addAll(m.getCommands());
                                                          }
                                                      }
                                              ).toList()
             );
-            Main.getCommandManager().addCommands(guildId, guildCommands);
-            System.out.println("\n");
         }
 
         for (Long guildId : List.of(EPL_DISCORD_ID, TEST_DISCORD_ID, SINF_DISCORD_ID)) {
             Guild guild = jda.getGuildById(guildId);
             if(guild == null) continue;
-            System.out.println("Registering global modules for " + guild.getName());
-            List<Command> guildCommands = new ArrayList<>();
             moduleManager.addModules(globalModules.stream()
                                              .map(clazz -> instantiate(clazz, guildId))
                                              .map(o -> (Module)o)
                                              .peek(m -> System.out.println("\t" + m.getName()))
-                                             .peek(m -> guildCommands.addAll(m.getCommands()))
+                                             .peek(m -> guildCommands.get(guild).addAll(m.getCommands()))
                                              .toList()
             );
-            Main.getCommandManager().addCommands(guildId, guildCommands);
             System.out.println("\n");
+        }
+        for (Map.Entry<Guild, List<Command>> guildListEntry : guildCommands.entrySet()) {
+            Main.getCommandManager().addCommands(guildListEntry.getKey(), guildListEntry.getValue());
         }
         getModuleManager().getModuleByName("confession", TEST_DISCORD_ID, ConfessionModule.class).ifPresent(m -> commandManager.addGlobalCommands(m.getCommands()));
         getModuleManager().getModule(MirrorModule.class).forEach(MirrorModule::loadMirrors);
