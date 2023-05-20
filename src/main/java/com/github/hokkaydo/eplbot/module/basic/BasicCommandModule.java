@@ -15,6 +15,7 @@ public class BasicCommandModule extends Module {
     private final ClearLastCommand clearLastCommand;
     private final HelpCommand helpCommand;
     private final MoveMessagesCommand moveMessagesCommand;
+    private final PingCommand pingCommand;
     public BasicCommandModule(@NotNull Long guildId) {
         super(guildId);
         clearFromCommand = new ClearFromCommand();
@@ -22,6 +23,7 @@ public class BasicCommandModule extends Module {
         clearLastCommand = new ClearLastCommand();
         helpCommand = new HelpCommand(guildId);
         moveMessagesCommand = new MoveMessagesCommand();
+        pingCommand = new PingCommand();
     }
 
     @Override
@@ -31,7 +33,7 @@ public class BasicCommandModule extends Module {
 
     @Override
     public List<Command> getCommands() {
-        return List.of(clearBetweenCommand, clearFromCommand, clearLastCommand, helpCommand, moveMessagesCommand);
+        return List.of(clearBetweenCommand, clearFromCommand, clearLastCommand, helpCommand, moveMessagesCommand, pingCommand);
     }
 
     @Override
