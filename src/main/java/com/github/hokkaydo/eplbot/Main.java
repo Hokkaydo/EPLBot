@@ -60,7 +60,7 @@ public class Main {
         String token = System.getenv("DISCORD_BOT_TOKEN");
         String testDiscordId = System.getenv("TEST_DISCORD_ID");
         TEST_DISCORD_ID = testDiscordId == null ? 1108141461498777722L : Long.parseLong(testDiscordId);
-
+        if(token == null) token = args[0];
         if(token == null) throw new IllegalStateException("No token specified !");
         moduleManager = new ModuleManager();
         commandManager = new CommandManager();
