@@ -24,6 +24,7 @@ public class MirroredMessage {
     private final MessageChannel channel;
     private boolean embed;
     private OffsetDateTime lastUpdated;
+    private boolean threadOwner;
 
     public MirroredMessage(Message initialMessage, MessageChannel textChannel, boolean mirror) {
         this.channel = textChannel;
@@ -40,10 +41,20 @@ public class MirroredMessage {
 
         MessageCreateAction createAction;
         String content = getContent(initialMessage);
-        if(Arrays.stream(content.split(" ")).anyMatch(s -> URL_PATTERN.matcher(s).find()))
-            createAction = channel.sendMessage(initialMessage.getContentRaw());
-        else
-            createAction = channel.sendMessageEmbeds(MessageUtil.toEmbed(initialMessage).build());
+        if(Arrays.stream(content.split(" ")).anyMatch(s -> URL_PATTERN.matcher(s).find())) {
+            if(initialMessage.getEmbeds().isEmpty()) {
+                createAction = channel.sendMessage(initialMessage.getContentRaw());
+            } else {
+                createAction = channel.sendMessage(content);
+            }
+        }
+        else {
+            if(initialMessage.getEmbeds().isEmpty()) {
+                createAction = channel.sendMessageEmbeds(MessageUtil.toEmbed(initialMessage).build());
+            } else {
+                createAction = channel.sendMessageEmbeds(initialMessage.getEmbeds().get(0));
+            }
+        }
         AtomicReference<MessageCreateAction> action = new AtomicReference<>(createAction);
         initialMessage.getAttachments().stream()
                 .map(m -> new Tuple3<>(m.getFileName(), m.getProxy().download(), m.isSpoiler()))
@@ -62,8 +73,10 @@ public class MirroredMessage {
     }
 
     private void sendMessage(AtomicReference<MessageCreateAction> action, Message initialMessage) {
-        this.message = action.get().complete();
-        updatePin(initialMessage.isPinned());
+        action.get().queue(message -> {
+            this.message = message;
+            updatePin(initialMessage.isPinned());
+        });
     }
 
     private String getContent(Message message) {
@@ -108,11 +121,23 @@ public class MirroredMessage {
     }
 
     public Long getMessageId() {
-        return message.getIdLong();
+        return message == null ? 0 : message.getIdLong();
     }
 
     public void delete() {
         message.delete().queue();
+    }
+
+    public long getChannelId() {
+        return channel.getIdLong();
+    }
+
+    public void setThreadOwner(boolean threadOwner) {
+        this.threadOwner = threadOwner;
+    }
+
+    public boolean isThreadOwner() {
+        return this.threadOwner;
     }
 
     private record Tuple3<A, B, C>(A a, B b, C c) {}

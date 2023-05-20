@@ -3,6 +3,10 @@ package com.github.hokkaydo.eplbot;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
+
+import java.awt.*;
+import java.time.Instant;
 
 public class MessageUtil {
 
@@ -12,6 +16,17 @@ public class MessageUtil {
                        .appendDescription(message.getContentRaw())
                        .setTimestamp(message.getTimeCreated())
                        .setFooter(message.getGuild().getName() + " - #" + message.getChannel().getName(), message.getGuild().getIconUrl());
+    }
+
+    public static EmbedBuilder toEmbed(String content) {
+        return new EmbedBuilder()
+                       .setAuthor(Main.getJDA().getSelfUser().getAsTag(), "https://hackertyper.com/", Main.getJDA().getSelfUser().getAvatarUrl())
+                       .appendDescription(content)
+                       .setTimestamp(Instant.now());
+    }
+
+    public static void sendWarning(String content, MessageChannel channel) {
+        channel.sendMessageEmbeds(toEmbed(content).setColor(Color.YELLOW).build()).queue();
     }
 
     private MessageUtil() {}

@@ -58,11 +58,7 @@ public class CommandManager extends ListenerAdapter {
             guildCommands.put(command.getName(), command);
         }
         guild.retrieveCommands().queue(s -> {
-            System.out.println(s);
-            System.out.println(commands);
-            System.out.println(s.size() + " " + commands.size());
             if(s.size() == commands.size()) return;
-            System.out.println("postreturn");
             guild.updateCommands().addCommands(guildCommands.values().stream().map(this::mapToCommandData).toList()).queue();
         });
         this.commands.put(guild.getIdLong(), guildCommands);

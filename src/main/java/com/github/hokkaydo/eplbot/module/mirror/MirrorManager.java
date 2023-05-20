@@ -1,9 +1,13 @@
 package com.github.hokkaydo.eplbot.module.mirror;
 
 import com.github.hokkaydo.eplbot.Main;
+import com.github.hokkaydo.eplbot.MessageUtil;
+import com.github.hokkaydo.eplbot.Strings;
+import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageType;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.message.MessageDeleteEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
@@ -57,18 +61,45 @@ public class MirrorManager extends ListenerAdapter {
     public void onMessageReceived(@NotNull MessageReceivedEvent event) {
         if(event.getMessage().isEphemeral()) return;
         if(event.getMessage().getType().isSystem()) return;
-        if(mirroredMessages.stream().flatMap(m -> m.getMessages().stream()).anyMatch(m -> m.getMessageId().equals(event.getMessageIdLong()))) return;
-        MirroredMessage initial = new MirroredMessage(event.getMessage(), event.getChannel().asTextChannel(), false);
+        if(mirroredMessages.stream().flatMap(m -> m.getMessages().stream()).anyMatch(m -> m.getMessageId() == 0 || m.getMessageId() == event.getMessageIdLong())) return;
+
+        if(event.getMessage().getType().equals(MessageType.THREAD_STARTER_MESSAGE) || event.getMessage().getType().equals(MessageType.THREAD_CREATED)) {
+            ThreadChannel threadChannel = event.getMessage().getChannel().asThreadChannel();
+            threadChannel.retrieveParentMessage().queue(parent -> mirrors.stream().filter(m -> m.has(event.getChannel().asThreadChannel().getParentMessageChannel())).forEach(mirror -> {
+                MessageChannel other = mirror.other(parent.getChannel());
+                mirroredMessages.stream()
+                        .filter(m -> m.getMessages().stream().anyMatch(msg -> msg.getMessageId() == parent.getIdLong()))
+                        .filter(m -> m.getMessages().stream().anyMatch(msg -> msg.getChannelId() == other.getIdLong()))
+                        .flatMap(m -> m.getMessages().stream().filter(msg -> msg.getChannelId() == other.getIdLong()))
+                        .filter(m -> !m.isThreadOwner())
+                        .findFirst()
+                        .ifPresentOrElse(message -> {
+                            createThread(message.getMessageId(), other.getIdLong(), threadChannel);
+                            message.setThreadOwner(true);
+                        }, () -> createThread(other.getLatestMessageIdLong(), other.getIdLong(), threadChannel));
+            }));
+            return;
+        }
+        MirroredMessage initial = new MirroredMessage(event.getMessage(), event.getChannel(), false);
         MirroredMessages messages = new MirroredMessages(initial, new ArrayList<>());
-        mirrors.stream().filter(m -> m.has(event.getChannel().asTextChannel())).forEach(mirror -> {
+        mirrors.stream().filter(m -> m.has(event.getChannel())).forEach(mirror -> {
             MessageChannel other = mirror.other(event.getChannel());
             MirroredMessage mirroredMessage = new MirroredMessage(event.getMessage(), other, true);
             messages.mirrored.add(mirroredMessage);
-            if(event.getMessage().getType().equals(MessageType.THREAD_STARTER_MESSAGE)) {
-                //event.getMessage().getStartedThread()
-            }
         });
         mirroredMessages.add(messages);
+    }
+
+    private void createThread(Long messageId, Long channelId, ThreadChannel firstThread) {
+        TextChannel channel = Main.getJDA().getChannelById(TextChannel.class, channelId);
+        if(channel == null) return;
+        channel.retrieveMessageById(messageId).queue(m -> {
+            if(m.getStartedThread() != null) return;
+            m.createThreadChannel(firstThread.getName()).queue(t -> {
+                MessageUtil.sendWarning(Strings.getString("THREAD_FIRST_MESSAGE_NOT_SENT").formatted(firstThread.getAsMention()), t);
+                createLink(firstThread, t);
+            });
+        });
     }
 
     @Override
