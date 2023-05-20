@@ -1,19 +1,14 @@
 package com.github.hokkaydo.eplbot.module.mirror;
 
 import com.github.hokkaydo.eplbot.Main;
-import com.github.hokkaydo.eplbot.MessageUtil;
 import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.MessageType;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.message.MessageDeleteEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.MessageUpdateEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
-import net.dv8tion.jda.api.utils.FileUpload;
-import net.dv8tion.jda.api.utils.messages.MessageCreateData;
-import net.dv8tion.jda.api.utils.messages.MessageEditData;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
@@ -23,16 +18,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.regex.Pattern;
 
 public class MirrorManager extends ListenerAdapter {
 
     private static final Path MIRROR_STORAGE_PATH = Path.of(Main.PERSISTENCE_DIR_PATH + "/mirrors");
-    private static final Pattern URL_PATTERN = Pattern.compile("^https?://(?:www\\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b[-a-zA-Z0-9()@:%_+.~#?&/=]*$");
     private final List<Mirror> mirrors = new ArrayList<>();
     private final List<MirroredMessages> mirroredMessages = new ArrayList<>();
 
@@ -66,67 +57,35 @@ public class MirrorManager extends ListenerAdapter {
     public void onMessageReceived(@NotNull MessageReceivedEvent event) {
         if(event.getMessage().isEphemeral()) return;
         if(event.getMessage().getType().isSystem()) return;
-        AtomicReference<MessageCreateAction> action = new AtomicReference<>();
-        mirrors.stream().filter(m -> m.has(event.getChannel())).forEach(mirror -> {
+        if(mirroredMessages.stream().flatMap(m -> m.getMessages().stream()).anyMatch(m -> m.getMessageId().equals(event.getMessageIdLong()))) return;
+        MirroredMessage initial = new MirroredMessage(event.getMessage(), event.getChannel().asTextChannel(), false);
+        MirroredMessages messages = new MirroredMessages(initial, new ArrayList<>());
+        mirrors.stream().filter(m -> m.has(event.getChannel().asTextChannel())).forEach(mirror -> {
             MessageChannel other = mirror.other(event.getChannel());
-            if(action.get() != null) {
-                action.get().queue();
-                return;
+            MirroredMessage mirroredMessage = new MirroredMessage(event.getMessage(), other, true);
+            messages.mirrored.add(mirroredMessage);
+            if(event.getMessage().getType().equals(MessageType.THREAD_STARTER_MESSAGE)) {
+                //event.getMessage().getStartedThread()
             }
-            if(mirroredMessages.stream().anyMatch(mirrored -> mirrored.isMirror(event.getMessage()) && other.getId().equals(mirrored.initial.getChannel().getId()))) return;
-            if(URL_PATTERN.matcher(event.getMessage().getContentRaw()).find()) {
-                action.set(other.sendMessage(MessageCreateData.fromMessage(event.getMessage())));
-            } else {
-                MessageEmbed embed = MessageUtil.toEmbed(event.getMessage()).build();
-                action.set(other.sendMessageEmbeds(embed));
-            }
-            event.getMessage().getAttachments().stream()
-                    .map(m -> new Tuple3<>(m.getFileName(), m.getProxy().download(), m.isSpoiler()))
-                    .map(tuple3 -> tuple3.b()
-                                           .thenApply(i -> FileUpload.fromData(i, tuple3.a()))
-                                           .thenApply(f -> Boolean.TRUE.equals(tuple3.c()) ? f.asSpoiler() : f)
-                    )
-                    .map(c -> c.thenAccept(f -> action.get().addFiles(f)))
-                    .reduce((a,b) -> {a.join(); return b;})
-                    .ifPresentOrElse(
-                            c -> {c.join(); Message m = action.get().complete();
-                                sentMessage(event.getMessage(), m);},
-                            () -> {Message m = action.get().complete();
-                                sentMessage(event.getMessage(), m);}
-                    );
         });
+        mirroredMessages.add(messages);
     }
 
-    private void sentMessage(Message initial, Message newMessage) {
-        mirroredMessages.stream()
-                .filter(m -> m.initial.getId().equals(initial.getId()))
-                .findFirst()
-                .ifPresentOrElse(
-                        mirror -> mirror.mirrored.add(newMessage),
-                        () -> mirroredMessages.add(new MirroredMessages(initial, new ArrayList<>(Collections.singletonList(newMessage))))
-                );
-    }
     @Override
     public void onMessageUpdate(@NotNull MessageUpdateEvent event) {
         mirroredMessages.stream()
-                .filter(mirror -> mirror.initial.getId().equals(event.getMessageId()))
+                .filter(mirror -> mirror.match(event.getMessageIdLong()))
                 .findFirst()
-                .ifPresent(mirrorE -> mirrorE.mirrored.forEach(mirror -> {
-                    mirror.editMessage(MessageEditData.fromEmbeds(MessageUtil.toEmbed(event.getMessage()).build())).queue();
-                    if(event.getMessage().isPinned())
-                        mirror.pin().queue();
-                    else
-                        mirror.unpin().queue();
-                }));
+                .ifPresent(mirrorE -> mirrorE.update(event.getMessage()));
     }
+
     @Override
     public void onMessageDelete(@NotNull MessageDeleteEvent event) {
         mirroredMessages.stream()
-                .filter(mirror -> mirror.initial.getId().equals(event.getMessageId()))
+                .filter(mirror -> mirror.match(event.getMessageIdLong()))
                 .findFirst()
                 .ifPresent(mirrorE -> {
-                    mirrorE.mirrored.forEach(mirror -> mirror.delete().queue());
-                    mirrorE.mirrored.clear();
+                    mirrorE.getMessages().stream().filter(m -> !m.getMessageId().equals(event.getMessageIdLong())).forEach(MirroredMessage::delete);
                     mirroredMessages.remove(mirrorE);
                 });
     }
@@ -172,11 +131,37 @@ public class MirrorManager extends ListenerAdapter {
         }
     }
 
-    private record MirroredMessages(Message initial, List<Message> mirrored) {
+    private static class MirroredMessages {
 
-        public boolean isMirror(Message message) {
-            return mirrored.stream().anyMatch(m -> m.getId().equals(message.getId()));
+        private final MirroredMessage initial;
+        private final List<MirroredMessage> mirrored;
+        private final List<Long> updatedIds = new ArrayList<>();
+
+        private MirroredMessages(MirroredMessage initial, List<MirroredMessage> mirrored) {
+            this.initial = initial;
+            this.mirrored = mirrored;
         }
+
+        public boolean match(Long messageId) {
+            return initial.getMessageId().equals(messageId) || mirrored.stream().anyMatch(m -> m.getMessageId().equals(messageId));
+        }
+
+        public List<MirroredMessage> getMessages() {
+            List<MirroredMessage> list = new ArrayList<>(mirrored);
+            list.add(initial);
+            return list;
+        }
+
+        public void update(Message message) {
+            if(updatedIds.contains(message.getIdLong())) return;
+            for (MirroredMessage mirroredMessage : getMessages()) {
+                if(mirroredMessage.getMessageId() == message.getIdLong()) continue;
+                updatedIds.add(mirroredMessage.getMessageId());
+                mirroredMessage.update(message);
+            }
+            updatedIds.clear();
+        }
+
     }
 
     record Mirror(@NotNull MessageChannel first, @NotNull MessageChannel second) {
@@ -190,7 +175,5 @@ public class MirrorManager extends ListenerAdapter {
         }
 
     }
-
-    private record Tuple3<A, B, C>(A a, B b, C c) {}
 
 }

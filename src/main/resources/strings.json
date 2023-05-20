@@ -59,5 +59,5 @@
   "COMMAND_CONFIG_OPTION_VALUE_DESCRIPTION": "Valeur à modifier",
   "COMMAND_CONFIG_UNKNOWN_VARIABLE": "Variable introuvable.",
   "COMMAND_CONFIG_UPDATED": "Variable mise à jour.",
-  "COMMAND_MIRRORLINK_CREATED": "Lien créé entre %s et %s."
+  "COMMAND_MIRRORLINK_LINK_CREATED": "Lien créé entre %s et %s."
 }
