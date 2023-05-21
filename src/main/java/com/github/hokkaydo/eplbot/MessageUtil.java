@@ -20,7 +20,7 @@ public class MessageUtil {
 
     public static EmbedBuilder toEmbed(String content) {
         return new EmbedBuilder()
-                       .setAuthor(Main.getJDA().getSelfUser().getAsTag(), "https://hackertyper.com/", Main.getJDA().getSelfUser().getAvatarUrl())
+                       .setAuthor(Main.getJDA().getSelfUser().getAsTag(), "https://github.com/Hokkaydo/eplbot", Main.getJDA().getSelfUser().getAvatarUrl())
                        .appendDescription(content)
                        .setTimestamp(Instant.now());
     }
