@@ -46,14 +46,15 @@ public class Main {
             Activity.playing("bâtir des ponts (solides) entre nous et le ciel"),
             Activity.playing("démontrer que l²(N) est un honnête espace de fonctions"),
             Activity.playing("calculer le meilleur angle d'artillerie par Newton-Raphson"),
-            Activity.streaming("#PoissonPower", "https://youtu.be/580gEIVVKe8"),
-            Activity.listening("les FEZZZZZZZ"),
+            Activity.of(Activity.ActivityType.LISTENING,"@POISSON?!", "https://youtu.be/580gEIVVKe8"),
+            Activity.of(Activity.ActivityType.LISTENING, "les FEZZZZZZZ", "https://www.youtube.com/watch?v=KUDJOsaAFOs"),
             Activity.playing("comprendre la doc de Oz2"),
             Activity.playing("à observer les SINFs faire des bêtises (comme d'hab)"),
             Activity.playing("regarder la mousse descendre dans sa chope"),
-            Activity.playing("déprimer devant ses résistances grillées et ses transistors brûlés sur son circuit"),
+            Activity.playing("griller les amplis op et brûler les transistors de son circuit"),
             Activity.playing("avoir pitié de ChatGPT pour tout le travail qu'il doit fournir pendant le blocus des étudiants"),
-            Activity.competing("Affond 13h")
+            Activity.competing("Affond 13h"),
+            Activity.of(Activity.ActivityType.STREAMING, "Radio Gazou", "https://www.youtube.com/watch?v=rj_kEDituic")
     );
 
     public static void main(String[] args) throws InterruptedException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException, IOException {
