@@ -2,7 +2,7 @@ services:
     eplbot:
         image: eplbot
         volumes:
-            - eplbot_persistence:/persistence
+            - eplbot_persistence:/home/eplbot/persistence
         env_file:
             -   variables.env
 volumes:

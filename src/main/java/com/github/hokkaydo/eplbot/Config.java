@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 
 public class Config {
 
-    private static final String CONFIG_PATH = "./persistence/config";
+    private static final String CONFIG_PATH = Main.PERSISTENCE_DIR_PATH + "/config";
 
     private static final String IDENTIFIER_UNDER_STRING_FORM = "Identifiant sous forme de chaîne de caractères";
     private static final Supplier<ConfigurationParser> MODULE_DISABLED = () -> new ConfigurationParser(false, Object::toString, Boolean::valueOf, "Booléen");

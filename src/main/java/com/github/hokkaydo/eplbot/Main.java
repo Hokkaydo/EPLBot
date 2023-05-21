@@ -40,7 +40,7 @@ public class Main {
     private static final Long EPL_DISCORD_ID = 517720163223601153L;
     private static Long TEST_DISCORD_ID = 1108141461498777722L;
     private static final Long SINF_DISCORD_ID = 492762354111479828L;
-    public static String PERSISTENCE_DIR_PATH = "persistence";
+    public static String PERSISTENCE_DIR_PATH = "./persistence";
 
     private static final List<Activity> status = List.of(
             Activity.playing("bâtir des ponts (solides) entre nous et le ciel"),
