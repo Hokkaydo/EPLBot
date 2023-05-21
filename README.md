@@ -14,44 +14,44 @@ Avant de commencer, assurez-vous d'avoir les éléments suivants :
 
 1. Clonez ce dépôt sur votre machine :
 
-```shell
-git clone https://github.com/Hokkaydo/EPLBot.git
-```
+    ```shell
+    git clone https://github.com/Hokkaydo/EPLBot.git
+    ```
 
 2. Accédez au répertoire du projet :
 
-```shell
-cd eplbot
-```
+    ```shell
+    cd eplbot
+    ```
 
 3. Compilez le projet en exécutant la commande :
 
-```shell
-./gradlew shadowJar
-```
+    ```shell
+    ./gradlew shadowJar
+    ```
 
 4. Ajoutez les variables d'environnement :
 
-```shell
-DISCORD_BOT_TOKEN=votre-jeton
-TES_DISCORD_ID=id-de-votre-discord-de-test
-```
+    ```shell
+    DISCORD_BOT_TOKEN=votre-jeton
+    TES_DISCORD_ID=id-de-votre-discord-de-test
+    ```
 
 5. Exécutez le bot Discord en utilisant la commande :
 
-```shell
-  ./gradlew run
-```
+    ```shell
+      ./gradlew run
+    ```
 
 ## Configuration du bot Discord
 
 Le bot propose un système modulaire permettant d'activer et désactiver les modules via les commandes Discord `/enable <module>` et `/disable <module>`.
 ## Contribution
 
-Les contributions à ce projet sont les bienvenues. Si vous souhaitez apporter des améliorations, veuillez créer une branche à partir de la branche `master`, effectuer vos modifications et soumettre une pull request (PR).
+Les contributions à ce projet sont les bienvenues. Si vous souhaitez apporter des améliorations, veuillez créer une branche à partir de la branche `master`, effectuer vos modifications et soumettre une Pull Request (PR).
 ### Features
 - [x] Mirroring de canaux
-- [x] Quote de message cités par lien Discord
+- [x] Quote de messages cités par lien Discord
 - [x] Flux RSS
 - [x] Auto-pin lorsque N réactions sont ajoutées à un message 
 - [x] Commandes de suppression de messages :  `/clearfrom <id_a>`, `/clearbetween <id_a> <id_b>`, `/clearlast <N>`
