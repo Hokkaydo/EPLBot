@@ -72,4 +72,4 @@ Les contributions à ce projet sont les bienvenues. Si vous souhaitez apporter d
 
 ## Licence
 
-Ce projet est sous licence [GNU GPLv3](https://github.com/Hokkaydo/EPLBot/LICENCE).
+Ce projet est sous licence [GNU GPLv3](https://github.com/Hokkaydo/EPLBot/blob/master/LICENCE).
