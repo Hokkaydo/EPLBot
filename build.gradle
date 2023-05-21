@@ -20,6 +20,10 @@ dependencies {
     implementation 'io.github.cdimascio:dotenv-java:3.0.0'
 }
 
+tasks.register('run', JavaExec) {
+    classpath = files('build/libs/EPLBot-1.0-SNAPSHOT-all.jar')
+}
+
 test {
     useJUnitPlatform()
 }
