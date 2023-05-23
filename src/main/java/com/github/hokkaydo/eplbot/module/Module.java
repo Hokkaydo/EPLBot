@@ -6,6 +6,7 @@ import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public abstract class Module {
@@ -14,7 +15,7 @@ public abstract class Module {
 
     private final Long guildId;
 
-    public Module(@NotNull Long guildId) {
+    protected Module(@NotNull Long guildId) {
         this.guildId = guildId;
     }
 
@@ -38,13 +39,19 @@ public abstract class Module {
     public void enable() {
         this.enabled = true;
         Main.getJDA().addEventListener(getListeners().toArray());
-        Main.getCommandManager().enableCommands(getGuildId(), getCommands().stream().map(Command::getClass).toList());
+        Main.getCommandManager().enableCommands(getGuildId(), getCommandAsClass());
     }
 
     public void disable() {
         this.enabled = false;
         Main.getJDA().removeEventListener(getListeners().toArray());
-        Main.getCommandManager().disableCommands(getGuildId(), getCommands().stream().map(Command::getClass).toList());
+        Main.getCommandManager().disableCommands(getGuildId(), getCommandAsClass());
+    }
+
+    protected List<Class<? extends Command>> getCommandAsClass() {
+        List<Class<? extends Command>> list = new ArrayList<>();
+        getCommands().forEach(c -> list.add(c.getClass()));
+        return list;
     }
 
     @Override

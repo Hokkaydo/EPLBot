@@ -50,9 +50,9 @@ public class MoveMessagesCommand implements Command {
                 if(i == sortedMessages.size() - 1) {
                     List<Message> finalSortedMessages = sortedMessages;
                     newChannel.sendMessageEmbeds(embed).and(message.delete()).queue(s -> context.hook().sendMessage(String.format(Strings.getString("COMMAND_MOVE_MESSAGES_MOVED"), finalSortedMessages.size())).queue());
-                }else {
-                    newChannel.sendMessageEmbeds(embed).queue(s -> message.delete().queue());
+                    break;
                 }
+                newChannel.sendMessageEmbeds(embed).queue(s -> message.delete().queue());
             }
         }));
 

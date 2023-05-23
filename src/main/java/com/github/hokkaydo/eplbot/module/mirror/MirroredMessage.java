@@ -57,14 +57,17 @@ public class MirroredMessage {
     }
 
     private void sendMessage(AtomicReference<MessageCreateAction> action, Message initialMessage) {
-        action.get().queue(message -> {
-            this.message = message;
+        action.get().queue(m -> {
+            this.message = m;
             updatePin(initialMessage.isPinned());
         });
     }
 
     private String getContent(Message message) {
-        String content = message.getContentRaw().isEmpty() ? (message.getEmbeds().isEmpty() ? "" : message.getEmbeds().get(0).getDescription()) : message.getContentRaw();
+        String content = message.getContentRaw().isEmpty() ? "" : message.getContentRaw();
+        if(content.isBlank()) {
+            content = message.getEmbeds().isEmpty() ? "" : message.getEmbeds().get(0).getDescription();
+        }
         return content == null ? "" : content;
     }
 

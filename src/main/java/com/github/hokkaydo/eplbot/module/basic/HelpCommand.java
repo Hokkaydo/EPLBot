@@ -36,20 +36,16 @@ public class HelpCommand implements Command {
             return;
         }
         List<String> helps = Main.getCommandManager().getCommands(guildId).stream()
-                                     .filter(c -> Main.getCommandManager().isEnabled(guildId, c.getClass()) || (c.adminOnly() && context.author().hasPermission(Permission.ADMINISTRATOR)))
+                                     .filter(c -> Main.getCommandManager().isEnabled(guildId, c.getClass()) || context.author().hasPermission(Permission.ADMINISTRATOR))
                                      .map(c -> "__" + c.getName() + "__: \n" + c.help().get())
                                      .toList();
-        if(helps.isEmpty()) {
-            context.replyCallbackAction().setContent(Strings.getString("ERROR_OCCURRED")).queue();
-            return;
-        }
         StringBuilder stringBuilder = new StringBuilder("__AIDE :__");
         boolean firstSent = false;
         for (String help : helps) {
             StringBuilder temp = new StringBuilder(stringBuilder);
             temp.append("\n\n").append(help);
-            if(temp.length() > 2000) {
-                if(firstSent) {
+            if (temp.length() > 2000) {
+                if (firstSent) {
                     context.hook().sendMessage(stringBuilder.toString()).queue();
                 } else {
                     context.replyCallbackAction().setContent(stringBuilder.toString()).queue();
@@ -60,13 +56,12 @@ public class HelpCommand implements Command {
             }
             stringBuilder = temp;
         }
-        if(!stringBuilder.isEmpty()) {
-            if (firstSent) {
-                context.hook().sendMessage(stringBuilder.toString()).queue();
-            } else {
-                context.replyCallbackAction().setContent(stringBuilder.toString()).queue();
-            }
+        if(stringBuilder.isEmpty()) return;
+        if (firstSent) {
+            context.hook().sendMessage(stringBuilder.toString()).queue();
+            return;
         }
+        context.replyCallbackAction().setContent(stringBuilder.toString()).queue();
     }
 
     @Override

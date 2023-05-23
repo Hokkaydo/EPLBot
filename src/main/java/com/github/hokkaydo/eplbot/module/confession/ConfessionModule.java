@@ -36,14 +36,14 @@ public class ConfessionModule extends Module {
     public void enable() {
         this.enabled = true;
         Main.getJDA().addEventListener(getListeners().toArray());
-        Main.getCommandManager().enableGlobalCommands(getCommands().stream().map(Command::getClass).toList());
+        Main.getCommandManager().enableGlobalCommands(getCommandAsClass());
     }
 
     @Override
     public void disable() {
         this.enabled = false;
         Main.getJDA().removeEventListener(getListeners().toArray());
-        Main.getCommandManager().disableGlobalCommands(getCommands().stream().map(Command::getClass).toList());
+        Main.getCommandManager().disableGlobalCommands(getCommandAsClass());
     }
 
 }

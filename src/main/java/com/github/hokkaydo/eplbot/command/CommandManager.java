@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 public class CommandManager extends ListenerAdapter {
 
@@ -23,30 +22,30 @@ public class CommandManager extends ListenerAdapter {
     private final Map<String, Command> globalCommands = new HashMap<>();
     private final Map<Class<? extends Command>, Boolean> globalCommandStatus = new HashMap<>();
 
-    public void disableCommands(Long guildId, List<? extends Class<? extends Command>> commands) {
+    public void disableCommands(Long guildId, List<Class<? extends Command>> commands) {
         if(!this.commandStatus.containsKey(guildId)) return;
-        Map<Class<? extends Command>, Boolean> commandStatus = this.commandStatus.get(guildId);
+        Map<Class<? extends Command>, Boolean> status = this.commandStatus.get(guildId);
         for (Class<? extends Command> command : commands) {
-            commandStatus.put(command, false);
+            status.put(command, false);
         }
-        this.commandStatus.put(guildId, commandStatus);
+        this.commandStatus.put(guildId, status);
     }
 
-    public void enableCommands(Long guildId, List<? extends Class<? extends Command>> commands) {
-        Map<Class<? extends Command>, Boolean> commandStatus = this.commandStatus.getOrDefault(guildId, new HashMap<>());
+    public void enableCommands(Long guildId, List<Class<? extends Command>> commands) {
+        Map<Class<? extends Command>, Boolean> status = this.commandStatus.getOrDefault(guildId, new HashMap<>());
         for (Class<? extends Command> command : commands) {
-            commandStatus.put(command, true);
+            status.put(command, true);
         }
-        this.commandStatus.put(guildId, commandStatus);
+        this.commandStatus.put(guildId, status);
     }
 
-    public void disableGlobalCommands(List<? extends Class<? extends Command>> commands) {
+    public void disableGlobalCommands(List<Class<? extends Command>> commands) {
         for (Class<? extends Command> command : commands) {
             this.globalCommandStatus.put(command, false);
         }
     }
 
-    public void enableGlobalCommands(List<? extends Class<? extends Command>> commands) {
+    public void enableGlobalCommands(List<Class<? extends Command>> commands) {
         for (Class<? extends Command> command : commands) {
             this.globalCommandStatus.put(command, true);
         }
@@ -74,7 +73,7 @@ public class CommandManager extends ListenerAdapter {
                 event.reply(Strings.getString("COMMAND_NOT_FOUND")).setEphemeral(true).queue();
                 return;
             }
-            if(!globalCommandStatus.getOrDefault(command.getClass(), false)) {
+            if(Boolean.FALSE.equals(globalCommandStatus.getOrDefault(command.getClass(), false))) {
                 event.reply(Strings.getString("COMMAND_DISABLED")).setEphemeral(true).queue();
                 return;
             }
@@ -85,7 +84,7 @@ public class CommandManager extends ListenerAdapter {
                 event.reply(Strings.getString("COMMAND_NOT_FOUND")).setEphemeral(true).queue();
                 return;
             }
-            if(!commandStatus.get(event.getGuild().getIdLong()).getOrDefault(command.getClass(), false)) {
+            if(Boolean.FALSE.equals(commandStatus.get(event.getGuild().getIdLong()).getOrDefault(command.getClass(), false))) {
                 event.reply(Strings.getString("COMMAND_DISABLED")).setEphemeral(true).queue();
                 return;
             }

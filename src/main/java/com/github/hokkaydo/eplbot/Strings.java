@@ -8,6 +8,7 @@ import org.json.JSONTokener;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
 
 public class Strings {
 
@@ -29,7 +30,7 @@ public class Strings {
 
     public static String getString(String key) {
         if(!STRINGS_MAP.containsKey(key)) {
-            System.err.printf("Missing string : %s\n", key);
+            Main.LOGGER.log(Level.WARNING, "Missing string : %s\n", key);
             return STRING_NOT_FOUND;
         }
         return STRINGS_MAP.get(key);

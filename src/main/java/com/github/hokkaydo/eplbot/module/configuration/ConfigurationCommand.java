@@ -26,7 +26,7 @@ public class ConfigurationCommand implements Command {
         Optional<OptionMapping> valueOption = context.options().stream().filter(s -> s.getName().equals("value")).findFirst();
         if(keyOption.isEmpty()) {
             context.replyCallbackAction().setContent(
-                    Config.DEFAULT_CONFIGURATION.keySet().stream()
+                    Config.getDefaultConfiguration().keySet().stream()
                             .map(k ->  "`" + k + "`: " + Config.getGuildVariable(guildId, k))
                             .reduce((s1, s2) -> s1 + "\n" + s2)
                             .orElse("")
@@ -35,7 +35,7 @@ public class ConfigurationCommand implements Command {
         }
         if(valueOption.isEmpty()) {
             context.replyCallbackAction().setContent(
-                    Config.DEFAULT_CONFIGURATION.keySet().stream()
+                    Config.getDefaultConfiguration().keySet().stream()
                             .filter(k -> k.equals(keyOption.get().getAsString()))
                             .map(k -> "`" + k + "`: " + Config.getGuildVariable(guildId, k))
                             .findFirst()
@@ -65,7 +65,7 @@ public class ConfigurationCommand implements Command {
     public List<OptionData> getOptions() {
         return Arrays.asList(
                 new OptionData(OptionType.STRING, "key", Strings.getString("COMMAND_CONFIG_OPTION_KEY_DESCRIPTION"), false)
-                        .addChoices(Config.DEFAULT_CONFIGURATION.keySet().stream().map(s -> new net.dv8tion.jda.api.interactions.commands.Command.Choice(s, s)).toList()),
+                        .addChoices(Config.getDefaultConfiguration().keySet().stream().map(s -> new net.dv8tion.jda.api.interactions.commands.Command.Choice(s, s)).toList()),
                 new OptionData(OptionType.STRING, "value", Strings.getString("COMMAND_CONFIG_OPTION_VALUE_DESCRIPTION"), false)
         );
     }
@@ -87,7 +87,7 @@ public class ConfigurationCommand implements Command {
 
     @Override
     public Supplier<String> help() {
-        return () -> Strings.getString("COMMAND_CONFIG_HELP").formatted(Config.DEFAULT_CONFIGURATION.keySet().stream().map(key -> "`" + key + "`: " + Config.getValueFormat(key)).reduce((s1, s2) -> s1+"\n\t"+s2).orElse(""));
+        return () -> Strings.getString("COMMAND_CONFIG_HELP").formatted(Config.getDefaultConfiguration().keySet().stream().map(key -> "`" + key + "`: " + Config.getValueFormat(key)).reduce((s1, s2) -> s1+"\n\t"+s2).orElse(""));
     }
 
 }

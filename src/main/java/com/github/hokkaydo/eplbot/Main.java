@@ -31,6 +31,8 @@ import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Main {
 
@@ -38,9 +40,11 @@ public class Main {
     private static ModuleManager moduleManager;
     private static CommandManager commandManager;
     private static final Long EPL_DISCORD_ID = 517720163223601153L;
-    private static Long TEST_DISCORD_ID = 1108141461498777722L;
+    private static Long testDiscordId;
     private static final Long SINF_DISCORD_ID = 492762354111479828L;
-    public static String PERSISTENCE_DIR_PATH = "./persistence";
+    public static final String PERSISTENCE_DIR_PATH = "./persistence";
+    private static final Random RANDOM = new Random();
+    public static final Logger LOGGER = Logger.getLogger("EPLBot");
 
     private static final List<Activity> status = List.of(
             Activity.playing("bâtir des ponts (solides) entre nous et le ciel"),
@@ -57,10 +61,10 @@ public class Main {
             Activity.of(Activity.ActivityType.STREAMING, "Radio Gazou", "https://www.youtube.com/watch?v=rj_kEDituic")
     );
 
-    public static void main(String[] args) throws InterruptedException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException, IOException {
+    public static void main(String[] args) throws InterruptedException, IOException {
         String token = System.getenv("DISCORD_BOT_TOKEN");
-        String testDiscordId = System.getenv("TEST_DISCORD_ID");
-        TEST_DISCORD_ID = testDiscordId == null ? 1108141461498777722L : Long.parseLong(testDiscordId);
+        String testDiscordIdStr = System.getenv("TEST_DISCORD_ID");
+        testDiscordId = testDiscordIdStr == null ? 1108141461498777722L : Long.parseLong(testDiscordIdStr);
         if(token == null && args.length > 0) token = args[0];
         if(token == null) throw new IllegalStateException("No token specified !");
         moduleManager = new ModuleManager();
@@ -109,38 +113,41 @@ public class Main {
                 AutoPinModule.class
         );
         Map<Guild, List<Command>> guildCommands = new HashMap<>();
-        for(Long guildId : List.of(EPL_DISCORD_ID, TEST_DISCORD_ID)) {
+        for(Long guildId : List.of(EPL_DISCORD_ID, testDiscordId)) {
             Guild guild = jda.getGuildById(guildId);
             if(guild == null) continue;
             guildCommands.put(guild, new ArrayList<>());
-            moduleManager.addModules(eplModules.stream()
-                                             .map(clazz -> instantiate(clazz, guildId))
-                                             .map(o -> (Module)o)
-                                             .peek(m -> {
-                                                         if(!m.getClass().equals(ConfessionModule.class)) {
-                                                             guildCommands.get(guild).addAll(m.getCommands());
-                                                         }
-                                                     }
-                                             ).toList()
-            );
+            List<Module> modules = eplModules.stream()
+                                           .map(clazz -> instantiate(clazz, guildId))
+                                           .map(o -> (Module)o)
+                                           .toList();
+            for (Module m : modules) {
+                if(!m.getClass().equals(ConfessionModule.class)) {
+                    guildCommands.get(guild).addAll(m.getCommands());
+                }
+            }
+            moduleManager.addModules(modules);
         }
 
-        for (Long guildId : List.of(EPL_DISCORD_ID, TEST_DISCORD_ID, SINF_DISCORD_ID)) {
+        for (Long guildId : List.of(EPL_DISCORD_ID, testDiscordId, SINF_DISCORD_ID)) {
             Guild guild = jda.getGuildById(guildId);
             if(guild == null) continue;
-            moduleManager.addModules(globalModules.stream()
-                                             .map(clazz -> instantiate(clazz, guildId))
-                                             .map(o -> (Module)o)
-                                             .peek(m -> System.out.println("\t" + m.getName()))
-                                             .peek(m -> guildCommands.get(guild).addAll(m.getCommands()))
-                                             .toList()
-            );
-            System.out.println("\n");
+            List<Module> modules = globalModules.stream()
+                                           .map(clazz -> instantiate(clazz, guildId))
+                                           .map(o -> (Module)o)
+                                           .toList();
+            for (Module module : modules) {
+                String name = "\t%s".formatted(module.getName());
+                LOGGER.log(Level.INFO, name);
+                guildCommands.get(guild).addAll(module.getCommands());
+            }
+            moduleManager.addModules(modules);
+            LOGGER.log(Level.INFO, "\n");
         }
         for (Map.Entry<Guild, List<Command>> guildListEntry : guildCommands.entrySet()) {
             Main.getCommandManager().addCommands(guildListEntry.getKey(), guildListEntry.getValue());
         }
-        getModuleManager().getModuleByName("confession", TEST_DISCORD_ID, ConfessionModule.class).ifPresent(m -> commandManager.addGlobalCommands(m.getCommands()));
+        getModuleManager().getModuleByName("confession", testDiscordId, ConfessionModule.class).ifPresent(m -> commandManager.addGlobalCommands(m.getCommands()));
         getModuleManager().getModule(MirrorModule.class).forEach(MirrorModule::loadMirrors);
     }
 
@@ -149,13 +156,13 @@ public class Main {
             return clazz.getDeclaredConstructor(Long.class).newInstance(guildId);
         } catch (InstantiationException | NoSuchMethodException | InvocationTargetException |
                  IllegalAccessException e) {
-            throw new RuntimeException(e);
+            throw new IllegalStateException(e);
         }
     }
     private static void launchPeriodicStatusUpdate() {
-        ScheduledExecutorService service = Executors.newScheduledThreadPool(1);
-        Random random = new Random();
-        service.scheduleAtFixedRate(() -> jda.getPresence().setActivity(status.get(random.nextInt(status.size()))),26*6, 26*6, TimeUnit.SECONDS); // 2min30
+        try(ScheduledExecutorService service = Executors.newScheduledThreadPool(1)) {
+            service.scheduleAtFixedRate(() -> jda.getPresence().setActivity(status.get(RANDOM.nextInt(status.size()))),26*6L, 26*6L, TimeUnit.SECONDS); // 2min30
+        }
     }
 
     public static JDA getJDA() {

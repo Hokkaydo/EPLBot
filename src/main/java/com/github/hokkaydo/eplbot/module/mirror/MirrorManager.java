@@ -127,7 +127,7 @@ public class MirrorManager extends ListenerAdapter {
             try {
                 Files.createFile(MIRROR_STORAGE_PATH);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new IllegalStateException(e);
             }
             noMirrors = true;
             return;
@@ -153,7 +153,7 @@ public class MirrorManager extends ListenerAdapter {
                 try {
                     stream.append(m.first.getId()).append(";").append(String.valueOf(m.second.getIdLong())).append("\n");
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    throw new IllegalStateException(e);
                 }
             });
         } catch (IOException e) {

@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,7 +25,8 @@ public class Config {
 
     private static final String IDENTIFIER_UNDER_STRING_FORM = "Identifiant sous forme de chaîne de caractères";
     private static final Supplier<ConfigurationParser> MODULE_DISABLED = () -> new ConfigurationParser(false, Object::toString, Boolean::valueOf, "Booléen");
-    public static final Map<String, ConfigurationParser> DEFAULT_CONFIGURATION = new HashMap<>(Map.of(
+    private static final String INTEGER_FORMAT = "Nombre entier";
+    protected static final Map<String, ConfigurationParser> DEFAULT_CONFIGURATION = new HashMap<>(Map.of(
             "PIN_REACTION_NAME", new ConfigurationParser(
                     "\uD83D\uDCCC",
                     Object::toString,
@@ -35,13 +37,13 @@ public class Config {
                     1,
                     Object::toString,
                     Integer::parseInt,
-                    "Nombre entier"
+                    INTEGER_FORMAT
             ),
             "ADMIN_CHANNEL_ID", new ConfigurationParser(
                     1,
                     Object::toString,
                     Integer::parseInt,
-                    "Nombre entier"
+                    INTEGER_FORMAT
             ),
             "CONFESSION_CHANNEL_ID", new ConfigurationParser(
                     "",
@@ -62,6 +64,10 @@ public class Config {
                     "RGB sous forme hexadécimale : Ex #FFFFFF = Blanc"
             )
     ));
+
+    public static Map<String, ConfigurationParser> getDefaultConfiguration() {
+        return Collections.unmodifiableMap(DEFAULT_CONFIGURATION);
+    }
 
     private static final Map<String, ConfigurationParser> DEFAULT_STATE = Map.of(
             "LAST_RSS_ARTICLE_DATE", new ConfigurationParser(
@@ -95,7 +101,7 @@ public class Config {
                         15L,
                         Object::toString,
                         Long::parseLong,
-                        "Nombre entier"
+                        INTEGER_FORMAT
                 ),
                 "ADMIN_CHANNEL_ID", new ConfigurationParser(
                         "",
@@ -191,7 +197,7 @@ public class Config {
         try(FileInputStream stream = new FileInputStream(CONFIG_PATH)) {
             CONFIGURATION_PROPERTIES.load(stream);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new IllegalStateException(e);
         }
         CONFIGURATION_PROPERTIES.forEach((a, b) -> {
             String v = b.toString();
