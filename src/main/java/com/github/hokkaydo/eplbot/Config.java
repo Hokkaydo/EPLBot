@@ -44,13 +44,13 @@ public class Config {
                     "Nombre entier"
             ),
             "CONFESSION_CHANNEL_ID", new ConfigurationParser(
-                    "1096874480267169974",
+                    "",
                     Object::toString,
                     s -> s,
                     IDENTIFIER_UNDER_STRING_FORM
             ),
             "CONFESSION_VALIDATION_CHANNEL_ID", new ConfigurationParser(
-                    "1096378039027388436",
+                    "",
                     Object::toString,
                     s -> s,
                     IDENTIFIER_UNDER_STRING_FORM
@@ -80,7 +80,7 @@ public class Config {
                         "Liste de liens séparés par `;`"
                 ),
                 "RSS_FEEDS_CHANNEL_ID", new ConfigurationParser(
-                        "1096874480267169974",
+                        "",
                         Object::toString,
                         s -> s,
                         IDENTIFIER_UNDER_STRING_FORM
@@ -98,7 +98,7 @@ public class Config {
                         "Nombre entier"
                 ),
                 "ADMIN_CHANNEL_ID", new ConfigurationParser(
-                        "1096365022944448543",
+                        "",
                         Object::toString,
                         s -> s,
                         IDENTIFIER_UNDER_STRING_FORM
