@@ -213,7 +213,7 @@ public class Config {
     }
 
 
-    public record ConfigurationParser(Object defaultValue,
+    private record ConfigurationParser(Object defaultValue,
                                        Function<Object, String> toConfig,
                                        Function<String, Object> fromConfig,
                                        String format) {}

@@ -87,7 +87,7 @@ public class ConfigurationCommand implements Command {
 
     @Override
     public Supplier<String> help() {
-        return () -> Strings.getString("COMMAND_CONFIG_HELP").formatted(Config.DEFAULT_CONFIGURATION.entrySet().stream().map(e -> "`" + e.getKey() + "`: " + e.getValue().format()).reduce((s1, s2) -> s1+"\n\t"+s2).orElse(""));
+        return () -> Strings.getString("COMMAND_CONFIG_HELP").formatted(Config.DEFAULT_CONFIGURATION.keySet().stream().map(key -> "`" + key + "`: " + Config.getValueFormat(key)).reduce((s1, s2) -> s1+"\n\t"+s2).orElse(""));
     }
 
 }
