@@ -23,6 +23,7 @@ public class QuoteListener extends ListenerAdapter {
     private static final Pattern MESSAGE_URL_PATTERN = Pattern.compile("https://discord.com/channels/\\d*/\\d*/\\d*");
     @Override
     public void onMessageReceived(@NotNull MessageReceivedEvent event) {
+        if(!event.isFromGuild()) return;
         if(event.getGuild().getIdLong() != guildId) return;
         MESSAGE_URL_PATTERN.matcher(event.getMessage().getContentDisplay()).results()
                 .map(matchResult -> {String[] split = matchResult.group().split("/"); return new Tuple3<>(split[4], split[5], split[6]);})
