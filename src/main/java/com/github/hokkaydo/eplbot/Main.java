@@ -160,9 +160,8 @@ public class Main {
         }
     }
     private static void launchPeriodicStatusUpdate() {
-        try(ScheduledExecutorService service = Executors.newScheduledThreadPool(1)) {
-            service.scheduleAtFixedRate(() -> jda.getPresence().setActivity(status.get(RANDOM.nextInt(status.size()))),26*6L, 26*6L, TimeUnit.SECONDS); // 2min30
-        }
+        ScheduledExecutorService service = Executors.newScheduledThreadPool(1);
+        service.scheduleAtFixedRate(() -> jda.getPresence().setActivity(status.get(RANDOM.nextInt(status.size()))),10L, 26*6L, TimeUnit.SECONDS); // 2min30
     }
 
     public static JDA getJDA() {
