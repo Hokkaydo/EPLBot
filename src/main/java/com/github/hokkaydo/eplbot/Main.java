@@ -72,6 +72,7 @@ public class Main {
         if(token == null) throw new IllegalStateException("No token specified !");
         moduleManager = new ModuleManager();
         commandManager = new CommandManager();
+        final GuildStateListener guildStateListener = new GuildStateListener();
         Path path = Path.of(Main.PERSISTENCE_DIR_PATH);
         if(!Files.exists(path))
             Files.createDirectory(path);
@@ -83,10 +84,11 @@ public class Main {
                       .disableCache(CacheFlag.MEMBER_OVERRIDES, CacheFlag.VOICE_STATE)
                       .setBulkDeleteSplittingEnabled(false)
                       .setActivity(Activity.playing("compter les moutons"))
-                      .addEventListeners(commandManager)
+                      .addEventListeners(commandManager, guildStateListener)
                       .build();
         jda.awaitReady();
-        registerModules(moduleManager);
+        redirectError();
+        registerModules();
         jda.getGuilds().forEach(guild ->
                                         moduleManager.enableModules(
                                                 guild.getIdLong(),
@@ -103,7 +105,10 @@ public class Main {
         launchPeriodicStatusUpdate();
     }
 
-    private static void registerModules(ModuleManager moduleManager) {
+    protected static final List<Long> globalModuleRegisteredGuilds = new ArrayList<>();
+    protected static final List<Long> eplModuleRegisteredGuilds = new ArrayList<>();
+
+    public static void registerModules() {
         List<Class<? extends Module>> globalModules = Arrays.asList(
                 MirrorModule.class,
                 ConfigurationModule.class
@@ -115,18 +120,19 @@ public class Main {
                 ConfessionModule.class,
                 AutoPinModule.class
         );
-        Map<Guild, List<Command>> guildCommands = new HashMap<>();
+        Map<Long, List<Command>> guildCommands = new HashMap<>();
         for(Long guildId : List.of(EPL_DISCORD_ID, testDiscordId)) {
             Guild guild = jda.getGuildById(guildId);
-            if(guild == null) continue;
-            guildCommands.put(guild, new ArrayList<>());
+            if(eplModuleRegisteredGuilds.contains(guildId) || guild == null) continue;
+            eplModuleRegisteredGuilds.add(guildId);
+            guildCommands.put(guildId, new ArrayList<>());
             List<Module> modules = eplModules.stream()
                                            .map(clazz -> instantiate(clazz, guildId))
                                            .map(o -> (Module)o)
                                            .toList();
             for (Module m : modules) {
                 if(!m.getClass().equals(ConfessionModule.class)) {
-                    guildCommands.get(guild).addAll(m.getCommands());
+                    guildCommands.get(guildId).addAll(m.getCommands());
                 }
             }
             moduleManager.addModules(modules);
@@ -134,25 +140,31 @@ public class Main {
 
         for (Long guildId : List.of(EPL_DISCORD_ID, testDiscordId, SINF_DISCORD_ID)) {
             Guild guild = jda.getGuildById(guildId);
-            if(guild == null) continue;
+            if(globalModuleRegisteredGuilds.contains(guildId) || guild == null) continue;
+            if(!guildCommands.containsKey(guildId)) {
+                guildCommands.put(guildId, new ArrayList<>());
+            }
+            globalModuleRegisteredGuilds.add(guildId);
             List<Module> modules = globalModules.stream()
                                            .map(clazz -> instantiate(clazz, guildId))
                                            .map(o -> (Module)o)
                                            .toList();
+            StringBuilder log = new StringBuilder("Enabling modules for %s :%n".formatted(guild.getName()));
             for (Module module : modules) {
-                String name = "\t%s".formatted(module.getName());
-                LOGGER.log(Level.INFO, name);
-                guildCommands.get(guild).addAll(module.getCommands());
+                log.append("\t%s%n".formatted(module.getName()));
+                guildCommands.get(guildId).addAll(module.getCommands());
             }
+            String logS = log.toString();
+            LOGGER.log(Level.INFO, logS);
             moduleManager.addModules(modules);
-            LOGGER.log(Level.INFO, "\n");
         }
-        for (Map.Entry<Guild, List<Command>> guildListEntry : guildCommands.entrySet()) {
-            Main.getCommandManager().addCommands(guildListEntry.getKey(), guildListEntry.getValue());
+        for (Map.Entry<Long, List<Command>> guildListEntry : guildCommands.entrySet()) {
+            Guild guild = jda.getGuildById(guildListEntry.getKey());
+            if(guild == null) continue;
+            Main.getCommandManager().addCommands(guild, guildListEntry.getValue());
         }
         getModuleManager().getModuleByName("confession", testDiscordId, ConfessionModule.class).ifPresent(m -> commandManager.addGlobalCommands(m.getCommands()));
         getModuleManager().getModule(MirrorModule.class).forEach(MirrorModule::loadMirrors);
-        redirectError();
     }
 
     private static void redirectError() {

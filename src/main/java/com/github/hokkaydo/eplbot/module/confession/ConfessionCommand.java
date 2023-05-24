@@ -7,6 +7,8 @@ import com.github.hokkaydo.eplbot.Strings;
 import com.github.hokkaydo.eplbot.command.Command;
 import com.github.hokkaydo.eplbot.command.CommandContext;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
@@ -19,11 +21,13 @@ import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 
+import java.awt.*;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Supplier;
@@ -33,6 +37,10 @@ public class ConfessionCommand extends ListenerAdapter implements Command {
     private static final String CONFESSION = "confession";
 
     private static final Map<UUID, MessageCreateBuilder> pendingConfessions = new HashMap<>();
+    private static final String[] VALIDATION_EMBED_TITLES = {"Confession - Validée", "Confession - Refusée"};
+    private static final Color[] VALIDATION_EMBED_COLORS = {Color.GREEN, Color.RED};
+    private static final int VALID = 0;
+    private static final int REFUSED = 1;
 
     private final Long guildId;
     public ConfessionCommand(Long guildId) {
@@ -87,15 +95,20 @@ public class ConfessionCommand extends ListenerAdapter implements Command {
         if(id.contains(CONFESSION)) {
             if(id.startsWith("validate")) {
                 validateConfession(UUID.fromString(id.replace("validate-confession-", "")), event.getGuild().getIdLong());
-                event.reply("Envoyé !").queue();
+                updateEmbedColor(VALID, event.getMessage());
             } else {
-                event.reply("Refusée").queue();
+                updateEmbedColor(REFUSED, event.getMessage());
             }
             event.getMessage().editMessageComponents(Collections.emptyList()).queue();
             return;
         }
-
         event.reply("unknown").queue();
+    }
+    private void updateEmbedColor(int state, Message message) {
+        if(message.getEmbeds().isEmpty() || message.getEmbeds().get(0).getFields().isEmpty()) return;
+        MessageEmbed embed = message.getEmbeds().get(0);
+        EmbedBuilder builder = new EmbedBuilder(embed).setColor(VALIDATION_EMBED_COLORS[state]).clearFields().addField(VALIDATION_EMBED_TITLES[state], Objects.requireNonNull(embed.getFields().get(0).getValue()), true);
+        message.editMessageEmbeds(builder.build()).queue();
     }
 
     @Override
