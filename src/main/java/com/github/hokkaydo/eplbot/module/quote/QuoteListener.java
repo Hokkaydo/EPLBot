@@ -2,13 +2,11 @@ package com.github.hokkaydo.eplbot.module.quote;
 
 import com.github.hokkaydo.eplbot.Main;
 import com.github.hokkaydo.eplbot.MessageUtil;
-import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -29,7 +27,7 @@ public class QuoteListener extends ListenerAdapter {
                 .map(matchResult -> {String[] split = matchResult.group().split("/"); return new Tuple3<>(split[4], split[5], split[6]);})
                 .map(this::toMessage)
                 .filter(Objects::nonNull)
-                .forEach(m -> MessageUtil.toEmbedWithAttachements(m, e -> m.replyEmbeds(e.build())));
+                .forEach(m -> MessageUtil.toEmbedWithAttachements(m, e -> event.getMessage().replyEmbeds(e.build())));
     }
 
     private record Tuple3<A, B, C>(A a, B b, C c) {}
