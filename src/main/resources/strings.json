@@ -63,7 +63,7 @@
   "THREAD_FIRST_MESSAGE_NOT_SENT": ":warning: First message couldn't be mirrored due to Discord API restrictions ! Please check by yourself : %s",
   "COMMAND_PING_DESCRIPTION": "Permet d'afficher la latence du bot",
   "COMMAND_PING_HELP": "Affiche la latence du bot en millisecondes",
-  "COMMAND_CONFESSION_WARN_AUTHOR": "Votre confession a été refusée pour non-respect des règles en vigueur sur le serveur. \nCela inclut, sans pour autant s'y limiter, : \n- Insultes\n-Racisme, homophobie, dénigrement d'une communauté\n- Apologie du terrorisme\n-Publicité sans accord préalable. \nMerci de bien vouloir relire les règles avant de reposter une confession.",
+  "COMMAND_CONFESSION_WARN_AUTHOR": ":warning: Votre confession a été refusée pour non-respect des règles en vigueur sur le serveur. \nCela inclut, sans pour autant s'y limiter : \n- Insultes\n- Racisme, homophobie, dénigrement d'une communauté\n- Apologie du terrorisme\n- Publicité sans accord préalable. \nMerci de bien vouloir relire les règles avant de reposter une confession.",
   "COMMAND_REFRESH_HELP": "Resynchronise la liste des commandes sur le serveur",
   "COMMAND_REFRESH_DESCRIPTION": "Permet de rafraîchir la liste des commandes sur le serveur",
   "COMMAND_REFRESH_DONE": "Les commandes ont bien été resynchronisées."
