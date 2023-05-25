@@ -79,11 +79,30 @@ public class MirrorManager extends ListenerAdapter {
             }));
             return;
         }
-        MirroredMessage initial = new MirroredMessage(event.getMessage(), event.getChannel(), false);
+        if(event.getMessage().getReferencedMessage() != null && event.getMessage().getType().equals(MessageType.INLINE_REPLY)) {
+            Long replyId = event.getMessage().getReferencedMessage().getIdLong();
+            mirroredMessages.stream()
+                    .filter(m -> m.getMessages().stream().anyMatch(msg -> msg.getMessageId().equals(replyId)))
+                    .findFirst()
+                    .map(MirroredMessages::getMessages)
+                    .flatMap(l -> l.stream().filter(m -> m.getMessageId().equals(replyId)).findFirst())
+                    .ifPresent(mirroredMessage -> Optional.ofNullable(Main.getJDA().getChannelById(MessageChannel.class, mirroredMessage.getChannelId()))
+                                                          .ifPresent(channel ->
+                                                                             channel.retrieveMessageById(mirroredMessage.getMessageId())
+                                                                                     .queue(m -> processMirroring(event.getChannel(), event.getMessage(), m))
+                                                          )
+                    );
+        } else {
+            processMirroring(event.getChannel(), event.getMessage(), null);
+        }
+    }
+
+    private void processMirroring(MessageChannel channel, Message original, Message replyingTo) {
+        MirroredMessage initial = new MirroredMessage(original, channel, false, replyingTo);
         MirroredMessages messages = new MirroredMessages(initial, new ArrayList<>());
-        mirrors.stream().filter(m -> m.has(event.getChannel())).forEach(mirror -> {
-            MessageChannel other = mirror.other(event.getChannel());
-            MirroredMessage mirroredMessage = new MirroredMessage(event.getMessage(), other, true);
+        mirrors.stream().filter(m -> m.has(channel)).forEach(mirror -> {
+            MessageChannel other = mirror.other(channel);
+            MirroredMessage mirroredMessage = new MirroredMessage(original, other, true, replyingTo);
             messages.mirrored.add(mirroredMessage);
         });
         mirroredMessages.add(messages);
