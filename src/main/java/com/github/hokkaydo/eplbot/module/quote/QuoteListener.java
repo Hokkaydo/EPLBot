@@ -29,10 +29,7 @@ public class QuoteListener extends ListenerAdapter {
                 .map(matchResult -> {String[] split = matchResult.group().split("/"); return new Tuple3<>(split[4], split[5], split[6]);})
                 .map(this::toMessage)
                 .filter(Objects::nonNull)
-                .map(MessageUtil::toEmbed)
-                .map(EmbedBuilder::build)
-                .map(event.getMessage()::replyEmbeds)
-                .forEach(MessageCreateAction::queue);
+                .forEach(m -> MessageUtil.toEmbedWithAttachements(m, e -> m.replyEmbeds(e.build())));
     }
 
     private record Tuple3<A, B, C>(A a, B b, C c) {}
