@@ -21,20 +21,24 @@ public class MirroredMessage {
     private final MessageChannel channel;
     private OffsetDateTime lastUpdated;
     private boolean threadOwner;
-    public MirroredMessage(Message initialMessage, MessageChannel textChannel, boolean mirror) {
+    public MirroredMessage(Message initialMessage, MessageChannel textChannel, boolean mirror, Message replyTo) {
         this.channel = textChannel;
         this.lastUpdated = initialMessage.getTimeCreated();
         if(mirror) {
-            mirrorMessage(initialMessage);
+            mirrorMessage(initialMessage, replyTo);
         } else {
             this.message = initialMessage;
         }
     }
 
-    public void mirrorMessage(Message initialMessage) {
+    public void mirrorMessage(Message initialMessage, Message replyTo) {
         MessageCreateAction createAction;
         String content = getContent(initialMessage);
-        createAction = channel.sendMessageEmbeds(MessageUtil.toEmbed(initialMessage).setDescription(content).setFooter("").build());
+        MessageEmbed embed = MessageUtil.toEmbed(initialMessage).setDescription(content).setFooter("").build();
+        if(replyTo != null)
+            createAction = replyTo.replyEmbeds(embed);
+        else
+            createAction = channel.sendMessageEmbeds(embed);
         if(!initialMessage.getEmbeds().isEmpty()) {
             createAction.addEmbeds(initialMessage.getEmbeds());
         }

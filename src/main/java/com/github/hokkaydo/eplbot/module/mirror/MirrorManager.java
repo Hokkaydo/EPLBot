@@ -79,15 +79,36 @@ public class MirrorManager extends ListenerAdapter {
             }));
             return;
         }
-        MirroredMessage initial = new MirroredMessage(event.getMessage(), event.getChannel(), false);
+        boolean reply = event.getMessage().getType().equals(MessageType.INLINE_REPLY) && event.getMessage().getReferencedMessage() != null;
+        MirroredMessage initial = new MirroredMessage(event.getMessage(), event.getChannel(), false, event.getMessage().getReferencedMessage());
         MirroredMessages messages = new MirroredMessages(initial, new ArrayList<>());
         mirrors.stream().filter(m -> m.has(event.getChannel())).forEach(mirror -> {
             MessageChannel other = mirror.other(event.getChannel());
-            MirroredMessage mirroredMessage = new MirroredMessage(event.getMessage(), other, true);
-            messages.mirrored.add(mirroredMessage);
+            if(reply) {
+                mirroredMessages.stream()
+                        .filter(m -> m.match(event.getMessage().getReferencedMessage().getIdLong()))
+                        .findFirst()
+                        .flatMap(message -> message.getMessages().stream().filter(m -> m.getChannelId() == other.getIdLong()).findFirst())
+                        .map(m -> new Tuple2<>(m, Main.getJDA().getChannelById(MessageChannel.class, m.getChannelId())))
+                        .map(t -> new Tuple2<>(t.a, t.b.retrieveMessageById(t.a.getMessageId())))
+                        .map(Tuple2::b)
+                        .ifPresentOrElse(a -> a.queue(replyMsg -> {
+                            MirroredMessage mirroredMessage = new MirroredMessage(event.getMessage(), other, true, replyMsg);
+                            messages.mirrored.add(mirroredMessage);
+                        }), () -> {
+                            MirroredMessage mirroredMessage = new MirroredMessage(event.getMessage(), other, true, null);
+                            messages.mirrored.add(mirroredMessage);
+                        });
+            }
+            else {
+                MirroredMessage mirroredMessage = new MirroredMessage(event.getMessage(), other, true, null);
+                messages.mirrored.add(mirroredMessage);
+            }
         });
         mirroredMessages.add(messages);
     }
+
+    private record Tuple2<A, B>(A a, B b){}
 
     private void createThread(Long messageId, Long channelId, ThreadChannel firstThread) {
         TextChannel channel = Main.getJDA().getChannelById(TextChannel.class, channelId);
