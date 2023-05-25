@@ -65,6 +65,7 @@ public class Main {
     );
 
     public static void main(String[] args) throws InterruptedException, IOException {
+        LOGGER.log(Level.INFO, "--------- START ---------");
         String token = System.getenv("DISCORD_BOT_TOKEN");
         String testDiscordIdStr = System.getenv("TEST_DISCORD_ID");
         testDiscordId = testDiscordIdStr == null ? 1108141461498777722L : Long.parseLong(testDiscordIdStr);
@@ -89,18 +90,24 @@ public class Main {
         jda.awaitReady();
         redirectError();
         registerModules();
-        jda.getGuilds().forEach(guild ->
-                                        moduleManager.enableModules(
-                                                guild.getIdLong(),
-                                                Config.getModulesStatus(
-                                                                guild.getIdLong(),
-                                                                moduleManager.getModuleNames())
-                                                        .entrySet()
-                                                        .stream()
-                                                        .filter(Map.Entry::getValue)
-                                                        .map(Map.Entry::getKey)
-                                                        .toList()
-                                        )
+        jda.getGuilds().forEach(guild -> {
+                    List<String> modules = Config.getModulesStatus(
+                                    guild.getIdLong(),
+                                    moduleManager.getModuleNames()
+                            )
+                                                   .entrySet()
+                                                   .stream()
+                                                   .filter(Map.Entry::getValue)
+                                                   .map(Map.Entry::getKey)
+                                                   .toList();
+                    moduleManager.enableModules(guild.getIdLong(), modules);
+                    StringBuilder log = new StringBuilder("Registering modules for %s :%n".formatted(guild.getName()));
+                    for (String module : modules) {
+                        log.append("\t%s%n".formatted(module));
+                    }
+                    String logS = log.toString();
+                    LOGGER.log(Level.INFO, logS);
+                }
         );
         launchPeriodicStatusUpdate();
     }
@@ -149,13 +156,9 @@ public class Main {
                                            .map(clazz -> instantiate(clazz, guildId))
                                            .map(o -> (Module)o)
                                            .toList();
-            StringBuilder log = new StringBuilder("Enabling modules for %s :%n".formatted(guild.getName()));
             for (Module module : modules) {
-                log.append("\t%s%n".formatted(module.getName()));
                 guildCommands.get(guildId).addAll(module.getCommands());
             }
-            String logS = log.toString();
-            LOGGER.log(Level.INFO, logS);
             moduleManager.addModules(modules);
         }
         for (Map.Entry<Long, List<Command>> guildListEntry : guildCommands.entrySet()) {
