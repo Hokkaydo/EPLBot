@@ -34,7 +34,6 @@ public class MirroredMessage {
     public void mirrorMessage(Message initialMessage) {
         MessageCreateAction createAction;
         String content = getContent(initialMessage);
-        if(content.isBlank()) return;
         createAction = channel.sendMessageEmbeds(MessageUtil.toEmbed(initialMessage).setDescription(content).setFooter("").build());
         if(!initialMessage.getEmbeds().isEmpty()) {
             createAction.addEmbeds(initialMessage.getEmbeds());
