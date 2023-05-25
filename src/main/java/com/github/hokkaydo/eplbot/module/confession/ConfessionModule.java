@@ -14,7 +14,7 @@ public class ConfessionModule extends Module {
     private final ConfessionCommand confessionCommand;
     public ConfessionModule(@NotNull Long guildId) {
         super(guildId);
-        confessionCommand = new ConfessionCommand(guildId);
+        confessionCommand = new ConfessionCommand();
     }
 
     @Override

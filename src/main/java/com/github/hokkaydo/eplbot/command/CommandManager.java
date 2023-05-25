@@ -97,6 +97,7 @@ public class CommandManager extends ListenerAdapter {
 
         command.executeCommand(new CommandContext(event.getName(),
                 event.getOptions(),
+                event.getUser(),
                 event.getMember(),
                 event.getMessageChannel(),
                 event.getCommandType(),

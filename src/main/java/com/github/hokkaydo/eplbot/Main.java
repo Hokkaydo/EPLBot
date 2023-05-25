@@ -42,7 +42,7 @@ public class Main {
     private static JDA jda;
     private static ModuleManager moduleManager;
     private static CommandManager commandManager;
-    private static final Long EPL_DISCORD_ID = 517720163223601153L;
+    public static final Long EPL_DISCORD_ID = 517720163223601153L;
     private static Long testDiscordId;
     private static final Long SINF_DISCORD_ID = 492762354111479828L;
     public static final String PERSISTENCE_DIR_PATH = "./persistence";

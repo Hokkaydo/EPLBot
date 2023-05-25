@@ -45,12 +45,14 @@ public class ConfessionCommand extends ListenerAdapter implements Command {
     private static final int REFUSED = 1;
     private static final int WARNED = 2;
 
-    private final Long guildId;
-    public ConfessionCommand(Long guildId) {
-        this.guildId = guildId;
-    }
     @Override
     public void executeCommand(CommandContext context) {
+        Long guildId;
+        if(context.author() == null) {
+            guildId = Main.EPL_DISCORD_ID;
+        }else {
+            guildId = context.author().getGuild().getIdLong();
+        }
         TextChannel validationChannel = Main.getJDA().getChannelById(TextChannel.class, Config.getGuildVariable(guildId, "CONFESSION_VALIDATION_CHANNEL_ID"));
         if(validationChannel == null) {
             MessageUtil.sendAdminMessage(Strings.getString("WARNING_CONFESSION_VALIDATION_CHANNEL_ID_INVALID"), guildId);
@@ -70,13 +72,13 @@ public class ConfessionCommand extends ListenerAdapter implements Command {
                         .build()
         ));
         pendingConfessions.put(confessUUID, embedBuilder);
-        confessionAuthor.put(confessUUID, context.author().getIdLong());
+        confessionAuthor.put(confessUUID, context.user().getIdLong());
 
         validationChannel.sendMessage(MessageCreateBuilder.from(embedBuilder.build())
                                               .addActionRow(
-                                                      Button.primary("validate-confession-" + confessUUID, Emoji.fromUnicode("✅")),
-                                                      Button.primary("warn-confession-" + confessUUID, Emoji.fromUnicode("⚠")),
-                                                      Button.primary("refuse-confession-" + confessUUID, Emoji.fromUnicode("❌"))
+                                                      Button.primary("validate-confession;" + confessUUID, Emoji.fromUnicode("✅")),
+                                                      Button.primary("warn-confession;" + confessUUID, Emoji.fromUnicode("⚠")),
+                                                      Button.primary("refuse-confession;" + confessUUID, Emoji.fromUnicode("❌"))
                                               ).build()).queue();
     }
 
@@ -97,15 +99,15 @@ public class ConfessionCommand extends ListenerAdapter implements Command {
         if(event.getGuild() == null) return;
         assert id != null;
         if(id.contains(CONFESSION)) {
-            UUID uuid = UUID.fromString(id.split("-")[2]);
+            UUID uuid = UUID.fromString(id.split(";")[1]);
             if(id.startsWith("validate")) {
                 sendConfession(uuid, event.getGuild().getIdLong());
                 updateValidationEmbedColor(VALID, event.getMessage());
-            } else if(id.startsWith("refused")){
+            } else if(id.startsWith("refuse")){
                 updateValidationEmbedColor(REFUSED, event.getMessage());
             } else {
                 updateValidationEmbedColor(WARNED, event.getMessage());
-                Main.getJDA().retrieveUserById(confessionAuthor.get(uuid)).flatMap(User::openPrivateChannel).queue(privateChannel -> privateChannel.sendMessage(Strings.getString("CONFESSION_COMMAND_WARN_AUTHOR")).queue());
+                Main.getJDA().retrieveUserById(confessionAuthor.get(uuid)).flatMap(User::openPrivateChannel).queue(privateChannel -> privateChannel.sendMessage(Strings.getString("COMMAND_CONFESSION_WARN_AUTHOR")).queue());
             }
             event.getMessage().editMessageComponents(Collections.emptyList()).queue();
             confessionAuthor.remove(uuid);

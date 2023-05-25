@@ -30,7 +30,8 @@ public class Strings {
 
     public static String getString(String key) {
         if(!STRINGS_MAP.containsKey(key)) {
-            Main.LOGGER.log(Level.WARNING, "Missing string : %s\n", key);
+            String formatted = "Missing string : %s%n".formatted(key);
+            Main.LOGGER.log(Level.WARNING, formatted);
             return STRING_NOT_FOUND;
         }
         return STRINGS_MAP.get(key);
