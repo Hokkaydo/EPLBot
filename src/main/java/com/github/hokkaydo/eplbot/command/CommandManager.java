@@ -125,4 +125,8 @@ public class CommandManager extends ListenerAdapter {
                 .setDefaultPermissions(cmd.adminOnly() ? DefaultMemberPermissions.DISABLED : DefaultMemberPermissions.ENABLED);
     }
 
+    public void refreshCommands(Guild guild) {
+        guild.updateCommands().addCommands(commands.get(guild.getIdLong()).values().stream().map(this::mapToCommandData).toList()).queue();
+    }
+
 }
