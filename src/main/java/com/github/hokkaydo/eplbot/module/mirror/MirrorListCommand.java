@@ -25,15 +25,19 @@ public class MirrorListCommand implements Command {
     @Override
     public void executeCommand(CommandContext context) {
         Optional<OptionMapping> channelAOption = context.options().stream().filter(o -> o.getName().equals("channel_a")).findFirst();
-        if(channelAOption.isEmpty()) return;
-        MessageChannel channelA = Main.getJDA().getChannelById(MessageChannel.class, channelAOption.get().getAsString());
-        if(channelA == null) {
-            context.replyCallbackAction().setContent(Strings.getString("COMMAND_MIRROR_INVALID_CHANNEL").formatted(channelAOption.get().getAsString())).queue();
-            return;
+        MessageChannel channelA;
+        if(channelAOption.isEmpty()) {
+            channelA = context.channel();
+        }else {
+            channelA = Main.getJDA().getChannelById(MessageChannel.class, channelAOption.get().getAsString());
+            if(channelA == null) {
+                context.replyCallbackAction().setContent(Strings.getString("COMMAND_MIRROR_INVALID_CHANNEL").formatted(channelAOption.get().getAsString())).queue();
+                return;
+            }
         }
         List<MirrorManager.Mirror> mirrors = mirrorManager.getLinks(channelA);
         if(mirrors.isEmpty()) {
-            context.replyCallbackAction().setContent(Strings.getString("COMMAND_MIRRORLIST_NO_MIRROR").formatted(channelAOption.get().getAsString())).queue();
+            context.replyCallbackAction().setContent(Strings.getString("COMMAND_MIRRORLIST_NO_MIRROR").formatted(channelA.getAsMention())).queue();
             return;
         }
         StringBuilder stringBuilder = new StringBuilder("__Liste des liens existants__ :\n");
@@ -61,7 +65,7 @@ public class MirrorListCommand implements Command {
 
     @Override
     public List<OptionData> getOptions() {
-        return Collections.singletonList(new OptionData(OptionType.STRING, "channel_a", Strings.getString("COMMAND_MIRRORLINK_OPTION_CHANNEL_A_DESCRIPTION"), true));
+        return Collections.singletonList(new OptionData(OptionType.STRING, "channel_a", Strings.getString("COMMAND_MIRRORLINK_OPTION_CHANNEL_A_DESCRIPTION"), false));
     }
 
     @Override

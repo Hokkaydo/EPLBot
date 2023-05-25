@@ -32,13 +32,13 @@
   "COMMAND_CLEAR_BETWEEN_HELP": "Supprime les messages compris entre le message ayant pour identifiant `id_a` et le message ayant pour identifiant `id_b` tous deux inclus.",
   "COMMAND_CLEAR_LAST": "Supprime les N derniers messages (N < 100)",
   "COMMAND_MIRRORLIST_HELP": "Affiche la liste des canaux reliés pour le canal dont l'identifiant est donné en paramètre.",
-  "COMMAND_MIRRORLINK_HELP": "Crée un lien symbolique entre les deux canaux dont les identifiants sont donnés en paramètre. Si un message est envoyé dans l'un, il est également envoyé dans l'autre.\n Les modifications de messages sont répercutées.\n \nPermet de synchroniser les messages entre deux canaux voire serveurs.",
+  "COMMAND_MIRRORLINK_HELP": "Crée un lien symbolique entre les deux canaux dont les identifiants sont donnés en paramètre. Si un message est envoyé dans l'un, il est également envoyé dans l'autre.\n Les modifications de messages sont répercutées.\n \nPermet de synchroniser les messages entre deux canaux, voire serveurs.",
   "COMMAND_MIRRORUNLINK_HELP": "Détruit un lien précédemment créé entre deux canaux.",
   "WARNING_RSS_CHANNEL_ID_INVALID": "Identifiant de canal d'envoi de flux RSS invalide ! Utilisez /config pour le modifier",
   "COMMAND_MIRRORUNLINK_LINK_DOESNT_EXISTS": "Aucun lien n'existe entre ces deux canaux",
   "COMMAND_MIRRORLINK_LINK_DESTROYED": "Le lien a bien été détruit",
   "COMMAND_MIRROR_INVALID_CHANNEL": "Identifiant de canal %s invalide.",
-  "COMMAND_MIRRORLIST_NO_MIRROR": "Aucun lien trouvé pour ce canal",
+  "COMMAND_MIRRORLIST_NO_MIRROR": "Aucun lien trouvé pour le canal %s",
   "COMMAND_MIRRORLINK_LINK_EXISTS": "Un lien existe déjà entre %s et %s.",
   "ERROR_OCCURRED": "Une erreur est survenue.",
   "WARNING_CONFESSION_VALIDATION_CHANNEL_ID_INVALID": ":warning: L'identifiant du canal de validation de confession est invalide",
@@ -62,5 +62,6 @@
   "COMMAND_MIRRORLINK_LINK_CREATED": "Lien créé entre %s et %s.",
   "THREAD_FIRST_MESSAGE_NOT_SENT": ":warning: First message couldn't be mirrored due to Discord API restrictions ! Please check by yourself : %s",
   "COMMAND_PING_DESCRIPTION": "Permet d'afficher la latence du bot",
-  "COMMAND_PING_HELP": "Affiche la latence du bot en millisecondes"
+  "COMMAND_PING_HELP": "Affiche la latence du bot en millisecondes",
+  "COMMAND_CONFESSION_WARN_AUTHOR": "Votre confession a été refusée pour non-respect des règles en vigueur sur le serveur. \nCela inclut, sans pour autant s'y limiter, : \n- Insultes\n-Racisme, homophobie, dénigrement d'une communauté\n- Apologie du terrorisme\n-Publicité sans accord préalable. \nMerci de bien vouloir relire les règles avant de reposter une confession."
 }
