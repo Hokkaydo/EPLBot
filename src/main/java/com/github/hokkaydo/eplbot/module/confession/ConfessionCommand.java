@@ -9,6 +9,7 @@ import com.github.hokkaydo.eplbot.command.CommandContext;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
@@ -37,10 +38,12 @@ public class ConfessionCommand extends ListenerAdapter implements Command {
     private static final String CONFESSION = "confession";
 
     private static final Map<UUID, MessageCreateBuilder> pendingConfessions = new HashMap<>();
-    private static final String[] VALIDATION_EMBED_TITLES = {"Confession - Validée", "Confession - Refusée"};
-    private static final Color[] VALIDATION_EMBED_COLORS = {Color.GREEN, Color.RED};
+    private static final Map<UUID, Long> confessionAuthor = new HashMap<>();
+    private static final String[] VALIDATION_EMBED_TITLES = {"Confession - Validée", "Confession - Refusée", "Confession - Signalée"};
+    private static final Color[] VALIDATION_EMBED_COLORS = {Color.GREEN, Color.RED, Color.YELLOW};
     private static final int VALID = 0;
     private static final int REFUSED = 1;
+    private static final int WARNED = 2;
 
     private final Long guildId;
     public ConfessionCommand(Long guildId) {
@@ -67,15 +70,17 @@ public class ConfessionCommand extends ListenerAdapter implements Command {
                         .build()
         ));
         pendingConfessions.put(confessUUID, embedBuilder);
+        confessionAuthor.put(confessUUID, context.author().getIdLong());
 
         validationChannel.sendMessage(MessageCreateBuilder.from(embedBuilder.build())
                                               .addActionRow(
                                                       Button.primary("validate-confession-" + confessUUID, Emoji.fromUnicode("✅")),
+                                                      Button.primary("warn-confession-" + confessUUID, Emoji.fromUnicode("⚠")),
                                                       Button.primary("refuse-confession-" + confessUUID, Emoji.fromUnicode("❌"))
                                               ).build()).queue();
     }
 
-    private void validateConfession(UUID uuid, Long guildId) {
+    private void sendConfession(UUID uuid, Long guildId) {
         MessageCreateBuilder confession = pendingConfessions.get(uuid);
         if(confession == null) return;
         TextChannel confessionChannel = Main.getJDA().getChannelById(TextChannel.class, Config.getGuildVariable(guildId,"CONFESSION_CHANNEL_ID"));
@@ -84,7 +89,6 @@ public class ConfessionCommand extends ListenerAdapter implements Command {
             return;
         }
         confessionChannel.sendMessage(confession.build()).queue();
-        pendingConfessions.remove(uuid);
     }
 
     @Override
@@ -93,18 +97,24 @@ public class ConfessionCommand extends ListenerAdapter implements Command {
         if(event.getGuild() == null) return;
         assert id != null;
         if(id.contains(CONFESSION)) {
+            UUID uuid = UUID.fromString(id.split("-")[2]);
             if(id.startsWith("validate")) {
-                validateConfession(UUID.fromString(id.replace("validate-confession-", "")), event.getGuild().getIdLong());
-                updateEmbedColor(VALID, event.getMessage());
+                sendConfession(uuid, event.getGuild().getIdLong());
+                updateValidationEmbedColor(VALID, event.getMessage());
+            } else if(id.startsWith("refused")){
+                updateValidationEmbedColor(REFUSED, event.getMessage());
             } else {
-                updateEmbedColor(REFUSED, event.getMessage());
+                updateValidationEmbedColor(WARNED, event.getMessage());
+                Main.getJDA().retrieveUserById(confessionAuthor.get(uuid)).flatMap(User::openPrivateChannel).queue(privateChannel -> privateChannel.sendMessage(Strings.getString("CONFESSION_COMMAND_WARN_AUTHOR")).queue());
             }
             event.getMessage().editMessageComponents(Collections.emptyList()).queue();
+            confessionAuthor.remove(uuid);
+            pendingConfessions.remove(uuid);
             return;
         }
         event.reply("unknown").queue();
     }
-    private void updateEmbedColor(int state, Message message) {
+    private void updateValidationEmbedColor(int state, Message message) {
         if(message.getEmbeds().isEmpty() || message.getEmbeds().get(0).getFields().isEmpty()) return;
         MessageEmbed embed = message.getEmbeds().get(0);
         EmbedBuilder builder = new EmbedBuilder(embed).setColor(VALIDATION_EMBED_COLORS[state]).clearFields().addField(VALIDATION_EMBED_TITLES[state], Objects.requireNonNull(embed.getFields().get(0).getValue()), true);
