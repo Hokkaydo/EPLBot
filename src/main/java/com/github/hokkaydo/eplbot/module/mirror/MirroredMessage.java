@@ -34,7 +34,11 @@ public class MirroredMessage {
     public void mirrorMessage(Message initialMessage, Message replyTo) {
         MessageCreateAction createAction;
         String content = getContent(initialMessage);
-        MessageEmbed embed = MessageUtil.toEmbed(initialMessage).setDescription(content).setFooter("").build();
+        MessageEmbed embed = MessageUtil.toEmbed(initialMessage)
+                                     .setDescription(content)
+                                     .setFooter("")
+                                     .setTimestamp(null)
+                                     .build();
         if(replyTo != null)
             createAction = replyTo.replyEmbeds(embed);
         else
@@ -118,7 +122,18 @@ public class MirroredMessage {
         return this.threadOwner;
     }
 
-    private record Tuple3<A, B, C>(A a, B b, C c) {}
+    private record Tuple3<A, B, C>(A a, B b, C c) {
+
+        @Override
+        public String toString() {
+            return "Tuple3{" +
+                           "a=" + a +
+                           ", b=" + b +
+                           ", c=" + c +
+                           '}';
+        }
+
+    }
 
 
 }
