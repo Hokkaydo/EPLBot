@@ -71,7 +71,7 @@ public class Config {
 
     private static final Map<String, ConfigurationParser> DEFAULT_STATE = Map.of(
             "LAST_RSS_ARTICLE_DATE", new ConfigurationParser(
-                    Map.of("https://www.developpez.com/index/rss", Timestamp.from(Instant.MIN)),
+                    Map.of("https://www.developpez.com/index/rss", Timestamp.from(Instant.EPOCH)),
                     m -> ((Map<String, Timestamp>) m).entrySet().stream().map(e -> e.getKey() + ";" + e.getValue()).reduce("", (a,b) ->  a + "," + b),
                     s -> Arrays.stream(s.split(",")).map(a -> a.split(";")).map(a -> Map.entry(a[0], Timestamp.valueOf(a[1]))).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)),
                     "Liste de paires Lien-Timestamp"
