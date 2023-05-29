@@ -103,7 +103,9 @@ public class RssReader {
     }
 
     public void stop(Long guildId) {
-        futures.get(guildId).cancel(true);
+        ScheduledFuture<?> f = futures.get(guildId);
+        if(f != null )
+            f.cancel(true);
         futures.remove(guildId);
     }
 }
