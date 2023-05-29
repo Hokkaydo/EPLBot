@@ -4,6 +4,8 @@ import com.github.hokkaydo.eplbot.Main;
 import com.github.hokkaydo.eplbot.Strings;
 import com.github.hokkaydo.eplbot.command.Command;
 import com.github.hokkaydo.eplbot.command.CommandContext;
+import net.dv8tion.jda.api.entities.channel.ChannelType;
+import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
@@ -25,11 +27,19 @@ public class MirrorListCommand implements Command {
     @Override
     public void executeCommand(CommandContext context) {
         Optional<OptionMapping> channelAOption = context.options().stream().filter(o -> o.getName().equals("channel_a")).findFirst();
-        MessageChannel channelA;
+        GuildMessageChannel channelA;
         if(channelAOption.isEmpty()) {
-            channelA = context.channel();
+            if(!context.channel().getType().isGuild() || !context.channel().getType().isMessage()) {
+                context.replyCallbackAction().setContent(Strings.getString("COMMAND_MIRRORLIST_CHANNEL_GUILD_TEXT")).queue();
+                return;
+            }
+            channelA = (GuildMessageChannel) Main.getJDA().getGuildChannelById(ChannelType.TEXT, context.channel().getIdLong());
+            if(channelA == null) {
+                context.replyCallbackAction().setContent(Strings.getString("COMMAND_MIRRORLIST_CHANNEL_GUILD_TEXT")).queue();
+                return;
+            }
         }else {
-            channelA = Main.getJDA().getChannelById(MessageChannel.class, channelAOption.get().getAsString());
+            channelA = Main.getJDA().getChannelById(GuildMessageChannel.class, channelAOption.get().getAsString());
             if(channelA == null) {
                 context.replyCallbackAction().setContent(Strings.getString("COMMAND_MIRROR_INVALID_CHANNEL").formatted(channelAOption.get().getAsString())).queue();
                 return;

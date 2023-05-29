@@ -4,9 +4,10 @@ import com.github.hokkaydo.eplbot.Main;
 import com.github.hokkaydo.eplbot.MessageUtil;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.EmbedType;
+import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
-import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
 import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
 import net.dv8tion.jda.api.utils.FileUpload;
 
@@ -18,10 +19,10 @@ import java.util.concurrent.atomic.AtomicReference;
 public class MirroredMessage {
 
     private Message message;
-    private final MessageChannel channel;
+    private final GuildMessageChannel channel;
     private OffsetDateTime lastUpdated;
     private boolean threadOwner;
-    public MirroredMessage(Message initialMessage, MessageChannel textChannel, boolean mirror, Message replyTo) {
+    public MirroredMessage(Message initialMessage, GuildMessageChannel textChannel, boolean mirror, Message replyTo) {
         this.channel = textChannel;
         this.lastUpdated = initialMessage.getTimeCreated();
         if(mirror) {
@@ -34,7 +35,10 @@ public class MirroredMessage {
     public void mirrorMessage(Message initialMessage, Message replyTo) {
         MessageCreateAction createAction;
         String content = getContent(initialMessage);
+        Member authorMember = channel.getGuild().getMemberById(initialMessage.getAuthor().getIdLong());
+        String authorNickAndTag = (authorMember == null ? "" : authorMember.getNickname() + " (") + message.getAuthor().getAsTag() + (authorMember == null ? "" : ")");
         MessageEmbed embed = MessageUtil.toEmbed(initialMessage)
+                                     .setAuthor(authorNickAndTag, message.getJumpUrl(), message.getAuthor().getAvatarUrl())
                                      .setDescription(content)
                                      .setFooter("")
                                      .setTimestamp(null)
