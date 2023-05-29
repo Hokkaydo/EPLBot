@@ -12,7 +12,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
-public class RefreshCommand implements Command {
+public class RefreshCommandsCommand implements Command {
 
     @Override
     public void executeCommand(CommandContext context) {
@@ -22,7 +22,7 @@ public class RefreshCommand implements Command {
 
     @Override
     public String getName() {
-        return "refresh";
+        return "refreshcommands";
     }
 
     @Override

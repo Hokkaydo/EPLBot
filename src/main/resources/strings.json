@@ -67,5 +67,10 @@
   "COMMAND_REFRESH_HELP": "Resynchronise la liste des commandes sur le serveur",
   "COMMAND_REFRESH_DESCRIPTION": "Permet de rafraîchir la liste des commandes sur le serveur",
   "COMMAND_REFRESH_DONE": "Les commandes ont bien été resynchronisées.",
-  "COMMAND_MIRRORLIST_CHANNEL_GUILD_TEXT": "Le canal doit être un canal lié à un serveur textuel : pas de messages privés ni d'audio."
+  "COMMAND_MIRRORLIST_CHANNEL_GUILD_TEXT": "Le canal doit être un canal lié à un serveur textuel : pas de messages privés ni d'audio.",
+  "COMMAND_STATE_RESET": "Les variables d'état ont bien été réinitialisées.",
+  "COMMAND_STATE_ACTION_NOT_FOUND": "Action d'état %s introuvable.",
+  "COMMAND_STATE_HELP": "Affiche les variables d'états du serveur.\n- `/state reset` pour les réinitialiser",
+  "COMMAND_STATE_DESCRIPTION": "Permet de gérer les variables d'état du serveur. Debug-only !",
+  "COMMAND_STATE_SUBCOMMAND_OPTION_DESCRIPTION": "Sous-commande optionnelle"
 }

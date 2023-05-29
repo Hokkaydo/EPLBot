@@ -15,7 +15,8 @@ public class ConfigurationModule extends Module {
     private final DisableCommand disableCommand;
     private final ListFeaturesCommand listFeaturesCommand;
     private final ConfigurationCommand configurationCommand;
-    private final RefreshCommand refreshCommand;
+    private final RefreshCommandsCommand refreshCommandsCommand;
+    private final StateCommand stateCommand;
 
     public ConfigurationModule(@NotNull Long guildId) {
         super(guildId);
@@ -23,7 +24,8 @@ public class ConfigurationModule extends Module {
         disableCommand = new DisableCommand(getGuildId());
         listFeaturesCommand = new ListFeaturesCommand(getGuildId());
         configurationCommand = new ConfigurationCommand(getGuildId());
-        refreshCommand = new RefreshCommand();
+        refreshCommandsCommand = new RefreshCommandsCommand();
+        stateCommand = new StateCommand(guildId);
     }
 
     @Override
@@ -33,7 +35,7 @@ public class ConfigurationModule extends Module {
 
     @Override
     public List<Command> getCommands() {
-        return Arrays.asList(enableCommand, disableCommand, listFeaturesCommand, configurationCommand, refreshCommand);
+        return Arrays.asList(enableCommand, disableCommand, listFeaturesCommand, configurationCommand, refreshCommandsCommand, stateCommand);
     }
 
     @Override

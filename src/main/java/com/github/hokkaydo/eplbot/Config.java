@@ -148,7 +148,13 @@ public class Config {
     }
 
     public static void updateValue(Long guildId, String key, Object value) {
-        if(!DEFAULT_CONFIGURATION.containsKey(key)) throw new IllegalStateException("Configuration key not allowed");
+        if(!DEFAULT_CONFIGURATION.containsKey(key)) {
+            if(!DEFAULT_STATE.containsKey(key)) throw new IllegalStateException("Configuration key not allowed");
+            if(!GUILD_STATE.containsKey(guildId))
+                GUILD_STATE.put(guildId, new HashMap<>());
+            GUILD_STATE.get(guildId).put(key, value);
+            return;
+        }
         if(!GUILD_CONFIGURATION.containsKey(guildId))
             GUILD_CONFIGURATION.put(guildId, new HashMap<>());
         GUILD_CONFIGURATION.get(guildId).put(key, value);
@@ -216,6 +222,16 @@ public class Config {
             }
             GUILD_CONFIGURATION.get(guildId).put(key, DEFAULT_CONFIGURATION.get(key).fromConfig.apply(v));
         });
+    }
+
+    public static Map<String, ConfigurationParser> getDefaultState() {
+        return DEFAULT_STATE;
+    }
+
+    public static void resetDefaultState(Long guildId) {
+        for (Map.Entry<String, ConfigurationParser> entry : DEFAULT_STATE.entrySet()) {
+            updateValue(guildId, entry.getKey(), entry.getValue().defaultValue);
+        }
     }
 
 
