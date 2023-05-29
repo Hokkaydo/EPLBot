@@ -1,4 +1,4 @@
-package com.github.hokkaydo.eplbot.module.basic;
+package com.github.hokkaydo.eplbot.module.eplcommand;
 
 import com.github.hokkaydo.eplbot.Strings;
 import com.github.hokkaydo.eplbot.command.Command;
@@ -16,16 +16,22 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-public class ClearFromCommand implements Command {
+public class ClearLastCommand implements Command {
 
     @Override
     public void executeCommand(CommandContext context) {
-        Optional<OptionMapping> fromIdOption = context.options().stream().filter(o -> o.getName().equals("from")).findFirst();
-        if(fromIdOption.isEmpty()) return;
-        context.channel().getHistoryAfter(fromIdOption.get().getAsString(), 100)
-                .map(MessageHistory::getRetrievedHistory)
-                .queue(l -> l.stream().map(Message::delete).forEach(AuditableRestAction::queue));
-        context.channel().deleteMessageById(fromIdOption.get().getAsString()).queue(
+        Optional<OptionMapping> amountOption = context.options().stream().filter(o -> o.getName().equals("amount")).findFirst();
+        if(amountOption.isEmpty()) return;
+        int amount = amountOption.get().getAsInt();
+        if(amount <= 0) {
+            context.replyCallbackAction().setContent(Strings.getString("COMMAND_CLEAR_AMOUNT_POSITIVE"));
+            return;
+        }
+        if(amount > 1)
+            context.channel().getHistoryBefore(context.channel().getLatestMessageIdLong(), amount-1)
+                    .map(MessageHistory::getRetrievedHistory)
+                    .queue(l -> l.stream().map(Message::delete).forEach(AuditableRestAction::queue));
+        context.channel().deleteMessageById(context.channel().getLatestMessageIdLong()).queue(
                 s-> context.replyCallbackAction().setContent(Strings.getString("COMMAND_CLEAR_PROCESSING")).queue(),
                 f -> context.replyCallbackAction().setContent(Strings.getString("COMMAND_CLEAR_MESSAGE_TOO_OLD")).queue()
         );
@@ -33,17 +39,17 @@ public class ClearFromCommand implements Command {
 
     @Override
     public String getName() {
-        return "clearfrom";
+        return "clearlast";
     }
 
     @Override
     public Supplier<String> getDescription() {
-        return () -> Strings.getString("COMMAND_CLEAR_FROM_DESCRIPTION");
+        return () -> Strings.getString("COMMAND_CLEAR_LAST_DESCRIPTION");
     }
 
     @Override
     public List<OptionData> getOptions() {
-        return Collections.singletonList(new OptionData(OptionType.STRING, "from", Strings.getString("COMMAND_CLEAR_FROM_OPTION_FROM_DESCRIPTION"), true));
+        return Collections.singletonList(new OptionData(OptionType.STRING, "amount", Strings.getString("COMMAND_CLEAR_LAST_OPTION_AMOUNT_DESCRIPTION"), true));
     }
 
     @Override
@@ -63,7 +69,7 @@ public class ClearFromCommand implements Command {
 
     @Override
     public Supplier<String> help() {
-        return () -> Strings.getString("COMMAND_CLEAR_FROM_HELP");
+        return () -> Strings.getString("COMMAND_CLEAR_LAST_HELP");
     }
 
 }

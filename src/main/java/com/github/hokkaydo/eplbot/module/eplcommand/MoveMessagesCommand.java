@@ -1,4 +1,4 @@
-package com.github.hokkaydo.eplbot.module.basic;
+package com.github.hokkaydo.eplbot.module.eplcommand;
 
 import com.github.hokkaydo.eplbot.MessageUtil;
 import com.github.hokkaydo.eplbot.Strings;

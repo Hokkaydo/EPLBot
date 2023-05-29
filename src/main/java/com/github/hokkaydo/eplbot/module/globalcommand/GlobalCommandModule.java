@@ -1,4 +1,4 @@
-package com.github.hokkaydo.eplbot.module.configuration;
+package com.github.hokkaydo.eplbot.module.globalcommand;
 
 import com.github.hokkaydo.eplbot.command.Command;
 import com.github.hokkaydo.eplbot.module.Module;
@@ -9,7 +9,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class ConfigurationModule extends Module {
+public class GlobalCommandModule extends Module {
 
     private final EnableCommand enableCommand;
     private final DisableCommand disableCommand;
@@ -17,8 +17,11 @@ public class ConfigurationModule extends Module {
     private final ConfigurationCommand configurationCommand;
     private final RefreshCommandsCommand refreshCommandsCommand;
     private final StateCommand stateCommand;
+    private final PingCommand pingCommand;
+    private final HelpCommand helpCommand;
 
-    public ConfigurationModule(@NotNull Long guildId) {
+
+    public GlobalCommandModule(@NotNull Long guildId) {
         super(guildId);
         enableCommand = new EnableCommand(getGuildId());
         disableCommand = new DisableCommand(getGuildId());
@@ -26,6 +29,8 @@ public class ConfigurationModule extends Module {
         configurationCommand = new ConfigurationCommand(getGuildId());
         refreshCommandsCommand = new RefreshCommandsCommand();
         stateCommand = new StateCommand(guildId);
+        pingCommand = new PingCommand();
+        helpCommand = new HelpCommand(guildId);
     }
 
     @Override
@@ -35,7 +40,7 @@ public class ConfigurationModule extends Module {
 
     @Override
     public List<Command> getCommands() {
-        return Arrays.asList(enableCommand, disableCommand, listFeaturesCommand, configurationCommand, refreshCommandsCommand, stateCommand);
+        return Arrays.asList(enableCommand, disableCommand, listFeaturesCommand, configurationCommand, refreshCommandsCommand, stateCommand, pingCommand, helpCommand);
     }
 
     @Override

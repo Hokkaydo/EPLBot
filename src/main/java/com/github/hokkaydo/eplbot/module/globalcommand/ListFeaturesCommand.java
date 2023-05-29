@@ -1,10 +1,9 @@
-package com.github.hokkaydo.eplbot.module.configuration;
+package com.github.hokkaydo.eplbot.module.globalcommand;
 
 import com.github.hokkaydo.eplbot.Main;
 import com.github.hokkaydo.eplbot.Strings;
 import com.github.hokkaydo.eplbot.command.Command;
 import com.github.hokkaydo.eplbot.command.CommandContext;
-import net.dv8tion.jda.api.entities.channel.concrete.PrivateChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 
@@ -12,22 +11,31 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
-public class RefreshCommandsCommand implements Command {
+public class ListFeaturesCommand implements Command {
 
+    private final Long guildId;
+    public ListFeaturesCommand(Long guildId) {
+        this.guildId = guildId;
+    }
     @Override
     public void executeCommand(CommandContext context) {
-        Main.getCommandManager().refreshCommands(context.author().getGuild());
-        context.replyCallbackAction().setContent(Strings.getString("COMMAND_REFRESH_DONE")).queue();
+        context.replyCallbackAction().setContent(
+                Main.getModuleManager().getModules(guildId)
+                        .stream()
+                        .map(feature -> "`" + feature.getName() + "`: " + (feature.isEnabled() ? ":white_check_mark:" : ":x:"))
+                        .reduce((s1, s2) -> s1 + "\n" + s2)
+                        .orElse("")
+        ).queue();
     }
 
     @Override
     public String getName() {
-        return "refreshcommands";
+        return "listfeatures";
     }
 
     @Override
     public Supplier<String> getDescription() {
-        return () -> Strings.getString("COMMAND_REFRESH_DESCRIPTION");
+        return () -> Strings.getString("COMMAND_LISTFEATURES_DESCRIPTION");
     }
 
     @Override
@@ -42,7 +50,7 @@ public class RefreshCommandsCommand implements Command {
 
     @Override
     public boolean validateChannel(MessageChannel channel) {
-        return !(channel instanceof PrivateChannel);
+        return true;
     }
 
     @Override
@@ -52,7 +60,6 @@ public class RefreshCommandsCommand implements Command {
 
     @Override
     public Supplier<String> help() {
-        return () -> Strings.getString("COMMAND_REFRESH_HELP");
+        return () -> Strings.getString("COMMAND_ENABLE_HELP");
     }
-
 }

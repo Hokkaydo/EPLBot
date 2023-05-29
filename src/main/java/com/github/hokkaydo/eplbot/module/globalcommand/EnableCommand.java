@@ -1,4 +1,4 @@
-package com.github.hokkaydo.eplbot.module.configuration;
+package com.github.hokkaydo.eplbot.module.globalcommand;
 
 import com.github.hokkaydo.eplbot.Main;
 import com.github.hokkaydo.eplbot.Strings;
@@ -13,38 +13,34 @@ import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import java.util.List;
 import java.util.function.Supplier;
 
-public class DisableCommand implements Command {
+public class EnableCommand implements Command {
 
     private final Long guildId;
-    public DisableCommand(Long guildId) {
+    public EnableCommand(Long guildId) {
         this.guildId = guildId;
     }
     @Override
     public void executeCommand(CommandContext context) {
         OptionMapping featureOption = context.options().get(0);
         if(featureOption == null) return;
-        if(featureOption.getAsString().equals("configuration")) {
-            context.replyCallbackAction().setContent("Mais t'es complètement zinzin ma parole").queue();
-            return;
-        }
-        Main.getModuleManager().disableModule(featureOption.getAsString(), guildId);
-        context.replyCallbackAction().setContent("Disabled `" + featureOption.getAsString() + "` :x:").queue();
+        Main.getModuleManager().enableModule(featureOption.getAsString(), guildId);
+        context.replyCallbackAction().setContent("Enabled `" + featureOption.getAsString() + "` :white_check_mark:").queue();
     }
 
     @Override
     public String getName() {
-        return "disable";
+        return "enable";
     }
 
     @Override
     public Supplier<String> getDescription() {
-        return () -> Strings.getString("COMMAND_DISABLE_DESCRIPTION");
+        return () -> Strings.getString("COMMAND_ENABLE_DESCRIPTION");
     }
 
     @Override
     public List<OptionData> getOptions() {
         return List.of(
-                new OptionData(OptionType.STRING, "feature", Strings.getString("COMMAND_DISABLE_OPTION_FEATURE_DESCRIPTION"), true)
+                new OptionData(OptionType.STRING, "feature", Strings.getString("COMMAND_ENABLE_OPTION_FEATURE_DESCRIPTION"), true)
                         .addChoices(Main.getModuleManager()
                                             .getModules(guildId)
                                             .stream()
@@ -72,6 +68,6 @@ public class DisableCommand implements Command {
 
     @Override
     public Supplier<String> help() {
-        return () -> Strings.getString("COMMAND_DISABLE_HELP");
+        return () -> Strings.getString("COMMAND_ENABLE_HELP");
     }
 }

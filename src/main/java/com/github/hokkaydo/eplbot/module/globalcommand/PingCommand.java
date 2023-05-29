@@ -1,4 +1,4 @@
-package com.github.hokkaydo.eplbot.module.configuration;
+package com.github.hokkaydo.eplbot.module.globalcommand;
 
 import com.github.hokkaydo.eplbot.Main;
 import com.github.hokkaydo.eplbot.Strings;
@@ -11,31 +11,21 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
-public class ListFeaturesCommand implements Command {
+public class PingCommand implements Command {
 
-    private final Long guildId;
-    public ListFeaturesCommand(Long guildId) {
-        this.guildId = guildId;
-    }
     @Override
     public void executeCommand(CommandContext context) {
-        context.replyCallbackAction().setContent(
-                Main.getModuleManager().getModules(guildId)
-                        .stream()
-                        .map(feature -> "`" + feature.getName() + "`: " + (feature.isEnabled() ? ":white_check_mark:" : ":x:"))
-                        .reduce((s1, s2) -> s1 + "\n" + s2)
-                        .orElse("")
-        ).queue();
+        Main.getJDA().getRestPing().queue(t -> context.replyCallbackAction().setContent(":ping_pong: %dms".formatted(t)).queue());
     }
 
     @Override
     public String getName() {
-        return "listfeatures";
+        return "ping";
     }
 
     @Override
     public Supplier<String> getDescription() {
-        return () -> Strings.getString("COMMAND_LISTFEATURES_DESCRIPTION");
+        return () -> Strings.getString("COMMAND_PING_DESCRIPTION");
     }
 
     @Override
@@ -45,7 +35,7 @@ public class ListFeaturesCommand implements Command {
 
     @Override
     public boolean ephemeralReply() {
-        return true;
+        return false;
     }
 
     @Override
@@ -55,11 +45,12 @@ public class ListFeaturesCommand implements Command {
 
     @Override
     public boolean adminOnly() {
-        return true;
+        return false;
     }
 
     @Override
     public Supplier<String> help() {
-        return () -> Strings.getString("COMMAND_ENABLE_HELP");
+        return () -> Strings.getString("COMMAND_PING_HELP");
     }
+
 }

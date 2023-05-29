@@ -1,4 +1,4 @@
-package com.github.hokkaydo.eplbot.module.configuration;
+package com.github.hokkaydo.eplbot.module.globalcommand;
 
 import com.github.hokkaydo.eplbot.Config;
 import com.github.hokkaydo.eplbot.Strings;

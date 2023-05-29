@@ -5,9 +5,9 @@ import com.github.hokkaydo.eplbot.command.CommandManager;
 import com.github.hokkaydo.eplbot.module.Module;
 import com.github.hokkaydo.eplbot.module.ModuleManager;
 import com.github.hokkaydo.eplbot.module.autopin.AutoPinModule;
-import com.github.hokkaydo.eplbot.module.basic.BasicCommandModule;
+import com.github.hokkaydo.eplbot.module.eplcommand.EPLCommandModule;
 import com.github.hokkaydo.eplbot.module.confession.ConfessionModule;
-import com.github.hokkaydo.eplbot.module.configuration.ConfigurationModule;
+import com.github.hokkaydo.eplbot.module.globalcommand.GlobalCommandModule;
 import com.github.hokkaydo.eplbot.module.mirror.MirrorModule;
 import com.github.hokkaydo.eplbot.module.quote.QuoteModule;
 import com.github.hokkaydo.eplbot.module.rss.RssModule;
@@ -118,14 +118,15 @@ public class Main {
     public static void registerModules() {
         List<Class<? extends Module>> globalModules = Arrays.asList(
                 MirrorModule.class,
-                ConfigurationModule.class
-        );
-        List<Class<? extends Module>> eplModules = Arrays.asList(
+                GlobalCommandModule.class,
                 QuoteModule.class,
                 RssModule.class,
-                BasicCommandModule.class,
-                ConfessionModule.class,
-                AutoPinModule.class
+                AutoPinModule.class,
+                RssModule.class
+        );
+        List<Class<? extends Module>> eplModules = Arrays.asList(
+                EPLCommandModule.class,
+                ConfessionModule.class
         );
         Map<Long, List<Command>> guildCommands = new HashMap<>();
         for(Long guildId : List.of(EPL_DISCORD_ID, testDiscordId)) {
