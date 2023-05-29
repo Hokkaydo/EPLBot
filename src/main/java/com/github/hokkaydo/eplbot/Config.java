@@ -143,7 +143,7 @@ public class Config {
 
     public static boolean parseAndUpdate(Long guildId, String key, String value) {
         if(!DEFAULT_CONFIGURATION.containsKey(key)) return false;
-        updateValue(guildId, key, DEFAULT_CONFIGURATION.get(key).toConfig.apply(value));
+        updateValue(guildId, key, DEFAULT_CONFIGURATION.get(key).fromConfig.apply(value));
         return true;
     }
 
