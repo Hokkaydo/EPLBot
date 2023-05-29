@@ -18,7 +18,7 @@ public class QuoteListener extends ListenerAdapter {
     public QuoteListener(Long guildId) {
         this.guildId = guildId;
     }
-    private static final Pattern MESSAGE_URL_PATTERN = Pattern.compile("https://discord.com/channels/\\d*/\\d*/\\d*");
+    private static final Pattern MESSAGE_URL_PATTERN = Pattern.compile("https?://(canary.|ptb.)?discord.com/channels/\\d*/\\d*/\\d*");
     @Override
     public void onMessageReceived(@NotNull MessageReceivedEvent event) {
         if(!event.isFromGuild()) return;
