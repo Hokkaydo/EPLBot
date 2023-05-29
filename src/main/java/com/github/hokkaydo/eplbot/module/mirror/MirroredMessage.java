@@ -36,7 +36,8 @@ public class MirroredMessage {
         MessageCreateAction createAction;
         String content = getContent(initialMessage);
         Member authorMember = channel.getGuild().getMemberById(initialMessage.getAuthor().getIdLong());
-        String authorNickAndTag = (authorMember == null ? "" : authorMember.getNickname() + " (") + initialMessage.getAuthor().getAsTag() + (authorMember == null ? "" : ")");
+        boolean hasNickname = authorMember != null && authorMember.getNickname() != null;
+        String authorNickAndTag = (hasNickname  ? authorMember.getNickname() + " (" : "") + initialMessage.getAuthor().getAsTag() + (hasNickname ? ")" : "");
         MessageEmbed embed = MessageUtil.toEmbed(initialMessage)
                                      .setAuthor(authorNickAndTag, initialMessage.getJumpUrl(), initialMessage.getAuthor().getAvatarUrl())
                                      .setDescription(content)
