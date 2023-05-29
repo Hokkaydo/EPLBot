@@ -88,7 +88,7 @@ public class Main {
                       .addEventListeners(commandManager, guildStateListener)
                       .build();
         jda.awaitReady();
-        redirectError();
+        //redirectError(); //TODO not working properly
         registerModules();
         jda.getGuilds().forEach(guild -> {
                     List<String> modules = Config.getModulesStatus(

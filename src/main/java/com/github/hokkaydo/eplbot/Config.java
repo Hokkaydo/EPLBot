@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -24,41 +25,41 @@ public class Config {
     private static final String CONFIG_PATH = Main.PERSISTENCE_DIR_PATH + "/config";
 
     private static final String IDENTIFIER_UNDER_STRING_FORM = "Identifiant sous forme de chaîne de caractères";
-    private static final Supplier<ConfigurationParser> MODULE_DISABLED = () -> new ConfigurationParser(false, Object::toString, Boolean::valueOf, "Booléen");
+    private static final Supplier<ConfigurationParser> MODULE_DISABLED = () -> new ConfigurationParser(() -> false, Object::toString, Boolean::valueOf, "Booléen");
     private static final String INTEGER_FORMAT = "Nombre entier";
     protected static final Map<String, ConfigurationParser> DEFAULT_CONFIGURATION = new HashMap<>(Map.of(
             "PIN_REACTION_NAME", new ConfigurationParser(
-                    "\uD83D\uDCCC",
+                    () -> "\uD83D\uDCCC",
                     Object::toString,
                     o -> o,
                     "Nom de la réaction"
             ),
             "PIN_REACTION_THRESHOLD", new ConfigurationParser(
-                    1,
+                    () -> 1,
                     Object::toString,
                     Integer::parseInt,
                     INTEGER_FORMAT
             ),
             "ADMIN_CHANNEL_ID", new ConfigurationParser(
-                    1,
+                    () -> 1,
                     Object::toString,
                     Integer::parseInt,
                     INTEGER_FORMAT
             ),
             "CONFESSION_CHANNEL_ID", new ConfigurationParser(
-                    "",
+                    () -> "",
                     Object::toString,
                     s -> s,
                     IDENTIFIER_UNDER_STRING_FORM
             ),
             "CONFESSION_VALIDATION_CHANNEL_ID", new ConfigurationParser(
-                    "",
+                    () -> "",
                     Object::toString,
                     s -> s,
                     IDENTIFIER_UNDER_STRING_FORM
             ),
             "CONFESSION_EMBED_COLOR", new ConfigurationParser(
-                    Color.decode("#3498DB"),
+                    () -> Color.decode("#3498DB"),
                     c -> Integer.toString(((Color)c).getRGB(), 16),
                     Color::decode,
                     "RGB sous forme hexadécimale : Ex #FFFFFF = Blanc"
@@ -71,8 +72,8 @@ public class Config {
 
     private static final Map<String, ConfigurationParser> DEFAULT_STATE = Map.of(
             "LAST_RSS_ARTICLE_DATE", new ConfigurationParser(
-                    Map.of("https://www.developpez.com/index/rss", Timestamp.from(Instant.EPOCH)),
-                    m -> ((Map<String, Timestamp>) m).entrySet().stream().map(e -> e.getKey() + ";" + e.getValue()).reduce("", (a,b) ->  a + "," + b),
+                    () -> new HashMap<>(Map.of("https://www.developpez.com/index/rss", Timestamp.from(Instant.EPOCH))),
+                    m -> ((Map<String, Timestamp>) m).entrySet().stream().map(e -> e.getKey() + ";" + e.getValue()).reduce("", (a,b) ->  a.isBlank() ? b : a + "," + b),
                     s -> Arrays.stream(s.split(",")).map(a -> a.split(";")).map(a -> Map.entry(a[0], Timestamp.valueOf(a[1]))).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)),
                     "Liste de paires Lien-Timestamp"
             )
@@ -80,38 +81,38 @@ public class Config {
     static {
         DEFAULT_CONFIGURATION.putAll(Map.of(
                 "RSS_FEEDS", new ConfigurationParser(
-                        List.of("https://www.developpez.com/index/rss"),
+                        () -> new ArrayList<>(List.of("https://www.developpez.com/index/rss")),
                         Object::toString,
                         s -> List.of(s.split(";")),
                         "Liste de liens séparés par `;`"
                 ),
                 "RSS_FEEDS_CHANNEL_ID", new ConfigurationParser(
-                        "",
+                        () -> "",
                         Object::toString,
                         s -> s,
                         IDENTIFIER_UNDER_STRING_FORM
                 ),
                 "RSS_FEEDS_COLOR", new ConfigurationParser(
-                        Color.YELLOW,
+                        () -> Color.YELLOW,
                         c -> Integer.toString(((Color)c).getRGB(), 16),
                         Color::decode,
                         "RGB sous forme hexadécimale : Ex #FFFFFF = Blanc"
                 ),
                 "RSS_UPDATE_PERIOD", new ConfigurationParser(
-                        15L,
+                        () -> 15L,
                         Object::toString,
                         Long::parseLong,
                         INTEGER_FORMAT
                 ),
                 "ADMIN_CHANNEL_ID", new ConfigurationParser(
-                        "",
+                        () -> "",
                         Object::toString,
                         s -> s,
                         IDENTIFIER_UNDER_STRING_FORM
                 )
         ));
         DEFAULT_CONFIGURATION.putAll(Map.of(
-                "configuration", new ConfigurationParser(true, Object::toString, Boolean::valueOf, "Booléen"),
+                "configuration", new ConfigurationParser(() -> true, Object::toString, Boolean::valueOf, "Booléen"),
                 "autopin", MODULE_DISABLED.get(),
                 "rss", MODULE_DISABLED.get(),
                 "mirror", MODULE_DISABLED.get(),
@@ -133,7 +134,7 @@ public class Config {
     }
 
     private static <T> T getGuildValue(Long guildId, String key, Map<Long, Map<String, Object>> map, Map<String, ConfigurationParser> defaultMap) {
-        return (T)map.getOrDefault(guildId, new HashMap<>()).getOrDefault(key, defaultMap.get(key).defaultValue);
+        return (T)map.getOrDefault(guildId, new HashMap<>()).getOrDefault(key, defaultMap.get(key).defaultValue.get());
     }
 
     public static String getValueFormat(String key) {
@@ -150,13 +151,11 @@ public class Config {
     public static void updateValue(Long guildId, String key, Object value) {
         if(!DEFAULT_CONFIGURATION.containsKey(key)) {
             if(!DEFAULT_STATE.containsKey(key)) throw new IllegalStateException("Configuration key not allowed");
-            if(!GUILD_STATE.containsKey(guildId))
-                GUILD_STATE.put(guildId, new HashMap<>());
+            GUILD_STATE.computeIfAbsent(guildId, id -> new HashMap<>());
             GUILD_STATE.get(guildId).put(key, value);
-            return;
+            saveValue(guildId, key, value);
         }
-        if(!GUILD_CONFIGURATION.containsKey(guildId))
-            GUILD_CONFIGURATION.put(guildId, new HashMap<>());
+        GUILD_CONFIGURATION.computeIfAbsent(guildId, id -> new HashMap<>());
         GUILD_CONFIGURATION.get(guildId).put(key, value);
         saveValue(guildId, key, value);
     }
@@ -170,7 +169,7 @@ public class Config {
     }
 
     public static boolean getModuleStatus(Long guildId, String moduleName) {
-        return (boolean)GUILD_CONFIGURATION.getOrDefault(guildId, new HashMap<>()).getOrDefault(moduleName, Optional.ofNullable(DEFAULT_CONFIGURATION.get(moduleName)).map(ConfigurationParser::defaultValue).orElse(false));
+        return (boolean)GUILD_CONFIGURATION.getOrDefault(guildId, new HashMap<>()).getOrDefault(moduleName, Optional.ofNullable(DEFAULT_CONFIGURATION.get(moduleName)).map(ConfigurationParser::defaultValue).map(Supplier::get).orElse(false));
     }
 
     public static Map<String, Boolean> getModulesStatus(Long guildId, List<String> moduleNames) {
@@ -213,12 +212,12 @@ public class Config {
             if(!DEFAULT_CONFIGURATION.containsKey(key)) {
                 if(!DEFAULT_STATE.containsKey(key)) return;
                 if(!GUILD_STATE.containsKey(guildId))
-                    GUILD_STATE.put(guildId, new HashMap<>(DEFAULT_STATE.entrySet().stream().map(e -> Map.entry(e.getKey(),e.getValue().defaultValue)).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))));
+                    GUILD_STATE.put(guildId, new HashMap<>(DEFAULT_STATE.entrySet().stream().map(e -> Map.entry(e.getKey(),e.getValue().defaultValue.get())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))));
                 GUILD_STATE.get(guildId).put(key, DEFAULT_STATE.get(key).fromConfig.apply(v));
                 return;
             }
             if(!GUILD_CONFIGURATION.containsKey(guildId)) {
-                GUILD_CONFIGURATION.put(guildId, new HashMap<>(DEFAULT_CONFIGURATION.entrySet().stream().map(e -> Map.entry(e.getKey(),e.getValue().defaultValue)).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))));
+                GUILD_CONFIGURATION.put(guildId, new HashMap<>(DEFAULT_CONFIGURATION.entrySet().stream().map(e -> Map.entry(e.getKey(),e.getValue().defaultValue.get())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))));
             }
             GUILD_CONFIGURATION.get(guildId).put(key, DEFAULT_CONFIGURATION.get(key).fromConfig.apply(v));
         });
@@ -230,12 +229,12 @@ public class Config {
 
     public static void resetDefaultState(Long guildId) {
         for (Map.Entry<String, ConfigurationParser> entry : DEFAULT_STATE.entrySet()) {
-            updateValue(guildId, entry.getKey(), entry.getValue().defaultValue);
+            updateValue(guildId, entry.getKey(), entry.getValue().defaultValue.get());
         }
     }
 
 
-    private record ConfigurationParser(Object defaultValue,
+    private record ConfigurationParser(Supplier<Object> defaultValue,
                                        Function<Object, String> toConfig,
                                        Function<String, Object> fromConfig,
                                        String format) {}

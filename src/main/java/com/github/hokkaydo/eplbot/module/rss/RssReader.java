@@ -99,7 +99,7 @@ public class RssReader {
     }
 
     public void launch(Long guildId) {
-        futures.put(guildId, service.scheduleAtFixedRate(() -> this.run(guildId), 1, Config.<Long>getGuildVariable(guildId, "RSS_UPDATE_PERIOD"), TimeUnit.MINUTES));
+        futures.put(guildId, service.scheduleAtFixedRate(() -> this.run(guildId), 0, Config.<Long>getGuildVariable(guildId, "RSS_UPDATE_PERIOD"), TimeUnit.MINUTES));
     }
 
     public void stop(Long guildId) {
