@@ -7,12 +7,17 @@ import net.dv8tion.jda.api.entities.EmbedType;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.MessageReaction;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
+import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
 import net.dv8tion.jda.api.utils.FileUpload;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -22,6 +27,7 @@ public class MirroredMessage {
     private final GuildMessageChannel channel;
     private OffsetDateTime lastUpdated;
     private boolean threadOwner;
+    private final Map<Emoji, Integer> reactions = new HashMap<>();
     public MirroredMessage(Message initialMessage, GuildMessageChannel textChannel, boolean mirror, Message replyTo) {
         this.channel = textChannel;
         this.lastUpdated = initialMessage.getTimeCreated();
@@ -125,6 +131,38 @@ public class MirroredMessage {
 
     public boolean isThreadOwner() {
         return this.threadOwner;
+    }
+
+    public void addReaction(MessageReaction reaction) {
+        reactions.merge(reaction.getEmoji(), 1, (e, i) -> i + 1);
+        updateReactionsField();
+    }
+
+    private void updateReactionsField() {
+        StringBuilder reactionString = new StringBuilder();
+        List<Map.Entry<Emoji, Integer>> entries = new ArrayList<>(reactions.entrySet());
+        for (int i = 0; i < entries.size() - 1; i++) {
+            reactionString.append(entries.get(i).getKey().getFormatted()).append(": ").append(entries.get(i).getValue()).append(", ");
+        }
+        reactionString.append(entries.get(entries.size() - 1).getKey().getFormatted()).append(": ").append(entries.get(entries.size() - 1).getValue());
+
+        Optional<MessageEmbed> oldEmbed = message.getEmbeds().stream().filter(e -> e.getType() == EmbedType.RICH).findFirst();
+        if(oldEmbed.isEmpty()) return;
+        List<MessageEmbed.Field> otherFields = new ArrayList<>(oldEmbed.get().getFields().stream().filter(f -> f.getName() == null || !f.getName().equals("Réactions")).toList());
+        EmbedBuilder newEmbed = new EmbedBuilder(oldEmbed.get()).clearFields();
+        otherFields.add(new MessageEmbed.Field("Réactions", reactionString.toString(), true));
+        for (MessageEmbed.Field otherField : otherFields) {
+            newEmbed.addField(otherField);
+        }
+        List<MessageEmbed> otherEmbeds = new ArrayList<>(message.getEmbeds().stream().filter(e -> e.getType() != EmbedType.RICH).toList());
+        otherEmbeds.add(newEmbed.build());
+        message.editMessageEmbeds(otherEmbeds).queue();
+    }
+
+    public void removeReaction(MessageReaction reaction) {
+        reactions.computeIfPresent(reaction.getEmoji(), (e, i) -> i-1);
+        if(reactions.getOrDefault(reaction.getEmoji(), 1) <= 0) reactions.remove(reaction.getEmoji());
+        updateReactionsField();
     }
 
     private record Tuple3<A, B, C>(A a, B b, C c) {

@@ -11,6 +11,8 @@ import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
 import net.dv8tion.jda.api.events.message.MessageDeleteEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.MessageUpdateEvent;
+import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
+import net.dv8tion.jda.api.events.message.react.MessageReactionRemoveEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.jetbrains.annotations.NotNull;
 
@@ -139,6 +141,22 @@ public class MirrorManager extends ListenerAdapter {
                     mirrorE.getMessages().stream().filter(m -> !m.getMessageId().equals(event.getMessageIdLong())).forEach(MirroredMessage::delete);
                     mirroredMessages.remove(mirrorE);
                 });
+    }
+
+    @Override
+    public void onMessageReactionAdd(@NotNull MessageReactionAddEvent event) {
+        mirroredMessages.stream()
+                .filter(mirror -> mirror.match(event.getMessageIdLong()))
+                .findFirst()
+                .ifPresent(mirrorE -> mirrorE.getMessages().forEach(m -> m.addReaction(event.getReaction())));
+    }
+
+    @Override
+    public void onMessageReactionRemove(@NotNull MessageReactionRemoveEvent event) {
+        mirroredMessages.stream()
+                .filter(mirror -> mirror.match(event.getMessageIdLong()))
+                .findFirst()
+                .ifPresent(mirrorE -> mirrorE.getMessages().forEach(m -> m.removeReaction(event.getReaction())));
     }
 
     private boolean noMirrors = false;
