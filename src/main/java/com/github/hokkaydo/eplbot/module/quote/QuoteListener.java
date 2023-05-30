@@ -2,6 +2,7 @@ package com.github.hokkaydo.eplbot.module.quote;
 
 import com.github.hokkaydo.eplbot.Main;
 import com.github.hokkaydo.eplbot.MessageUtil;
+import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
@@ -27,7 +28,13 @@ public class QuoteListener extends ListenerAdapter {
                 .map(matchResult -> {String[] split = matchResult.group().split("/"); return new Tuple3<>(split[4], split[5], split[6]);})
                 .map(this::toMessage)
                 .filter(Objects::nonNull)
-                .forEach(m -> MessageUtil.toEmbedWithAttachements(m, e -> event.getMessage().replyEmbeds(e.build())));
+                .forEach(m -> MessageUtil.toEmbedWithAttachements(m, e -> {
+                    Member authorMember = event.getGuild().getMemberById(m.getAuthor().getIdLong());
+                    boolean hasNickname = authorMember != null && authorMember.getNickname() != null;
+                    String authorNickAndTag = (hasNickname  ? authorMember.getNickname() + " (" : "") + m.getAuthor().getAsTag() + (hasNickname ? ")" : "");
+
+                    return event.getMessage().replyEmbeds(e.setAuthor(authorNickAndTag, m.getJumpUrl(), m.getAuthor().getAvatarUrl()).build());
+                }));
     }
 
     private record Tuple3<A, B, C>(A a, B b, C c) {}
