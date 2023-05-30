@@ -134,7 +134,7 @@ public class MirroredMessage {
     }
 
     public void addReaction(MessageReaction reaction) {
-        reactions.merge(reaction.getEmoji(), 0, (e, i) -> i + 1);
+        reactions.put(reaction.getEmoji(), reactions.getOrDefault(reaction.getEmoji(), 0) + 1);
         updateReactionsField();
     }
 
