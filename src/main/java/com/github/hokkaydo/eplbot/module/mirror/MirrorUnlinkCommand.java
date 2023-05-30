@@ -63,7 +63,7 @@ public class MirrorUnlinkCommand implements Command {
 
     @Override
     public boolean ephemeralReply() {
-        return true;
+        return false;
     }
 
     @Override

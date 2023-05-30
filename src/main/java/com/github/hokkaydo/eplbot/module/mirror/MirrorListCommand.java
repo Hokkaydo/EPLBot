@@ -80,7 +80,7 @@ public class MirrorListCommand implements Command {
 
     @Override
     public boolean ephemeralReply() {
-        return true;
+        return false;
     }
 
     @Override

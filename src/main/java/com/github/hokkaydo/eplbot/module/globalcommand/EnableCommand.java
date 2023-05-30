@@ -53,7 +53,7 @@ public class EnableCommand implements Command {
 
     @Override
     public boolean ephemeralReply() {
-        return true;
+        return false;
     }
 
     @Override

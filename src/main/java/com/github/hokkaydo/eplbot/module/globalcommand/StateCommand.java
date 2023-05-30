@@ -59,7 +59,7 @@ public class StateCommand implements Command {
 
     @Override
     public boolean ephemeralReply() {
-        return true;
+        return false;
     }
 
     @Override
