@@ -6,15 +6,21 @@ import com.github.hokkaydo.eplbot.module.Module;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ConfessionModule extends Module {
 
     private final ConfessionCommand confessionCommand;
+    private final ConfessionFollowCommand confessionFollowCommand;
+    private final ConfessionProcessor processor;
     public ConfessionModule(@NotNull Long guildId) {
         super(guildId);
-        confessionCommand = new ConfessionCommand();
+        final Map<Long, Long> lastConfession = new HashMap<>();
+        this.processor = new ConfessionProcessor(guildId, lastConfession);
+        confessionCommand = new ConfessionCommand(processor);
+        confessionFollowCommand = new ConfessionFollowCommand(lastConfession, processor);
     }
 
     @Override
@@ -24,12 +30,12 @@ public class ConfessionModule extends Module {
 
     @Override
     public List<Command> getCommands() {
-        return Collections.singletonList(confessionCommand);
+        return List.of(confessionCommand, confessionFollowCommand);
     }
 
     @Override
     public List<ListenerAdapter> getListeners() {
-        return Collections.singletonList(confessionCommand);
+        return List.of(processor);
     }
 
     @Override
