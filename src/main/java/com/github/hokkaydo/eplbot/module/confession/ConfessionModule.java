@@ -15,12 +15,14 @@ public class ConfessionModule extends Module {
     private final ConfessionCommand confessionCommand;
     private final ConfessionFollowCommand confessionFollowCommand;
     private final ConfessionProcessor processor;
+    private final ClearConfessWarningsCommand clearConfessWarningsCommand;
     public ConfessionModule(@NotNull Long guildId) {
         super(guildId);
         final Map<Long, Long> lastConfession = new HashMap<>();
         this.processor = new ConfessionProcessor(guildId, lastConfession);
         confessionCommand = new ConfessionCommand(processor);
         confessionFollowCommand = new ConfessionFollowCommand(lastConfession, processor);
+        clearConfessWarningsCommand = new ClearConfessWarningsCommand(processor);
     }
 
     @Override
@@ -30,7 +32,7 @@ public class ConfessionModule extends Module {
 
     @Override
     public List<Command> getCommands() {
-        return List.of(confessionCommand, confessionFollowCommand);
+        return List.of(confessionCommand, confessionFollowCommand, clearConfessWarningsCommand);
     }
 
     @Override

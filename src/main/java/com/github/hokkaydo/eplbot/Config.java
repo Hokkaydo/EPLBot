@@ -109,6 +109,12 @@ public class Config {
                         Object::toString,
                         s -> s,
                         IDENTIFIER_UNDER_STRING_FORM
+                ),
+                "CONFESSION_WARN_THRESHOLD", new ConfigurationParser(
+                        () -> 3,
+                        Object::toString,
+                        Integer::valueOf,
+                        INTEGER_FORMAT
                 )
         ));
         DEFAULT_CONFIGURATION.putAll(Map.of(

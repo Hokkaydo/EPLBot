@@ -77,5 +77,11 @@
   "COMMAND_CONTRIBUTE_HELP": "Affiche la liste des contributeurs et le lien vers le dépôt Github",
   "COMMAND_CONFESSIONCONTINUE_NO_LAST_CONFESSION_FOUND": "Vous n'avez rien confessé dernièrement.",
   "COMMAND_CONFESSIONCONTINUE_DESCRIPTION": "Permet de continuer une confession en anonyme.",
-  "COMMAND_CONFESSIONCONTINUE_HELP": "Crée un thread sous la dernière confession de l'auteur, ou récupère celui déjà existant, et envoie la nouvelle confession dans le thread. Permet de continuer une discussion de manière anonyme."
+  "COMMAND_CONFESSIONCONTINUE_HELP": "Crée un thread sous la dernière confession de l'auteur, ou récupère celui déjà existant, et envoie la nouvelle confession dans le thread. Permet de continuer une discussion de manière anonyme.",
+  "CONFESSION_TOO_MUCH_WARNS": ":warning: L'utilisateur %s a dépassé la limite de %d confessions signalées.\nVoici les %d confessions signalées ainsi que les auteurs des signalements :\n\n*Pour rappel, vous pouvez supprimer les signalements de confession de cet utilisateur en tapant la commande `/clearconfesswarnings %s`",
+  "CONFESSION_WARNED_BY": "Signalée par %s",
+  "COMMAND_CLEARCONFESSWARNINGS_DESCRIPTION": "Permet de réinitialiser le compteur de confessions signalées d'un utilisateur",
+  "COMMAND_CLEARCONFESSWARNINGS_HELP": "`/clearconfesswarnings @User` pour réinitialiser le compteur de confessions signalées d'un utilisateur.",
+  "COMMAND_CLEARCONFESSWARNINGS_OPTION_USER_DESCRIPTION": "Utilisateur",
+  "COMMAND_CLEARCONFESSWARNINGS_DONE": "Le compteur a bien été réinitialisé."
 }
