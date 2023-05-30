@@ -49,22 +49,8 @@ Le bot propose un système modulaire permettant d'activer et désactiver les mod
 ## Contribution
 
 Les contributions à ce projet sont les bienvenues. Si vous souhaitez apporter des améliorations, veuillez créer une branche à partir de la branche `master`, effectuer vos modifications et soumettre une Pull Request (PR).
-### Features
-- [x] Mirroring de canaux
-- [x] Quote de messages cités par lien Discord
-- [x] Flux RSS
-- [x] Auto-pin lorsque N réactions sont ajoutées à un message 
-- [x] Commandes de suppression de messages :  `/clearfrom <id_a>`, `/clearbetween <id_a> <id_b>`, `/clearlast <N>`
-- [x] Commande `/help`
-- [x] Commande `/ping`
-- [x] Confessions EPL 
-- [x] Gestion des modules `/enable <module>`, `/disable <module>`, `/listfeatures`
-- [x] Configuration des variables par serveur via `/config <var> <value>`
-- [ ] Commande `/status`
-- [ ] Sondages inter-serveurs
-- [ ] Plus de statuts RichPresence
-- [ ] Gestion d'inscriptions aux rôles / canaux
-- [ ] Gestions de canaux d'envois de corrections d'examens
+
+Afin de savoir ce qui est prévu ou en cours, n'hésitez pas à consulter le [kanban](https://github.com/users/Hokkaydo/projects/3/views/1) du projet.
 ## Ressources
 
 - Documentation JDA : [https://github.com/DV8FromTheWorld/JDA](https://github.com/DV8FromTheWorld/JDA)
