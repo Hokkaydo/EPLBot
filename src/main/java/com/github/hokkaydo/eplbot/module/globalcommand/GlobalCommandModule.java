@@ -19,7 +19,7 @@ public class GlobalCommandModule extends Module {
     private final StateCommand stateCommand;
     private final PingCommand pingCommand;
     private final HelpCommand helpCommand;
-
+    private final ContributeCommand contributeCommand;
 
     public GlobalCommandModule(@NotNull Long guildId) {
         super(guildId);
@@ -31,6 +31,7 @@ public class GlobalCommandModule extends Module {
         stateCommand = new StateCommand(guildId);
         pingCommand = new PingCommand();
         helpCommand = new HelpCommand(guildId);
+        contributeCommand = new ContributeCommand();
     }
 
     @Override
@@ -40,7 +41,17 @@ public class GlobalCommandModule extends Module {
 
     @Override
     public List<Command> getCommands() {
-        return Arrays.asList(enableCommand, disableCommand, listFeaturesCommand, configurationCommand, refreshCommandsCommand, stateCommand, pingCommand, helpCommand);
+        return Arrays.asList(
+                enableCommand,
+                disableCommand,
+                listFeaturesCommand,
+                configurationCommand,
+                refreshCommandsCommand,
+                stateCommand,
+                pingCommand,
+                helpCommand,
+                contributeCommand
+        );
     }
 
     @Override

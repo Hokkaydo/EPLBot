@@ -65,8 +65,4 @@ public class ConfessionFollowCommand implements Command {
         return () -> Strings.getString("COMMAND_CONFESSIONCONTINUE_HELP");
     }
 
-    public ConfessionProcessor getProcessor() {
-        return processor;
-    }
-
 }

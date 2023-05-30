@@ -72,5 +72,10 @@
   "COMMAND_STATE_ACTION_NOT_FOUND": "Action d'état %s introuvable.",
   "COMMAND_STATE_HELP": "Affiche les variables d'états du serveur.\n- `/state reset` pour les réinitialiser",
   "COMMAND_STATE_DESCRIPTION": "Permet de gérer les variables d'état du serveur. Debug-only !",
-  "COMMAND_STATE_SUBCOMMAND_OPTION_DESCRIPTION": "Sous-commande optionnelle"
+  "COMMAND_STATE_SUBCOMMAND_OPTION_DESCRIPTION": "Sous-commande optionnelle",
+  "COMMAND_CONTRIBUTE_DESCRIPTION": "Permet d'afficher la liste des contributeurs ainsi que le lien vers le dépôt Github.",
+  "COMMAND_CONTRIBUTE_HELP": "Affiche la liste des contributeurs et le lien vers le dépôt Github",
+  "COMMAND_CONFESSIONCONTINUE_NO_LAST_CONFESSION_FOUND": "Vous n'avez rien confessé dernièrement.",
+  "COMMAND_CONFESSIONCONTINUE_DESCRIPTION": "Permet de continuer une confession en anonyme.",
+  "COMMAND_CONFESSIONCONTINUE_HELP": "Crée un thread sous la dernière confession de l'auteur, ou récupère celui déjà existant, et envoie la nouvelle confession dans le thread. Permet de continuer une discussion de manière anonyme."
 }
