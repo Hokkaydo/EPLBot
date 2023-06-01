@@ -39,9 +39,10 @@ public class MirroredMessage {
     }
 
     public void mirrorMessage(Message initialMessage, Message replyTo) {
+        Member authorMember = channel.getGuild().getMemberById(initialMessage.getAuthor().getIdLong());
+        if(authorMember != null && authorMember.isTimedOut()) return;
         MessageCreateAction createAction;
         String content = getContent(initialMessage);
-        Member authorMember = channel.getGuild().getMemberById(initialMessage.getAuthor().getIdLong());
         boolean hasNickname = authorMember != null && authorMember.getNickname() != null;
         String authorNickAndTag = (hasNickname  ? authorMember.getNickname() + " (" : "") + initialMessage.getAuthor().getAsTag() + (hasNickname ? ")" : "");
         MessageEmbed embed = MessageUtil.toEmbed(initialMessage)
@@ -91,6 +92,8 @@ public class MirroredMessage {
 
     public void update(Message initialMessage) {
         updatePin(initialMessage.isPinned());
+        Member authorMember = channel.getGuild().getMemberById(initialMessage.getAuthor().getIdLong());
+        if(authorMember != null && authorMember.isTimedOut()) return;
         if(!(initialMessage.getTimeEdited() == null ? initialMessage.getTimeCreated() : initialMessage.getTimeEdited()).isAfter(lastUpdated)) return;
         String content = getContent(initialMessage);
         List<Message.Attachment> attachments = initialMessage.getAttachments();
