@@ -1,0 +1,185 @@
+{
+	"common": {
+		"name": "Tronc commun",
+		"lectures": [
+			[
+				["LANGL1271", "Anglais pour ingénieurs civils I"],
+				["LEPL1101", "Algèbre"],
+				["LEPL1102", "Analyse I"],
+				["LEPL1201", "Physique I"],
+				["LEPL1401", "Informatique I"],
+				["LEPL1501", "Projet I"],
+				["LEPL1801", "Éthique de l'ingénieur"]
+			],
+			[
+				["LEPL1104", "Méthodes numériques"],
+				["LEPL1105", "Analyse II"],
+				["LEPL1202", "Physique II"],
+				["LEPL1301", "Chimie et chimie physique I"],
+				["LEPL1502", "Projet II"],
+				["LEPL1803", "Économie"]
+			],
+			[
+				["LANGL1272", "Anglais pour ingénieurs civils II"],
+				["LEPL1103", "EDPs & Analyse complexe"],
+				["LEPL1108", "Mathématiques discrètes et probabilités"],
+				["LEPL1203", "Physique III"],
+				["LEPL1302", "Chimie et chimie physique II"],
+				["LTECO2100", "Sociétés, cultures et religions : lectures bibliques"],
+				["LTECO2200", "Sociétés, cultures, religions - questions humaines fondamentales,"]
+			],
+			[
+				["LEPL1106", "Signaux et systèmes"],
+				["LEPL1503", "Projet 3"]
+			],
+			[
+				["LEPL1109", "Statistiques et sciences des données"],
+				["LEPL1804", "Développement durable et transition"],
+				["LEPL1805", "Gestion des personnes"]
+			],
+			[
+				["LEPL1110", "Éléments finis"]
+			]
+		]
+	},
+	"info": {
+		"name": "Filière en Informatique",
+		"lectures": [
+			[],
+			[],
+			[],
+			[
+				["LINFO1104", "Paradigmes et concepts des langages de programmation"],
+				["LINFO1123", "Calculabilité, logique et complexité"]
+			],
+			[
+				["LINFO1252", "Systèmes informatiques"],
+				["LINFO1121", "Algorithmique et structures de données"]
+			],
+			[
+				["LINFO1341", "Réseaux informatiques"],
+				["LINFO1361", "Intelligence artificielle"]
+			]
+		]
+	},
+	"map": {
+		"name": "Filière en Mathématiques Appliquées",
+		"lectures": [
+			[],
+			[],
+			[],
+			[
+				["LINMA1315", "Compléments d'analyse"],
+				["LINMA1702", "Modèles et méthodes d'optimisation I"]
+			],
+			[
+				["LINMA1170", "Analyse numérique"],
+				["LINMA1691", "Mathématiques discrètes I : Théorie et algorithmique des graphes"]
+			],
+			[
+				["LINMA1510", "Linear Control"],
+				["LINMA1731", "Stochastic processes : Estimation and prediction"]
+			]
+		]
+	},
+	"meca": {
+		"name": "Filière en Mécanique",
+		"lectures": [
+			[],
+			[],
+			[],
+			[
+				["LMECA1210", "Description et analyse des mécanismes"],
+				["LMECA1901", "Mécanique des milieux continus"]
+			],
+			[
+				["LMECA110", "Mécanique des solides déformables"],
+				["LMECA1321", "Mécanique des fluides et transferts I"]
+			],
+			[
+				["LMECA1451", "Fabrication mécanique"],
+				["LMECA1855", "Thermodynamique et énergétique"]
+			]
+		]
+	},
+	"elec": {
+		"name": "Filière en Électricité",
+		"lectures": [
+			[],
+			[],
+			[],
+			[
+				["LELEC1101", "Projet d'électricité 1 - Circuits électriques"],
+				["LELEC1370", "Circuits et mesures électriques"]
+			],
+			[
+				["LELEC1530", "Circuits électroniques analogiques et digitaux fondamentaux"],
+				["LELEC1755", "Physique des dispositifs électroniques et des lignes de transmission"]
+			],
+			[
+				["LELEC1310", "Convertisseurs électromécaniques"],
+				["LELEC1360", "Télécommunications"]
+			]
+		]
+	},
+	"fyki": {
+		"name": "Filière en Chimie et physique appliquées",
+		"lectures": [
+			[],
+			[],
+			[],
+			[
+				["LMAPR1805", "Introduction à la science des matériaux"],
+				["LMECA1901", "Mécanique des milieux continus"]
+			],
+			[
+				["LMAPR1491", "Physique statistique et quantique"],
+				["LMAPR1230", "Chimie organique"]
+			],
+			[
+				["LMAPR1400", "Cinétique et thermodynamique"],
+				["LMAPR1492", "Physique des matériaux"]
+			]
+		]
+	},
+	"gc": {
+		"name": "Filière en Construction",
+		"lectures": [
+			[],
+			[],
+			[],
+			[
+				["LGCIV1031", "Matériaux structuraux et géomatériaux"],
+				["LGCIV1022", "Mécanique des structures"]
+			],
+			[
+				["LGCIV1023", "Stabilité des constructions"],
+				["LGCIV1072", "Mécanique des sols"]
+			],
+			[
+				["LGCIV1051", "Hydraulique"],
+				["LGCIV1032", "Structures en béton armé"]
+			]
+		]
+	},
+	"gbio": {
+		"name": "Filière en Génie Biomédical",
+		"lectures": [
+			[],
+			[],
+			[],
+			[
+				["LGBIO1111", "Biologie et physiologie cellulaire"],
+				["LGBIO1112", "Introduction au génie biomédical"]
+			],
+			[
+				["LGBIO1113", "Anatomie et physiologie des systèmes"],
+				["LGBIO1115", "Introduction aux neurosciences"]
+			],
+			[
+				["LBIR1250", "Biochimie I : biochimie structurale, enzymologie et métabolisme énergétique"],
+				["LINMA1510", "Linear Control"]
+			]
+		]
+	}
+}

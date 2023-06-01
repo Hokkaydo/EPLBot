@@ -8,6 +8,7 @@ import com.github.hokkaydo.eplbot.module.autopin.AutoPinModule;
 import com.github.hokkaydo.eplbot.module.eplcommand.EPLCommandModule;
 import com.github.hokkaydo.eplbot.module.confession.ConfessionModule;
 import com.github.hokkaydo.eplbot.module.globalcommand.GlobalCommandModule;
+import com.github.hokkaydo.eplbot.module.graderetrieve.ExamsRetrieveModule;
 import com.github.hokkaydo.eplbot.module.mirror.MirrorModule;
 import com.github.hokkaydo.eplbot.module.quote.QuoteModule;
 import com.github.hokkaydo.eplbot.module.ratio.RatioModule;
@@ -134,6 +135,7 @@ public class Main {
         List<Class<? extends Module>> eplModules = Arrays.asList(
                 EPLCommandModule.class,
                 ConfessionModule.class,
+                ExamsRetrieveModule.class,
                 RatioModule.class
         );
         Map<Long, List<Command>> guildCommands = new HashMap<>();
