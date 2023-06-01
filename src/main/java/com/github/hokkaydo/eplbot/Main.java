@@ -10,6 +10,7 @@ import com.github.hokkaydo.eplbot.module.confession.ConfessionModule;
 import com.github.hokkaydo.eplbot.module.globalcommand.GlobalCommandModule;
 import com.github.hokkaydo.eplbot.module.mirror.MirrorModule;
 import com.github.hokkaydo.eplbot.module.quote.QuoteModule;
+import com.github.hokkaydo.eplbot.module.ratio.RatioModule;
 import com.github.hokkaydo.eplbot.module.rss.RssModule;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
@@ -66,6 +67,10 @@ public class Main {
     );
 
     public static void main(String[] args) throws InterruptedException, IOException {
+        launch(args);
+    }
+
+    private static void launch(String[] args) throws InterruptedException, IOException{
         LOGGER.log(Level.INFO, "--------- START ---------");
         String token = System.getenv("DISCORD_BOT_TOKEN");
         String testDiscordIdStr = System.getenv("TEST_DISCORD_ID");
@@ -128,7 +133,8 @@ public class Main {
         );
         List<Class<? extends Module>> eplModules = Arrays.asList(
                 EPLCommandModule.class,
-                ConfessionModule.class
+                ConfessionModule.class,
+                RatioModule.class
         );
         Map<Long, List<Command>> guildCommands = new HashMap<>();
         for(Long guildId : List.of(EPL_DISCORD_ID, testDiscordId)) {
