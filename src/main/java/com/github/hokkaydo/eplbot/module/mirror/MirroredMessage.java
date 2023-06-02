@@ -8,6 +8,7 @@ import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.MessageReaction;
+import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
@@ -38,41 +39,50 @@ public class MirroredMessage {
         }
     }
 
+    private void checkBanTimeOut(User user, Runnable runnable) {
+        channel.getGuild().retrieveBanList().queue(list -> {
+            if(list.stream().anyMatch(b -> b.getUser().getIdLong() == user.getIdLong())) return;
+            Member authorMember = channel.getGuild().getMemberById(user.getIdLong());
+            if(authorMember != null && (authorMember.isTimedOut())) return;
+            runnable.run();
+        });
+    }
     public void mirrorMessage(Message initialMessage, Message replyTo) {
-        Member authorMember = channel.getGuild().getMemberById(initialMessage.getAuthor().getIdLong());
-        if(authorMember != null && authorMember.isTimedOut()) return;
-        MessageCreateAction createAction;
-        String content = getContent(initialMessage);
-        boolean hasNickname = authorMember != null && authorMember.getNickname() != null;
-        String authorNickAndTag = (hasNickname  ? authorMember.getNickname() + " (" : "") + initialMessage.getAuthor().getAsTag() + (hasNickname ? ")" : "");
-        MessageEmbed embed = MessageUtil.toEmbed(initialMessage)
-                                     .setAuthor(authorNickAndTag, initialMessage.getJumpUrl(), initialMessage.getAuthor().getAvatarUrl())
-                                     .setDescription(content)
-                                     .setFooter("")
-                                     .setTimestamp(null)
-                                     .build();
-        if(replyTo != null)
-            createAction = replyTo.replyEmbeds(embed);
-        else
-            createAction = channel.sendMessageEmbeds(embed);
-        if(!initialMessage.getEmbeds().isEmpty()) {
-            createAction.addEmbeds(initialMessage.getEmbeds());
-        }
-        AtomicReference<MessageCreateAction> action = new AtomicReference<>(createAction);
-        initialMessage.getAttachments().stream()
-                .map(m -> new Tuple3<>(m.getFileName(), m.getProxy().download(), m.isSpoiler()))
-                .map(tuple3 -> tuple3.b()
-                                       .thenApply(i -> FileUpload.fromData(i, tuple3.a()))
-                                       .thenApply(f -> Boolean.TRUE.equals(tuple3.c()) ? f.asSpoiler() : f)
-                )
-                .map(c -> c.thenAccept(f -> action.get().addFiles(f)))
-                .reduce((a,b) -> {a.join(); return b;})
-                .ifPresentOrElse(
-                        c -> {
-                            c.join();
-                            sendMessage(action, initialMessage);
-                        },
-                        () -> sendMessage(action, initialMessage));
+        checkBanTimeOut(initialMessage.getAuthor(), () -> {
+            MessageCreateAction createAction;
+            String content = getContent(initialMessage);
+            Member authorMember = channel.getGuild().getMemberById(initialMessage.getAuthor().getIdLong());
+            boolean hasNickname = authorMember != null && authorMember.getNickname() != null;
+            String authorNickAndTag = (hasNickname  ? authorMember.getNickname() + " (" : "") + initialMessage.getAuthor().getAsTag() + (hasNickname ? ")" : "");
+            MessageEmbed embed = MessageUtil.toEmbed(initialMessage)
+                                         .setAuthor(authorNickAndTag, initialMessage.getJumpUrl(), initialMessage.getAuthor().getAvatarUrl())
+                                         .setDescription(content)
+                                         .setFooter("")
+                                         .setTimestamp(null)
+                                         .build();
+            if(replyTo != null)
+                createAction = replyTo.replyEmbeds(embed);
+            else
+                createAction = channel.sendMessageEmbeds(embed);
+            if(!initialMessage.getEmbeds().isEmpty()) {
+                createAction.addEmbeds(initialMessage.getEmbeds());
+            }
+            AtomicReference<MessageCreateAction> action = new AtomicReference<>(createAction);
+            initialMessage.getAttachments().stream()
+                    .map(m -> new Tuple3<>(m.getFileName(), m.getProxy().download(), m.isSpoiler()))
+                    .map(tuple3 -> tuple3.b()
+                                           .thenApply(i -> FileUpload.fromData(i, tuple3.a()))
+                                           .thenApply(f -> Boolean.TRUE.equals(tuple3.c()) ? f.asSpoiler() : f)
+                    )
+                    .map(c -> c.thenAccept(f -> action.get().addFiles(f)))
+                    .reduce((a,b) -> {a.join(); return b;})
+                    .ifPresentOrElse(
+                            c -> {
+                                c.join();
+                                sendMessage(action, initialMessage);
+                            },
+                            () -> sendMessage(action, initialMessage));
+        });
     }
 
     private void sendMessage(AtomicReference<MessageCreateAction> action, Message initialMessage) {
@@ -92,21 +102,21 @@ public class MirroredMessage {
 
     public void update(Message initialMessage) {
         updatePin(initialMessage.isPinned());
-        Member authorMember = channel.getGuild().getMemberById(initialMessage.getAuthor().getIdLong());
-        if(authorMember != null && authorMember.isTimedOut()) return;
-        if(!(initialMessage.getTimeEdited() == null ? initialMessage.getTimeCreated() : initialMessage.getTimeEdited()).isAfter(lastUpdated)) return;
-        String content = getContent(initialMessage);
-        List<Message.Attachment> attachments = initialMessage.getAttachments();
-        if(message.getAuthor().getIdLong() == Main.getJDA().getSelfUser().getIdLong()) {
-            Optional<MessageEmbed> oldEmbed = message.getEmbeds().stream().filter(e -> e.getType() == EmbedType.RICH).findFirst();
-            if(oldEmbed.isEmpty()) return;
-            MessageEmbed newEmbed = new EmbedBuilder(oldEmbed.get()).setDescription(content).build();
-            List<MessageEmbed> current = new java.util.ArrayList<>(initialMessage.getEmbeds().stream().filter(e -> e.getType() != EmbedType.RICH).toList());
-            current.add(newEmbed);
-            message.editMessageEmbeds(current).map(m -> m.editMessageAttachments(attachments)).queue();
-        }
-        updatePin(initialMessage.isPinned());
-        this.lastUpdated = message.getTimeEdited() == null ? message.getTimeCreated() : message.getTimeEdited();
+        checkBanTimeOut(initialMessage.getAuthor(), () -> {
+            if(!(initialMessage.getTimeEdited() == null ? initialMessage.getTimeCreated() : initialMessage.getTimeEdited()).isAfter(lastUpdated)) return;
+            String content = getContent(initialMessage);
+            List<Message.Attachment> attachments = initialMessage.getAttachments();
+            if(message.getAuthor().getIdLong() == Main.getJDA().getSelfUser().getIdLong()) {
+                Optional<MessageEmbed> oldEmbed = message.getEmbeds().stream().filter(e -> e.getType() == EmbedType.RICH).findFirst();
+                if(oldEmbed.isEmpty()) return;
+                MessageEmbed newEmbed = new EmbedBuilder(oldEmbed.get()).setDescription(content).build();
+                List<MessageEmbed> current = new java.util.ArrayList<>(initialMessage.getEmbeds().stream().filter(e -> e.getType() != EmbedType.RICH).toList());
+                current.add(newEmbed);
+                message.editMessageEmbeds(current).map(m -> m.editMessageAttachments(attachments)).queue();
+            }
+            updatePin(initialMessage.isPinned());
+            this.lastUpdated = message.getTimeEdited() == null ? message.getTimeCreated() : message.getTimeEdited();
+        });
     }
 
     private void updatePin(boolean pinned) {
