@@ -63,7 +63,16 @@ public class Main {
             Activity.playing("regarder la mousse descendre dans sa chope"),
             Activity.playing("griller les amplis op et brûler les transistors de son circuit"),
             Activity.playing("avoir pitié de ChatGPT pour tout le travail qu'il doit fournir pendant le blocus des étudiants"),
+            Activity.playing("conspire avec les modos"),
+            Activity.playing("faire la pédicure des Rois"),
+            Activity.playing("chercher un modèle DB adapté pour stocker votre égo"),
+            Activity.playing("relire toutes les confessions"),
+            Activity.playing("Please wait, your data are sent to Google ..."),
+            Activity.playing("chercher du sens sous la place des Sciences"),
+            Activity.of(Activity.ActivityType.LISTENING,"Apocalypse894", "https://open.spotify.com/track/0A6FdQB9XVIbjP6Kr4vsa1?si=8cbfc79518df45d1"),
             Activity.competing("Affond 13h"),
+            Activity.competing("un beerpong"),
+            Activity.competing("Procrastination"),
             Activity.of(Activity.ActivityType.STREAMING, "Radio Gazou", "https://www.youtube.com/watch?v=rj_kEDituic")
     );
 
