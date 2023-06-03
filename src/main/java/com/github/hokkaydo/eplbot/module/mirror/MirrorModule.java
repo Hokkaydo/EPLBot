@@ -22,14 +22,15 @@ public class MirrorModule extends Module {
         this.mirrorLinkCommand = new MirrorLinkCommand(mirrorManager);
         this.mirrorListCommand = new MirrorListCommand(mirrorManager);
         this.mirrorUnlinkCommand = new MirrorUnlinkCommand(mirrorManager);
-        if(instanceCount == 0) {
-            Main.getJDA().addEventListener(getListeners().toArray());
-        }
     }
 
     @Override
     public void enable() {
         this.enabled = true;
+        int current = instanceCount;
+        if(current == 0) {
+            Main.getJDA().addEventListener(getListeners().toArray());
+        }
         instanceCount++;
         Main.getCommandManager().enableCommands(getGuildId(), getCommandAsClass());
     }
@@ -37,9 +38,10 @@ public class MirrorModule extends Module {
     @Override
     public void disable() {
         this.enabled = false;
-        instanceCount--;
-        if(instanceCount == 0)
+        int current = instanceCount;
+        if(current == 1)
             Main.getJDA().removeEventListener(getListeners().toArray());
+        instanceCount--;
         Main.getCommandManager().disableCommands(getGuildId(), getCommandAsClass());
     }
 
