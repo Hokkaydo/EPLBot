@@ -50,7 +50,7 @@ public class ConfessionProcessor extends ListenerAdapter {
     private static final int VALID = 0;
     private static final int REFUSED = 1;
     private static final int WARNED = 2;
-    private static final Path WARNED_CONFESSION_STORAGE_PATH = Path.of("%s/warned_confessions".formatted(Main.PERSISTENCE_DIR_PATH));
+    public static final Path WARNED_CONFESSION_STORAGE_PATH = Path.of("%s/warned_confessions".formatted(Main.PERSISTENCE_DIR_PATH));
 
     private static final String CONFESSION = "confession";
 

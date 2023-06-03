@@ -37,7 +37,7 @@ import java.util.zip.ZipOutputStream;
 
 public class ExamsRetrieveListener extends ListenerAdapter {
 
-    private static final Path MESSAGE_IDS_STORAGE_PATH = Path.of(Main.PERSISTENCE_DIR_PATH + "/message_ids");
+    public static final Path MESSAGE_IDS_STORAGE_PATH = Path.of(Main.PERSISTENCE_DIR_PATH + "/message_ids");
     private static final Path ZIP_PATH = Path.of(Main.PERSISTENCE_DIR_PATH + "/exams.zip");
     private final Long guildId;
     private Long examsRetrieveChannelId;

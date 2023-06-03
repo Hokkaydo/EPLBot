@@ -34,7 +34,7 @@ import java.util.concurrent.TimeUnit;
 
 public class MirrorManager extends ListenerAdapter {
 
-    private static final Path MIRROR_STORAGE_PATH = Path.of(Main.PERSISTENCE_DIR_PATH + "/mirrors");
+    public static final Path MIRROR_STORAGE_PATH = Path.of(Main.PERSISTENCE_DIR_PATH + "/mirrors");
     private final List<Mirror> mirrors = new ArrayList<>();
     private final List<MirroredMessages> mirroredMessages = new ArrayList<>();
 
