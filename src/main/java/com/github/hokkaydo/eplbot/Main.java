@@ -63,7 +63,7 @@ public class Main {
             Activity.playing("avoir pitié de ChatGPT pour tout le travail qu'il doit fournir pendant le blocus des étudiants"),
             Activity.playing("conspire avec les modos"),
             Activity.playing("faire la pédicure des Rois"),
-            Activity.playing("Cherche un modèle DB adapté pour stocker votre égo"),
+            Activity.playing("chercher un modèle DB adapté pour stocker votre égo"),
             Activity.playing("relis toutes les confessions"),
             Activity.playing("Please wait, your data are sent to Google ..."),
             Activity.playing("Cherche du sens sous la place des Sciences"),
