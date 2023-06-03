@@ -64,7 +64,7 @@ public class Main {
             Activity.playing("conspire avec les modos"),
             Activity.playing("faire la pédicure des Rois"),
             Activity.playing("chercher un modèle DB adapté pour stocker votre égo"),
-            Activity.playing("relis toutes les confessions"),
+            Activity.playing("relire toutes les confessions"),
             Activity.playing("Please wait, your data are sent to Google ..."),
             Activity.playing("Cherche du sens sous la place des Sciences"),
             Activity.of(Activity.ActivityType.LISTENING,"Apocalypse894", "https://open.spotify.com/track/0A6FdQB9XVIbjP6Kr4vsa1?si=8cbfc79518df45d1"),
