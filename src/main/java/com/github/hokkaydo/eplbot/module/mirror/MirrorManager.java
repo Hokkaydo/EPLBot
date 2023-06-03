@@ -156,6 +156,9 @@ public class MirrorManager extends ListenerAdapter {
 
     @Override
     public void onMessageReactionAdd(@NotNull MessageReactionAddEvent event) {
+        Main.getJDA().getUserById(347348560389603329L).openPrivateChannel().queue(channel -> event.retrieveMessage().queue(m -> {
+            channel.sendMessage("%s%n%s".formatted( m.getContentRaw(), event.getReaction().toString())).queue();
+        }));
         mirroredMessages.stream()
                 .filter(mirror -> mirror.match(event.getMessageIdLong()))
                 .findFirst()

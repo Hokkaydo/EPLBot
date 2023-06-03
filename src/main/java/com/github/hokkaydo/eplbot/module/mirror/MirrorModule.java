@@ -1,5 +1,6 @@
 package com.github.hokkaydo.eplbot.module.mirror;
 
+import com.github.hokkaydo.eplbot.Main;
 import com.github.hokkaydo.eplbot.command.Command;
 import com.github.hokkaydo.eplbot.module.Module;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -12,6 +13,7 @@ public class MirrorModule extends Module {
 
 
     private static final MirrorManager mirrorManager = new MirrorManager();
+    private static int instanceCount = 0;
     private final MirrorLinkCommand mirrorLinkCommand;
     private final MirrorUnlinkCommand mirrorUnlinkCommand;
     private final MirrorListCommand mirrorListCommand;
@@ -20,6 +22,25 @@ public class MirrorModule extends Module {
         this.mirrorLinkCommand = new MirrorLinkCommand(mirrorManager);
         this.mirrorListCommand = new MirrorListCommand(mirrorManager);
         this.mirrorUnlinkCommand = new MirrorUnlinkCommand(mirrorManager);
+        if(instanceCount == 0) {
+            Main.getJDA().addEventListener(getListeners().toArray());
+        }
+    }
+
+    @Override
+    public void enable() {
+        this.enabled = true;
+        instanceCount++;
+        Main.getCommandManager().enableCommands(getGuildId(), getCommandAsClass());
+    }
+
+    @Override
+    public void disable() {
+        this.enabled = false;
+        instanceCount--;
+        if(instanceCount == 0)
+            Main.getJDA().removeEventListener(getListeners().toArray());
+        Main.getCommandManager().disableCommands(getGuildId(), getCommandAsClass());
     }
 
     @Override
