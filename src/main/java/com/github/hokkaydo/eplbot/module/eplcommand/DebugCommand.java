@@ -19,10 +19,10 @@ import java.util.function.Supplier;
 
 public class DebugCommand implements Command {
 
-    private final Long BOSS_ID = 347348560389603329L;
     @Override
     public void executeCommand(CommandContext context) {
-        if(context.author().getIdLong() != BOSS_ID) {
+        long bossId = 347348560389603329L;
+        if(context.author().getIdLong() != bossId) {
             context.replyCallbackAction().setContent("You're not allowed to execute this commande (only my boss can use it)").queue();
             return;
         }
