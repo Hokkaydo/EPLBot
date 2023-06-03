@@ -62,7 +62,7 @@ public class Main {
             Activity.playing("griller les amplis op et brûler les transistors de son circuit"),
             Activity.playing("avoir pitié de ChatGPT pour tout le travail qu'il doit fournir pendant le blocus des étudiants"),
             Activity.playing("conspire avec les modos"),
-            Activity.playing("fait la pedicure des Rois"),
+            Activity.playing("faire la pédicure des Rois"),
             Activity.playing("Cherche un modèle DB adapté pour stocker votre égo"),
             Activity.playing("relis toutes les confessions"),
             Activity.playing("Please wait, your data are sent to Google ..."),
