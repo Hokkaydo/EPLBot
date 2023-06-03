@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 public class MirroredMessage {
 
@@ -29,14 +30,10 @@ public class MirroredMessage {
     private OffsetDateTime lastUpdated;
     private boolean threadOwner;
     private final Map<Emoji, Integer> reactions = new HashMap<>();
-    public MirroredMessage(Message initialMessage, GuildMessageChannel textChannel, boolean mirror, Message replyTo) {
+    public MirroredMessage(Message initialMessage, GuildMessageChannel textChannel) {
         this.channel = textChannel;
         this.lastUpdated = initialMessage.getTimeCreated();
-        if(mirror) {
-            mirrorMessage(initialMessage, replyTo);
-        } else {
-            this.message = initialMessage;
-        }
+        this.message = initialMessage;
     }
 
     private void checkBanTimeOut(User user, Runnable runnable) {
@@ -47,15 +44,15 @@ public class MirroredMessage {
             runnable.run();
         });
     }
-    public void mirrorMessage(Message initialMessage, Message replyTo) {
-        checkBanTimeOut(initialMessage.getAuthor(), () -> {
+    public void mirrorMessage(Message replyTo, Consumer<Message> sentMessage) {
+        checkBanTimeOut(message.getAuthor(), () -> {
             MessageCreateAction createAction;
-            String content = getContent(initialMessage);
-            Member authorMember = channel.getGuild().getMemberById(initialMessage.getAuthor().getIdLong());
+            String content = getContent(message);
+            Member authorMember = channel.getGuild().getMemberById(message.getAuthor().getIdLong());
             boolean hasNickname = authorMember != null && authorMember.getNickname() != null;
-            String authorNickAndTag = (hasNickname  ? authorMember.getNickname() + " (" : "") + initialMessage.getAuthor().getAsTag() + (hasNickname ? ")" : "");
-            MessageEmbed embed = MessageUtil.toEmbed(initialMessage)
-                                         .setAuthor(authorNickAndTag, initialMessage.getJumpUrl(), initialMessage.getAuthor().getAvatarUrl())
+            String authorNickAndTag = (hasNickname  ? authorMember.getNickname() + " (" : "") + message.getAuthor().getAsTag() + (hasNickname ? ")" : "");
+            MessageEmbed embed = MessageUtil.toEmbed(message)
+                                         .setAuthor(authorNickAndTag, message.getJumpUrl(), message.getAuthor().getAvatarUrl())
                                          .setDescription(content)
                                          .setFooter("")
                                          .setTimestamp(null)
@@ -64,11 +61,11 @@ public class MirroredMessage {
                 createAction = replyTo.replyEmbeds(embed);
             else
                 createAction = channel.sendMessageEmbeds(embed);
-            if(!initialMessage.getEmbeds().isEmpty()) {
-                createAction.addEmbeds(initialMessage.getEmbeds());
+            if(!message.getEmbeds().isEmpty()) {
+                createAction.addEmbeds(message.getEmbeds());
             }
             AtomicReference<MessageCreateAction> action = new AtomicReference<>(createAction);
-            initialMessage.getAttachments().stream()
+            message.getAttachments().stream()
                     .map(m -> new Tuple3<>(m.getFileName(), m.getProxy().download(), m.isSpoiler()))
                     .map(tuple3 -> tuple3.b()
                                            .thenApply(i -> FileUpload.fromData(i, tuple3.a()))
@@ -79,16 +76,17 @@ public class MirroredMessage {
                     .ifPresentOrElse(
                             c -> {
                                 c.join();
-                                sendMessage(action, initialMessage);
+                                sendMessage(action, message, sentMessage);
                             },
-                            () -> sendMessage(action, initialMessage));
+                            () -> sendMessage(action, message, sentMessage));
         });
     }
 
-    private void sendMessage(AtomicReference<MessageCreateAction> action, Message initialMessage) {
+    private void sendMessage(AtomicReference<MessageCreateAction> action, Message initialMessage, Consumer<Message> sentMessage) {
         action.get().queue(m -> {
             this.message = m;
             updatePin(initialMessage.isPinned());
+            sentMessage.accept(m);
         });
     }
 
