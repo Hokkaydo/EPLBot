@@ -4,6 +4,7 @@ import com.github.hokkaydo.eplbot.Main;
 import com.github.hokkaydo.eplbot.MessageUtil;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.EmbedType;
+import net.dv8tion.jda.api.entities.Icon;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
@@ -14,6 +15,7 @@ import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
 import net.dv8tion.jda.api.utils.FileUpload;
 
+import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -45,6 +47,19 @@ public class MirroredMessage {
         });
     }
     void mirrorMessage(Message replyTo, Consumer<Message> sentMessage) {
+        Main.getJDA().getTextChannelById(channel.getIdLong()).createWebhook("").queue(w -> {
+            message.getAuthor().getAvatar().download().thenAccept(is -> {
+                Member authorMember = channel.getGuild().getMemberById(message.getAuthor().getIdLong());
+                boolean hasNickname = authorMember != null && authorMember.getNickname() != null;
+                String authorNickAndTag = (hasNickname  ? authorMember.getNickname() + " (" : "") + message.getAuthor().getAsTag() + (hasNickname ? ")" : "");
+                try {
+                    w.getManager().setAvatar(Icon.from(is)).setName(authorNickAndTag).queue();
+
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        });
         checkBanTimeOut(message.getAuthor(), () -> {
             MessageCreateAction createAction;
             String content = getContent(message);
@@ -91,11 +106,11 @@ public class MirroredMessage {
     }
 
     private String getContent(Message message) {
-        String content = message.getContentRaw().isEmpty() ? "" : message.getContentRaw();
+        String content = message.getContentRaw();
         if(content.isBlank()) {
             content = message.getEmbeds().isEmpty() ? "" : message.getEmbeds().get(0).getDescription();
         }
-        return content == null ? "" : content;
+        return content;
     }
 
     void update(Message initialMessage) {
