@@ -6,6 +6,7 @@ import com.github.hokkaydo.eplbot.module.Module;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +24,8 @@ public class ConfessionModule extends Module {
         confessionCommand = new ConfessionCommand(processor);
         confessionFollowCommand = new ConfessionFollowCommand(lastConfession, processor);
         clearConfessWarningsCommand = new ClearConfessWarningsCommand(processor);
+        Main.getCommandManager().addGlobalCommands(List.of(confessionCommand, confessionFollowCommand));
+        Main.getCommandManager().addCommands(getGuild(), Collections.singletonList(clearConfessWarningsCommand));
     }
 
     @Override
@@ -32,7 +35,7 @@ public class ConfessionModule extends Module {
 
     @Override
     public List<Command> getCommands() {
-        return List.of(confessionCommand, confessionFollowCommand, clearConfessWarningsCommand);
+        return Collections.emptyList(); // Workaround used to add some global & guild commands, need to rewrite
     }
 
     @Override
@@ -44,14 +47,16 @@ public class ConfessionModule extends Module {
     public void enable() {
         this.enabled = true;
         Main.getJDA().addEventListener(getListeners().toArray());
-        Main.getCommandManager().enableGlobalCommands(getCommandAsClass());
+        Main.getCommandManager().enableGlobalCommands(List.of(confessionCommand.getClass(), confessionFollowCommand.getClass()));
+        Main.getCommandManager().enableCommands(getGuildId(), List.of(clearConfessWarningsCommand.getClass()));
     }
 
     @Override
     public void disable() {
         this.enabled = false;
         Main.getJDA().removeEventListener(getListeners().toArray());
-        Main.getCommandManager().disableGlobalCommands(getCommandAsClass());
+        Main.getCommandManager().disableGlobalCommands(List.of(confessionCommand.getClass(), confessionFollowCommand.getClass()));
+        Main.getCommandManager().disableCommands(getGuildId(), List.of(clearConfessWarningsCommand.getClass()));
     }
 
 }

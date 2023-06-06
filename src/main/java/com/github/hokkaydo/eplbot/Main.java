@@ -47,7 +47,6 @@ public class Main {
     public static final Long EPL_DISCORD_ID = 517720163223601153L;
     private static Long testDiscordId;
     private static final Long SINF_DISCORD_ID = 492762354111479828L;
-    private static Long prodDiscordId = 0L;
     public static final String PERSISTENCE_DIR_PATH = "./persistence";
     private static final Random RANDOM = new Random();
     public static final Logger LOGGER = Logger.getLogger("EPLBot");
@@ -85,7 +84,6 @@ public class Main {
         String token = System.getenv("DISCORD_BOT_TOKEN");
         String testDiscordIdStr = System.getenv("TEST_DISCORD_ID");
         testDiscordId = testDiscordIdStr == null ? 1108141461498777722L : Long.parseLong(testDiscordIdStr);
-        prodDiscordId = testDiscordIdStr == null ? EPL_DISCORD_ID : testDiscordId;
         if(token == null && args.length > 0) token = args[0];
         if(token == null) throw new IllegalStateException("No token specified !");
         moduleManager = new ModuleManager();
@@ -186,7 +184,6 @@ public class Main {
             if(guild == null) continue;
             Main.getCommandManager().addCommands(guild, guildListEntry.getValue());
         }
-        getModuleManager().getModuleByName("confession", prodDiscordId, ConfessionModule.class).ifPresent(m -> commandManager.addGlobalCommands(m.getCommands()));
         getModuleManager().getModule(MirrorModule.class).forEach(MirrorModule::loadMirrors);
     }
 
