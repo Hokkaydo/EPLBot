@@ -24,8 +24,6 @@ public class ConfessionModule extends Module {
         confessionCommand = new ConfessionCommand(processor);
         confessionFollowCommand = new ConfessionFollowCommand(lastConfession, processor);
         clearConfessWarningsCommand = new ClearConfessWarningsCommand(processor);
-        Main.getCommandManager().addGlobalCommands(List.of(confessionCommand, confessionFollowCommand));
-        Main.getCommandManager().addCommands(getGuild(), Collections.singletonList(clearConfessWarningsCommand));
     }
 
     @Override
@@ -35,7 +33,7 @@ public class ConfessionModule extends Module {
 
     @Override
     public List<Command> getCommands() {
-        return Collections.emptyList(); // Workaround used to add some global & guild commands, need to rewrite
+        return Collections.singletonList(clearConfessWarningsCommand);
     }
 
     @Override
@@ -43,20 +41,8 @@ public class ConfessionModule extends Module {
         return List.of(processor);
     }
 
-    @Override
-    public void enable() {
-        this.enabled = true;
-        Main.getJDA().addEventListener(getListeners().toArray());
-        Main.getCommandManager().enableGlobalCommands(List.of(confessionCommand.getClass(), confessionFollowCommand.getClass()));
-        Main.getCommandManager().enableCommands(getGuildId(), List.of(clearConfessWarningsCommand.getClass()));
-    }
-
-    @Override
-    public void disable() {
-        this.enabled = false;
-        Main.getJDA().removeEventListener(getListeners().toArray());
-        Main.getCommandManager().disableGlobalCommands(List.of(confessionCommand.getClass(), confessionFollowCommand.getClass()));
-        Main.getCommandManager().disableCommands(getGuildId(), List.of(clearConfessWarningsCommand.getClass()));
+    public List<Command> getGlobalCommands() {
+        return List.of(confessionCommand, confessionFollowCommand);
     }
 
 }

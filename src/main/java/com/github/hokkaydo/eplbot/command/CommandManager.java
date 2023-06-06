@@ -115,9 +115,16 @@ public class CommandManager extends ListenerAdapter {
     }
 
     public void addGlobalCommands(List<Command> commands) {
-        globalCommands.clear();
-        commands.forEach(c -> globalCommands.put(c.getName(), c));
-        Main.getJDA().updateCommands().addCommands(commands.stream().map(this::mapToCommandData).toList()).queue();
+        Map<String, Command> newGlobals = new HashMap<>(this.globalCommands);
+        for (Command command : commands) {
+            newGlobals.put(command.getName(), command);
+        }
+        Main.getJDA().retrieveCommands().queue(s -> {
+            if(s.size() == commands.size()) return;
+            Main.getJDA().updateCommands().addCommands(newGlobals.values().stream().map(this::mapToCommandData).toList()).queue();
+        });
+        this.globalCommands.clear();
+        this.globalCommands.putAll(newGlobals);
     }
 
     private CommandData mapToCommandData(Command cmd) {
