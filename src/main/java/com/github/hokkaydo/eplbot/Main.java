@@ -8,8 +8,10 @@ import com.github.hokkaydo.eplbot.module.autopin.AutoPinModule;
 import com.github.hokkaydo.eplbot.module.eplcommand.EPLCommandModule;
 import com.github.hokkaydo.eplbot.module.confession.ConfessionModule;
 import com.github.hokkaydo.eplbot.module.globalcommand.GlobalCommandModule;
+import com.github.hokkaydo.eplbot.module.graderetrieve.ExamsRetrieveModule;
 import com.github.hokkaydo.eplbot.module.mirror.MirrorModule;
 import com.github.hokkaydo.eplbot.module.quote.QuoteModule;
+import com.github.hokkaydo.eplbot.module.ratio.RatioModule;
 import com.github.hokkaydo.eplbot.module.rss.RssModule;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
@@ -36,6 +38,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class Main {
 
@@ -75,6 +78,10 @@ public class Main {
     );
 
     public static void main(String[] args) throws InterruptedException, IOException {
+        launch(args);
+    }
+
+    private static void launch(String[] args) throws InterruptedException, IOException{
         LOGGER.log(Level.INFO, "--------- START ---------");
         String token = System.getenv("DISCORD_BOT_TOKEN");
         String testDiscordIdStr = System.getenv("TEST_DISCORD_ID");
@@ -137,7 +144,9 @@ public class Main {
         );
         List<Class<? extends Module>> eplModules = Arrays.asList(
                 EPLCommandModule.class,
-                ConfessionModule.class
+                ConfessionModule.class,
+                ExamsRetrieveModule.class,
+                RatioModule.class
         );
         Map<Long, List<Command>> guildCommands = new HashMap<>();
         for(Long guildId : List.of(EPL_DISCORD_ID, testDiscordId)) {
@@ -149,11 +158,8 @@ public class Main {
                                            .map(clazz -> instantiate(clazz, guildId))
                                            .map(o -> (Module)o)
                                            .toList();
-            for (Module m : modules) {
-                if(!m.getClass().equals(ConfessionModule.class)) {
-                    guildCommands.get(guildId).addAll(m.getCommands());
-                }
-            }
+
+            modules.forEach(m -> guildCommands.get(guildId).addAll(m.getCommands()));
             moduleManager.addModules(modules);
         }
 
@@ -168,9 +174,8 @@ public class Main {
                                            .map(clazz -> instantiate(clazz, guildId))
                                            .map(o -> (Module)o)
                                            .toList();
-            for (Module module : modules) {
-                guildCommands.get(guildId).addAll(module.getCommands());
-            }
+
+            modules.forEach(m -> guildCommands.get(guildId).addAll(m.getCommands()));
             moduleManager.addModules(modules);
         }
         for (Map.Entry<Long, List<Command>> guildListEntry : guildCommands.entrySet()) {
@@ -178,7 +183,10 @@ public class Main {
             if(guild == null) continue;
             Main.getCommandManager().addCommands(guild, guildListEntry.getValue());
         }
-        getModuleManager().getModuleByName("confession", prodDiscordId, ConfessionModule.class).ifPresent(m -> commandManager.addGlobalCommands(m.getCommands()));
+        getModuleManager().getModuleByName("confession", prodDiscordId, ConfessionModule.class).ifPresent(m -> {
+            commandManager.addGlobalCommands(m.getGlobalCommands());
+            commandManager.enableGlobalCommands((m.getGlobalCommands().stream().map(Command::getClass).collect(Collectors.toList())));
+        });
         getModuleManager().getModule(MirrorModule.class).forEach(MirrorModule::loadMirrors);
     }
 

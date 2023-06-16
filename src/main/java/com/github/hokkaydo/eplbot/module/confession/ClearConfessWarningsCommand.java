@@ -41,7 +41,7 @@ public class ClearConfessWarningsCommand implements Command {
 
     @Override
     public List<OptionData> getOptions() {
-        return Collections.singletonList(new OptionData(OptionType.USER, "user", "COMMAND_CLEARCONFESSWARNINGS_OPTION_USER_DESCRIPTION", true));
+        return Collections.singletonList(new OptionData(OptionType.USER, "user", Strings.getString("COMMAND_CLEARCONFESSWARNINGS_OPTION_USER_DESCRIPTION"), true));
     }
 
     @Override

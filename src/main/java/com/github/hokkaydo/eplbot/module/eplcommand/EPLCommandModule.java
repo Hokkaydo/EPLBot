@@ -14,12 +14,14 @@ public class EPLCommandModule extends Module {
     private final ClearFromCommand clearFromCommand;
     private final ClearLastCommand clearLastCommand;
     private final MoveMessagesCommand moveMessagesCommand;
+    private final DebugCommand debugCommand;
     public EPLCommandModule(@NotNull Long guildId) {
         super(guildId);
         clearFromCommand = new ClearFromCommand();
         clearBetweenCommand = new ClearBetween();
         clearLastCommand = new ClearLastCommand();
         moveMessagesCommand = new MoveMessagesCommand();
+        debugCommand = new DebugCommand();
     }
 
     @Override
@@ -29,7 +31,7 @@ public class EPLCommandModule extends Module {
 
     @Override
     public List<Command> getCommands() {
-        return List.of(clearBetweenCommand, clearFromCommand, clearLastCommand, moveMessagesCommand);
+        return List.of(clearBetweenCommand, clearFromCommand, clearLastCommand, moveMessagesCommand, debugCommand);
     }
 
     @Override

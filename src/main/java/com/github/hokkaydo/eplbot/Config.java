@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 
 public class Config {
 
-    private static final String CONFIG_PATH = Main.PERSISTENCE_DIR_PATH + "/config";
+    public static final String CONFIG_PATH = Main.PERSISTENCE_DIR_PATH + "/config";
 
     private static final String IDENTIFIER_UNDER_STRING_FORM = "Identifiant sous forme de chaîne de caractères";
     private static final Supplier<ConfigurationParser> MODULE_DISABLED = () -> new ConfigurationParser(() -> false, Object::toString, Boolean::valueOf, "Booléen");
@@ -63,6 +63,12 @@ public class Config {
                     c -> Integer.toString(((Color)c).getRGB(), 16),
                     Color::decode,
                     "RGB sous forme hexadécimale : Ex #FFFFFF = Blanc"
+            ),
+            "DRIVE_ADMIN_CHANNEL_ID", new ConfigurationParser(
+                    () -> 0L,
+                    Object::toString,
+                    Long::parseLong,
+                    INTEGER_FORMAT
             )
     ));
 
@@ -76,6 +82,12 @@ public class Config {
                     m -> ((Map<String, Timestamp>) m).entrySet().stream().map(e -> e.getKey() + ";" + e.getValue()).reduce("", (a,b) ->  a.isBlank() ? b : a + "," + b),
                     s -> Arrays.stream(s.split(",")).map(a -> a.split(";")).map(a -> Map.entry(a[0], Timestamp.valueOf(a[1]))).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)),
                     "Liste de paires Lien-Timestamp"
+            ),
+            "EXAM_RETRIEVE_CHANNEL", new ConfigurationParser(
+                    () -> 0L,
+                    Object::toString,
+                    Long::parseLong,
+                    INTEGER_FORMAT
             )
     );
     static {
@@ -124,7 +136,9 @@ public class Config {
                 "mirror", MODULE_DISABLED.get(),
                 "confession", MODULE_DISABLED.get(),
                 "basiccommands", MODULE_DISABLED.get(),
-                "quote", MODULE_DISABLED.get()
+                "quote", MODULE_DISABLED.get(),
+                "examsretrieve", MODULE_DISABLED.get(),
+                "ratio", MODULE_DISABLED.get()
         ));
     }
     private static final Map<Long, Map<String, Object>> GUILD_CONFIGURATION = new HashMap<>();
