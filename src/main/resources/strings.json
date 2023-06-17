@@ -86,5 +86,12 @@
   "COMMAND_CLEARCONFESSWARNINGS_DONE": "Le compteur a bien été réinitialisé.",
   "COMMAND_SETUPGRADECHANNEL_DESCRIPTION": "Permet d'initialiser le canal de récupération de copies et corrigés d'examens.",
   "COMMAND_SETUPGRADECHANNEL_HELP": "Définit le canal dans lequel est exécutée la commande comme le channel de récupération de copies et corrigés d'examen",
-  "DRIVE_ADMIN_CHANNEL_NOT_SETUP": "Le canal de communication avec les administrateurs du Drive EPL n'est pas défini."
+  "DRIVE_ADMIN_CHANNEL_NOT_SETUP": "Le canal de communication avec les administrateurs du Drive EPL n'est pas défini.",
+  "COMMAND_ADDCOMMAND_DESCRIPTION": "Permet d'ajouter une commande personnalisée",
+  "COMMAND_ADDCOMMAND_NAME_OPTION_DESCRIPTION": "Nom de la commande",
+  "COMMAND_ADDCOMMAND_TEXT_OPTION_DESCRIPTION": "Texte à afficher",
+  "COMMAND_ADDCOMMAND_HELP": "Permet d'ajouter une commande personnalisée avec un nom et un texte à afficher",
+  "COMMAND_ADDCOMMAND_MISSING_ARG": "Il manque un argument.",
+  "COMMAND_ADDCOMMAND_ALREADY_EXISTS": "Cette commande existe déjà.",
+  "COMMAND_ADDCOMMAND_SUCCESS": "La commande a bien été ajoutée."
 }
