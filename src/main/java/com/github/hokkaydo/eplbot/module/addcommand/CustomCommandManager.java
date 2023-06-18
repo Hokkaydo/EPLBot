@@ -89,6 +89,22 @@ public class CustomCommandManager {
         storeCommands();
     }
 
+    public void removeCommand(Member author,  String commandName) {
+        //sanitize commandName
+        if(commandName.contains(";")) 
+            commandName = commandName.replace(";", "");
+
+        if(!existsCommand(commandName)) return;
+
+        CommandItem command = commands.get(commandName);
+
+        if(!command.authorId.equals(author.getId())) return;
+
+        commands.remove(commandName);
+        Main.getCommandManager().removeCommands(author.getGuild(), List.of(new CustomCommand(commandName, command.content)));
+        storeCommands();
+    }
+
 
     public boolean existsCommand(String name) {
         return commands.containsKey(name);

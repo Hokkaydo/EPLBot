@@ -12,12 +12,14 @@ import java.util.List;
 public class CustomCommandModule extends Module {
 
     private final AddCommandCommand addCommandCommand;
+    private final RemoveCommandCommand removeCommandCommand;
     private final CustomCommandManager customCommandManager;
 
     public CustomCommandModule(@NotNull Long guildId) {
         super(guildId);
         customCommandManager = new CustomCommandManager(guildId);
         addCommandCommand = new AddCommandCommand(customCommandManager);
+        removeCommandCommand = new RemoveCommandCommand(customCommandManager);
     }
 
     @Override
@@ -29,6 +31,7 @@ public class CustomCommandModule extends Module {
     public List<Command> getCommands() {
         List<Command> commands = customCommandManager.getCommands();
         commands.add(addCommandCommand);
+        commands.add(removeCommandCommand);
         return commands;
     }
 

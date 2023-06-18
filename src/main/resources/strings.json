@@ -93,5 +93,9 @@
   "COMMAND_ADDCOMMAND_HELP": "Permet d'ajouter une commande personnalisée avec un nom et un texte à afficher",
   "COMMAND_ADDCOMMAND_MISSING_ARG": "Il manque un argument.",
   "COMMAND_ADDCOMMAND_ALREADY_EXISTS": "Cette commande existe déjà.",
-  "COMMAND_ADDCOMMAND_SUCCESS": "La commande a bien été ajoutée."
+  "COMMAND_ADDCOMMAND_SUCCESS": "La commande a bien été ajoutée.",
+  "COMMAND_REMOVECOMMAND_NOT_EXISTS": "Cette commande n'existe pas.",
+  "COMMAND_REMOVECOMMAND_SUCCESS": "La commande a bien été supprimée.",
+  "COMMAND_REMOVECOMMAND_DESCRIPTION": "Permet de retirer une commande personnalisée précédemment ajoutée",
+  "COMMAND_REMOVECOMMAND_HELP": "Permet de retirer une commande personnalisée précédemment ajoutée via son nom"
 }
