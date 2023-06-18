@@ -12,15 +12,31 @@ import java.util.Map;
 import com.github.hokkaydo.eplbot.Main;
 import com.github.hokkaydo.eplbot.command.Command;
 
-import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Member;
 
-public class AddCommandManager {
+public class CustomCommandManager {
 
     private final Path commandsPath = Path.of(Main.PERSISTENCE_DIR_PATH + "/custom_commands");
-    private final Map<String,String> commands = new HashMap<>();
+    private final Map<String,CommandItem> commands = new HashMap<>();
     public final Long guildId;
 
-    public AddCommandManager(Long guildId) {
+    class CommandItem {
+        String content;
+        String authorId;
+
+        public CommandItem(String content, String authorId) {
+            this.content = content;
+            this.authorId = authorId;
+        }
+
+        @Override
+        public String toString() {
+            return  '\'' + content + '\'' +
+                    " by " + authorId;
+        }
+    }
+
+    public CustomCommandManager(Long guildId) {
         this.guildId = guildId;
         loadCommands();
     }
@@ -30,21 +46,24 @@ public class AddCommandManager {
             int c;
             StringBuilder commandName = new StringBuilder();
             StringBuilder commandContent = new StringBuilder();
-            boolean isCommandName = true;
+            StringBuilder authorId = new StringBuilder();
+            int index = 0;
             while((c = stream.read()) != -1) {
                 if(c == ';') {
-                    isCommandName = false;
+                    index++;
                     continue;
                 }
                 if(c == '\n') {
-                    commands.put(commandName.toString(), commandContent.toString());
+                    commands.put(commandName.toString(), new CommandItem(commandContent.toString(), authorId.toString()));
                     commandName = new StringBuilder();
                     commandContent = new StringBuilder();
-                    isCommandName = true;
+                    authorId = new StringBuilder();
+                    index = 0;
                     continue;
                 }
-                if(isCommandName) commandName.append((char) c);
-                else commandContent.append((char) c);
+                if (index == 0) commandName.append((char) c);
+                else if (index == 1) commandContent.append((char) c);
+                else if (index == 2) authorId.append((char) c);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -54,18 +73,19 @@ public class AddCommandManager {
 
     public List<Command> getCommands() {
         List<Command> new_commands = new ArrayList<>();
-        commands.forEach((name, content) -> new_commands.add(new CustomCommand(name, content)));
+        commands.forEach((name, item) -> new_commands.add(new CustomCommand(name, item.content)));
+        System.out.println(new_commands);
         return new_commands;
     }
 
-    public void addCommand(Guild guild,  String commandName, String commandContent) {
+    public void addCommand(Member author,  String commandName, String commandContent) {
         //sanitize commandName
         if(commandName.contains(";")) 
             commandName = commandName.replace(";", "");
 
         if(existsCommand(commandName)) return;
-        commands.put(commandName, commandContent);
-        Main.getCommandManager().addCommands(guild, List.of(new CustomCommand(commandName, commandContent)));
+        commands.put(commandName, new CommandItem(commandContent, author.getId()));
+        Main.getCommandManager().addCommands(author.getGuild(), List.of(new CustomCommand(commandName, commandContent)));
         storeCommands();
     }
 
@@ -76,9 +96,9 @@ public class AddCommandManager {
     
     private void storeCommands() {
         try(FileWriter stream = new FileWriter(commandsPath.toFile())) {
-            commands.forEach((name, content) -> {
+            commands.forEach((name, item) -> {
                 try {
-                    stream.append(name + ";" + content + "\n");
+                    stream.append(name + ";" + item.content + ";" + item.authorId + "\n");
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

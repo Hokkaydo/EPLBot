@@ -9,27 +9,26 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
-public class AddCommandModule extends Module {
+public class CustomCommandModule extends Module {
 
     private final AddCommandCommand addCommandCommand;
-    private final AddCommandManager addCommandManager;
+    private final CustomCommandManager customCommandManager;
 
-    public AddCommandModule(@NotNull Long guildId) {
+    public CustomCommandModule(@NotNull Long guildId) {
         super(guildId);
-        addCommandManager = new AddCommandManager(guildId);
-        addCommandCommand = new AddCommandCommand(addCommandManager);
+        customCommandManager = new CustomCommandManager(guildId);
+        addCommandCommand = new AddCommandCommand(customCommandManager);
     }
 
     @Override
     public String getName() {
-        return "addcommand";
+        return "customcommands";
     }
 
     @Override
     public List<Command> getCommands() {
-        List<Command> commands = addCommandManager.getCommands();
+        List<Command> commands = customCommandManager.getCommands();
         commands.add(addCommandCommand);
-        System.out.println(commands);
         return commands;
     }
 

@@ -18,10 +18,10 @@ public class AddCommandCommand implements Command{
     private static final String NAME = "name";
     private static final String TEXT = "text";
 
-    private AddCommandManager addCommandManager;
+    private CustomCommandManager customCommandManager;
 
-    public AddCommandCommand(AddCommandManager addCommandManager) {
-        this.addCommandManager = addCommandManager;
+    public AddCommandCommand(CustomCommandManager customCommandManager) {
+        this.customCommandManager = customCommandManager;
     }
 
     @Override
@@ -34,11 +34,11 @@ public class AddCommandCommand implements Command{
         }
         String name = nameOption.get().getAsString();
         String text = textOption.get().getAsString();
-        if(addCommandManager.existsCommand(name)){
+        if(customCommandManager.existsCommand(name)){
             context.replyCallbackAction().setContent(Strings.getString("COMMAND_ADDCOMMAND_ALREADY_EXISTS")).queue();
             return;
         }
-        addCommandManager.addCommand(context.author().getGuild(), name, text);
+        customCommandManager.addCommand(context.author(), name, text);
         context.replyCallbackAction().setContent(Strings.getString("COMMAND_ADDCOMMAND_SUCCESS")).queue();
     }
 

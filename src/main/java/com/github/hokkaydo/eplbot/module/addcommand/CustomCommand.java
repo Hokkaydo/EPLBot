@@ -4,7 +4,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
-import com.github.hokkaydo.eplbot.Strings;
 import com.github.hokkaydo.eplbot.command.Command;
 import com.github.hokkaydo.eplbot.command.CommandContext;
 
@@ -59,6 +58,11 @@ public class CustomCommand implements Command {
     @Override
     public Supplier<String> help() {
         return () -> TEXT;
+    }
+
+    @Override
+    public String toString(){
+        return "CustomCommand {\n\t/"+NAME+" : "+TEXT + "\n}";
     }
     
 }
