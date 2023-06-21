@@ -86,5 +86,6 @@
   "COMMAND_CLEARCONFESSWARNINGS_DONE": "Le compteur a bien été réinitialisé.",
   "COMMAND_SETUPGRADECHANNEL_DESCRIPTION": "Permet d'initialiser le canal de récupération de copies et corrigés d'examens.",
   "COMMAND_SETUPGRADECHANNEL_HELP": "Définit le canal dans lequel est exécutée la commande comme le channel de récupération de copies et corrigés d'examen",
-  "DRIVE_ADMIN_CHANNEL_NOT_SETUP": "Le canal de communication avec les administrateurs du Drive EPL n'est pas défini."
+  "DRIVE_ADMIN_CHANNEL_NOT_SETUP": "Le canal de communication avec les administrateurs du Drive EPL n'est pas défini.",
+  "COMMAND_CONFIG_HELP": "Permet la configuration et consultation des paramètres du bot spécifiques au serveur via `/config <name> <value>`.\n- Si la valeur est omise, la commande renverra la valeur actuelle du paramètre `<name>`. \n- Si les 2 paramètres sont omis, la configuration totale du serveur sera affichée.\n- Si le nom est omis mais pas la valeur, la commande renverra une erreur."
 }
