@@ -20,6 +20,7 @@ public class GlobalCommandModule extends Module {
     private final PingCommand pingCommand;
     private final HelpCommand helpCommand;
     private final ContributeCommand contributeCommand;
+    private final IssueCommand issueCommand;
 
     public GlobalCommandModule(@NotNull Long guildId) {
         super(guildId);
@@ -32,6 +33,7 @@ public class GlobalCommandModule extends Module {
         pingCommand = new PingCommand();
         helpCommand = new HelpCommand(guildId);
         contributeCommand = new ContributeCommand();
+        issueCommand = new IssueCommand();
     }
 
     @Override
@@ -50,7 +52,8 @@ public class GlobalCommandModule extends Module {
                 stateCommand,
                 pingCommand,
                 helpCommand,
-                contributeCommand
+                contributeCommand,
+                issueCommand
         );
     }
 
