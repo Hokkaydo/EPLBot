@@ -59,6 +59,6 @@ public class GlobalCommandModule extends Module {
 
     @Override
     public List<ListenerAdapter> getListeners() {
-        return Collections.emptyList();
+        return Collections.singletonList(issueCommand);
     }
 }

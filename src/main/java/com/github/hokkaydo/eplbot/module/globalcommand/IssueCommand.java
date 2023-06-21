@@ -7,10 +7,19 @@ import com.github.hokkaydo.eplbot.Main;
 import com.github.hokkaydo.eplbot.Strings;
 import com.github.hokkaydo.eplbot.command.Command;
 import com.github.hokkaydo.eplbot.command.CommandContext;
+import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
+import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
+import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.InteractionType;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
+import net.dv8tion.jda.api.interactions.components.text.TextInput;
+import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
+import net.dv8tion.jda.api.interactions.modals.Modal;
+import net.dv8tion.jda.api.requests.restaction.interactions.ReplyCallbackAction;
+import org.jetbrains.annotations.NotNull;
 import org.kohsuke.github.GHAppInstallation;
 import org.kohsuke.github.GHAppInstallationToken;
 import org.kohsuke.github.GHIssue;
@@ -30,49 +39,71 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-public class IssueCommand implements Command {
+public class IssueCommand extends ListenerAdapter implements Command {
 
     private Instant nextJwtRefresh;
     private GitHub github;
+    private static final String ERROR_OCCURRED = "ERROR_OCCURRED";
 
+    private final Map<String, Object[]> labelsFileModalTempStore = new HashMap<>();
 
     @Override
     public void executeCommand(CommandContext context) {
-        Optional<OptionMapping> titleOpt = context.options().stream().filter(o -> o.getName().equals("title")).findFirst();
-        Optional<OptionMapping> bodyOpt = context.options().stream().filter(o -> o.getName().equals("body")).findFirst();
-        Optional<OptionMapping> labelOpt = context.options().stream().filter(o -> o.getName().equals("label")).findFirst();
-        Optional<OptionMapping> fileOpt = context.options().stream().filter(o -> o.getName().equals("file")).findFirst();
-        if(titleOpt.isEmpty() || bodyOpt.isEmpty() || labelOpt.isEmpty()) {
-            context.replyCallbackAction().setContent(Strings.getString("ERROR_OCCURRED")).queue();
+        Optional<OptionMapping> labels = context.options().stream().filter(o -> o.getName().equals("label")).findFirst();
+        if(labels.isEmpty()) {
+            context.replyCallbackAction().setContent(Strings.getString(ERROR_OCCURRED)).queue();
             return;
         }
-        String title = titleOpt.get().getAsString();
-        String body = bodyOpt.get().getAsString();
-        String label = labelOpt.get().getAsString();
-        String file = "";
-        if(fileOpt.isPresent()) {
-            file = "![%s](%s)".formatted(fileOpt.get().getAsAttachment().getFileName(), fileOpt.get().getAsAttachment().getUrl());
-        }
+        Optional<OptionMapping> file = context.options().stream().filter(o -> o.getName().equals("file")).findFirst();
+        String key = context.author().getId() + "-issue-modal";
+        labelsFileModalTempStore.put(key, new Object[]{labels.get().getAsString(), file.<Object>map(OptionMapping::getAsAttachment).orElse(null)});
+
+        Modal modal = Modal.create(key, "Formulaire d'issue")
+                              .addActionRow(TextInput.create("title", "Titre", TextInputStyle.SHORT).setPlaceholder("Titre").setRequired(true).build())
+                              .addActionRow(TextInput.create("body", "Corps", TextInputStyle.PARAGRAPH).setPlaceholder("Corps").setRequired(true).build())
+                              .build();
+        context.interaction().replyModal(modal).queue();
+    }
+
+    @Override
+    public void onModalInteraction(@NotNull ModalInteractionEvent event) {
+        if(event.getInteraction().getType() != InteractionType.MODAL_SUBMIT || !event.getModalId().contains("-issue-modal")) return;
+        ReplyCallbackAction callbackAction = event.deferReply(true);
+        String title = Objects.requireNonNull(event.getInteraction().getValue("title")).getAsString();
+        String body = Objects.requireNonNull(event.getInteraction().getValue("body")).getAsString();
+
         if(nextJwtRefresh == null || nextJwtRefresh.isBefore(Instant.now())) {
             refreshJwt();
             if(github == null) {
-                context.replyCallbackAction().setContent(Strings.getString("ERROR_OCCURED")).queue();
+                callbackAction.setContent(Strings.getString(ERROR_OCCURRED)).queue();
                 return;
             }
             nextJwtRefresh = Instant.now().plus(45, ChronoUnit.MINUTES);
         }
 
+        String image = "";
+        String key = event.getModalId();
+        String label = (String) labelsFileModalTempStore.get(key)[0];
+        Message.Attachment attachment = (Message.Attachment) labelsFileModalTempStore.get(key)[1];
+        if(attachment != null) {
+            image = "![%s](%s)".formatted(attachment.getFileName(), attachment.getUrl());
+        }
+
         try {
-            GHIssue issue = github.getRepository("Hokkaydo/EPLBot").createIssue(title).body(body + "\n" + file).label(label).create();
-            context.replyCallbackAction().setContent(Strings.getString("COMMAND_ISSUE_SUCCESSFUL").formatted(issue.getNumber())).queue();
+            GHIssue issue = github.getRepository("Hokkaydo/EPLBot").createIssue(title).body(body + "\n" + image).label(label).create();
+            callbackAction.setContent(Strings.getString("COMMAND_ISSUE_SUCCESSFUL").formatted(issue.getNumber())).queue();
         } catch (IOException e) {
-            context.replyCallbackAction().setContent(Strings.getString("ERROR_OCCURED")).queue();
+            callbackAction.setContent(Strings.getString(ERROR_OCCURRED)).queue();
         }
     }
+
 
     private void refreshJwt() {
         try {
@@ -121,8 +152,6 @@ public class IssueCommand implements Command {
     @Override
     public List<OptionData> getOptions() {
         return List.of(
-                new OptionData(OptionType.STRING, "title", Strings.getString("COMMAND_ISSUE_TITLE_OPTION_DESCRIPTION"), true),
-                new OptionData(OptionType.STRING, "body", Strings.getString("COMMAND_ISSUE_BODY_OPTION_DESCRIPTION"), true),
                 new OptionData(OptionType.STRING, "label", Strings.getString("COMMAND_ISSUE_LABEL_OPTION_DESCRIPTION"), true)
                         .addChoice("bug", "bug")
                         .addChoice("new feature", "new feature")
