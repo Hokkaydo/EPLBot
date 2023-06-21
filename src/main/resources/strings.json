@@ -97,5 +97,12 @@
   "COMMAND_REMOVECOMMAND_NOT_EXISTS": "Cette commande n'existe pas.",
   "COMMAND_REMOVECOMMAND_SUCCESS": "La commande a bien été supprimée.",
   "COMMAND_REMOVECOMMAND_DESCRIPTION": "Permet de retirer une commande personnalisée précédemment ajoutée",
-  "COMMAND_REMOVECOMMAND_HELP": "Permet de retirer une commande personnalisée précédemment ajoutée via son nom"
+  "COMMAND_REMOVECOMMAND_HELP": "Permet de retirer une commande personnalisée précédemment ajoutée via son nom",
+  "COMMAND_ISSUE_SUCCESSFUL": "Votre issue a bien été enregistrée : https://github.com/Hokkaydo/EPLBot/issues/%d",
+  "COMMAND_ISSUE_HELP": "Crée une issue sur le dépôt public associée au sujet mentionné. Le sujet peut être un rapport de bug, une proposition de nouvelle fonctionnalité ou une suggestion d'amélioration.",
+  "COMMAND_ISSUE_DESCRIPTION": "Permet d'envoyer une suggestion/bug sur le dépôt public.",
+  "COMMAND_ISSUE_TITLE_OPTION_DESCRIPTION": "Titre de l'issue",
+  "COMMAND_ISSUE_BODY_OPTION_DESCRIPTION": "Corps de l'issue",
+  "COMMAND_ISSUE_LABEL_OPTION_DESCRIPTION": "Label de l'issue",
+  "COMMAND_CONFIG_HELP": "Permet la configuration et consultation des paramètres du bot spécifiques au serveur via `/config <name> <value>`.\n- Si la valeur est omise, la commande renverra la valeur actuelle du paramètre `<name>`. \n- Si les 2 paramètres sont omis, la configuration totale du serveur sera affichée.\n- Si le nom est omis mais pas la valeur, la commande renverra une erreur."
 }

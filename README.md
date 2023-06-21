@@ -34,7 +34,7 @@ Avant de commencer, assurez-vous d'avoir les éléments suivants :
 
     ```shell
     DISCORD_BOT_TOKEN=votre-jeton
-    TES_DISCORD_ID=id-de-votre-discord-de-test
+    TEST_DISCORD_ID=id-de-votre-discord-de-test
     ```
 
 5. Exécutez le bot Discord en utilisant la commande :
