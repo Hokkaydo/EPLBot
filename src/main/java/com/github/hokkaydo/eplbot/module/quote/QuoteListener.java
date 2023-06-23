@@ -31,7 +31,7 @@ public class QuoteListener extends ListenerAdapter {
                 .forEach(m -> MessageUtil.toEmbedWithAttachements(m, e -> {
                     Member authorMember = event.getGuild().getMemberById(m.getAuthor().getIdLong());
                     boolean hasNickname = authorMember != null && authorMember.getNickname() != null;
-                    String authorNickAndTag = (hasNickname  ? authorMember.getNickname() + " (" : "") + m.getAuthor().getAsTag() + (hasNickname ? ")" : "");
+                    String authorNickAndTag = (hasNickname  ? authorMember.getNickname() + " (" : "") + m.getAuthor().getName() + (hasNickname ? ")" : "");
 
                     return event.getMessage().replyEmbeds(e.setAuthor(authorNickAndTag, m.getJumpUrl(), m.getAuthor().getAvatarUrl()).build());
                 }));
