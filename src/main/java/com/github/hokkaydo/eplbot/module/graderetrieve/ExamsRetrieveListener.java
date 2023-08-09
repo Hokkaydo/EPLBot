@@ -52,7 +52,7 @@ public class ExamsRetrieveListener extends ListenerAdapter {
     ExamsRetrieveListener(Long guildId) throws IOException {
         this.guildId = guildId;
         loadMessageIdsPath();
-        loadLectures();
+        loadCourses();
     }
 
     void setGradeRetrieveChannelId(Long examsRetrieveChannelId, int quarter) {
@@ -167,26 +167,26 @@ public class ExamsRetrieveListener extends ListenerAdapter {
         TextChannel channel = Main.getJDA().getChannelById(TextChannel.class, examsRetrieveChannelId);
         if(channel == null) return;
         groups.forEach((englishGroupName, group) -> {
-            List<List<String[]>> lectures = group.lectures;
-            for (int quarter = 0; quarter < lectures.size(); quarter++) {
+            List<List<String[]>> courses = group.courses;
+            for (int quarter = 0; quarter < courses.size(); quarter++) {
                 if ((quarter + 1) % 2 != Math.abs(this.selectedQuarterToRetrieve - 2)) continue; // Check if the looped quarter is the selected one
-                List<String[]> quarterLectures = lectures.get(quarter);
-                for (int quarterCourseIndex = 0; quarterCourseIndex < quarterLectures.size(); quarterCourseIndex++) {
+                List<String[]> quartercourses = courses.get(quarter);
+                for (int quarterCourseIndex = 0; quarterCourseIndex < quartercourses.size(); quarterCourseIndex++) {
 
-                    String[] lecturesInformation = quarterLectures.get(quarterCourseIndex);
-                    String lecturesCode = lecturesInformation[0];
-                    String lecturesName = lecturesInformation[1];
+                    String[] coursesInformation = quartercourses.get(quarterCourseIndex);
+                    String coursesCode = coursesInformation[0];
+                    String coursesName = coursesInformation[1];
 
                     int finalQuarter = quarter;
                     int finalQuarterCourseIndex = quarterCourseIndex;
 
                     channel.sendMessage(
-                                    THREAD_MESSAGE_FORMAT.formatted(lecturesCode, lecturesName, (int) Math.ceil((quarter + 1) / 2.0), group.groupName.toUpperCase())
+                                    THREAD_MESSAGE_FORMAT.formatted(coursesCode, coursesName, (int) Math.ceil((quarter + 1) / 2.0), group.groupName.toUpperCase())
                             )
                             .queue(m -> {
-                                m.createThreadChannel(lecturesCode).queue();
-                                threadIdToPath.put(m.getIdLong(), EXAMEN_STORING_PATH_FORMAT.formatted(englishGroupName, finalQuarter + 1, lecturesCode));
-                                if (finalQuarter == lectures.size() - 1 && finalQuarterCourseIndex == quarterLectures.size() - 1) {
+                                m.createThreadChannel(coursesCode).queue();
+                                threadIdToPath.put(m.getIdLong(), EXAMEN_STORING_PATH_FORMAT.formatted(englishGroupName, finalQuarter + 1, coursesCode));
+                                if (finalQuarter == courses.size() - 1 && finalQuarterCourseIndex == quartercourses.size() - 1) {
                                     storeMessageIds();
                                 }
                             });
@@ -210,8 +210,8 @@ public class ExamsRetrieveListener extends ListenerAdapter {
         }
     }
 
-    private void loadLectures() throws JSONException {
-        InputStream stream = Strings.class.getClassLoader().getResourceAsStream("lectures.json");
+    private void loadCourses() throws JSONException {
+        InputStream stream = Strings.class.getClassLoader().getResourceAsStream("courses.json");
         assert stream != null;
         JSONObject object = new JSONObject(new JSONTokener(stream));
         if(object.isEmpty()) return;
@@ -242,27 +242,27 @@ public class ExamsRetrieveListener extends ListenerAdapter {
     }
 
     /**
-     * Record representing a group of lectures
+     * Record representing a group of courses
      * @param groupName English group name (common, map, info, gbio, elec, meca, fyki, gc)
      * @param name      French group name (Tronc commun, Filière en Mathématiques Appliquées, ...)
-     * @param lectures  Array of six arrays representing each year's group's lectures
+     * @param courses  Array of six arrays representing each year's group's courses
      * */
-    private record Group(String groupName, String name, List<List<String[]>> lectures) {
+    private record Group(String groupName, String name, List<List<String[]>> courses) {
 
         static Group of(String groupName, JSONObject object) {
             String name = object.getString("name");
-            List<List<String[]>> lectures = new ArrayList<>();
-            JSONArray lecturesArr = object.getJSONArray("lectures");
-            for (int i = 0; i < lecturesArr.length(); i++) {
-                JSONArray quarter = lecturesArr.getJSONArray(i);
+            List<List<String[]>> courses = new ArrayList<>();
+            JSONArray coursesArr = object.getJSONArray("courses");
+            for (int i = 0; i < coursesArr.length(); i++) {
+                JSONArray quarter = coursesArr.getJSONArray(i);
                 List<String[]> course = new ArrayList<>();
                 for (int j = 0; j < quarter.length(); j++) {
                     JSONArray courseArray = quarter.getJSONArray(j);
                     course.add(new String[]{courseArray.getString(0), courseArray.getString(1)});
                 }
-                lectures.add(course);
+                courses.add(course);
             }
-            return new Group(groupName, name, lectures);
+            return new Group(groupName, name, courses);
         }
 
     }

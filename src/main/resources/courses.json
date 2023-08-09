@@ -1,7 +1,7 @@
 {
 	"common": {
 		"name": "Tronc commun",
-		"lectures": [
+		"courses": [
 			[
 				["LANGL1271", "Anglais pour ingénieurs civils I"],
 				["LEPL1101", "Algèbre"],
@@ -44,7 +44,7 @@
 	},
 	"info": {
 		"name": "Filière en Informatique",
-		"lectures": [
+		"courses": [
 			[],
 			[],
 			[],
@@ -64,7 +64,7 @@
 	},
 	"map": {
 		"name": "Filière en Mathématiques Appliquées",
-		"lectures": [
+		"courses": [
 			[],
 			[],
 			[],
@@ -84,7 +84,7 @@
 	},
 	"meca": {
 		"name": "Filière en Mécanique",
-		"lectures": [
+		"courses": [
 			[],
 			[],
 			[],
@@ -104,7 +104,7 @@
 	},
 	"elec": {
 		"name": "Filière en Électricité",
-		"lectures": [
+		"courses": [
 			[],
 			[],
 			[],
@@ -124,7 +124,7 @@
 	},
 	"fyki": {
 		"name": "Filière en Chimie et physique appliquées",
-		"lectures": [
+		"courses": [
 			[],
 			[],
 			[],
@@ -144,7 +144,7 @@
 	},
 	"gc": {
 		"name": "Filière en Construction",
-		"lectures": [
+		"courses": [
 			[],
 			[],
 			[],
@@ -164,7 +164,7 @@
 	},
 	"gbio": {
 		"name": "Filière en Génie Biomédical",
-		"lectures": [
+		"courses": [
 			[],
 			[],
 			[],
