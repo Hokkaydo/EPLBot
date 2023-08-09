@@ -42,10 +42,11 @@ public class ContributeCommand implements Command {
                     for (int i = 0; i < array.length(); i++) {
                         JSONObject object = array.getJSONObject(i);
                         String nickname = object.getString("login");
+                        if(nickname.equalsIgnoreCase("Hokkaydo")) continue;
                         contributors.append(nickname).append("\n");
                     }
                     contributors.append("Hokkaydo");
-                    embedBuilder.addField("Contributeur%s :heart:".formatted(array.length() > 0 ? "s" : ""), contributors.toString(),false);
+                    embedBuilder.addField("Contributeur%s :heart:".formatted(!array.isEmpty() ? "s" : ""), contributors.toString(),false);
                     embedBuilder.setAuthor(Main.getJDA().getSelfUser().getAsTag(), "https://github.com/Hokkaydo/EPLBot", Main.getJDA().getSelfUser().getAvatarUrl());
                     context.replyCallbackAction().setEmbeds(embedBuilder.build()).queue();
                 });

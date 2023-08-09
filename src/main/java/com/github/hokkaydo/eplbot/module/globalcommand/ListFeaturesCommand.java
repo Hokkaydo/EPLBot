@@ -14,7 +14,7 @@ import java.util.function.Supplier;
 public class ListFeaturesCommand implements Command {
 
     private final Long guildId;
-    public ListFeaturesCommand(Long guildId) {
+    ListFeaturesCommand(Long guildId) {
         this.guildId = guildId;
     }
     @Override

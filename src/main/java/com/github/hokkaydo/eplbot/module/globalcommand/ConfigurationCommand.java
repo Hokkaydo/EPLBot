@@ -17,7 +17,7 @@ import java.util.function.Supplier;
 public class ConfigurationCommand implements Command {
 
     private final Long guildId;
-    public ConfigurationCommand(Long guildId) {
+    ConfigurationCommand(Long guildId) {
         this.guildId = guildId;
     }
     @Override

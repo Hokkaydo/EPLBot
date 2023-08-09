@@ -27,7 +27,7 @@ public class Config {
     private static final String IDENTIFIER_UNDER_STRING_FORM = "Identifiant sous forme de chaîne de caractères";
     private static final Supplier<ConfigurationParser> MODULE_DISABLED = () -> new ConfigurationParser(() -> false, Object::toString, Boolean::valueOf, "Booléen");
     private static final String INTEGER_FORMAT = "Nombre entier";
-    protected static final Map<String, ConfigurationParser> DEFAULT_CONFIGURATION = new HashMap<>(Map.of(
+    private static final Map<String, ConfigurationParser> DEFAULT_CONFIGURATION = new HashMap<>(Map.of(
             "PIN_REACTION_NAME", new ConfigurationParser(
                     () -> "\uD83D\uDCCC",
                     Object::toString,
@@ -254,7 +254,7 @@ public class Config {
     }
 
 
-    private record ConfigurationParser(Supplier<Object> defaultValue,
+    public record ConfigurationParser(Supplier<Object> defaultValue,
                                        Function<Object, String> toConfig,
                                        Function<String, Object> fromConfig,
                                        String format) {}

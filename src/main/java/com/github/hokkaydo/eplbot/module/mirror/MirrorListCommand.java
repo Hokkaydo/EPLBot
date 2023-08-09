@@ -20,7 +20,7 @@ public class MirrorListCommand implements Command {
 
     private final MirrorManager mirrorManager;
 
-    public MirrorListCommand(MirrorManager mirrorManager) {
+    MirrorListCommand(MirrorManager mirrorManager) {
         this.mirrorManager = mirrorManager;
     }
 

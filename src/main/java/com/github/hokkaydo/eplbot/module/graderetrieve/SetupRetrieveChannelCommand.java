@@ -19,7 +19,7 @@ public class SetupRetrieveChannelCommand implements Command {
 
     private final Long guildId;
     private final ExamsRetrieveListener examsRetrieveListener;
-    public SetupRetrieveChannelCommand(Long guildId, ExamsRetrieveListener examsRetrieveListener) {
+    SetupRetrieveChannelCommand(Long guildId, ExamsRetrieveListener examsRetrieveListener) {
         this.guildId = guildId;
         this.examsRetrieveListener = examsRetrieveListener;
     }

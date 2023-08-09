@@ -1,40 +1,30 @@
 package com.github.hokkaydo.eplbot.module.mirror;
 
-import com.github.hokkaydo.eplbot.Main;
 import com.github.hokkaydo.eplbot.Strings;
 import com.github.hokkaydo.eplbot.command.Command;
 import com.github.hokkaydo.eplbot.command.CommandContext;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
-import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 import java.util.function.Supplier;
 
 public class MirrorUnlinkCommand implements Command {
 
     private final MirrorManager mirrorManager;
-    public MirrorUnlinkCommand(MirrorManager mirrorManager) {
+    MirrorUnlinkCommand(MirrorManager mirrorManager) {
         this.mirrorManager = mirrorManager;
     }
     @Override
     public void executeCommand(CommandContext context) {
-        Optional<OptionMapping> channelAOption = context.options().stream().filter(o -> o.getName().equals("channel_a")).findFirst();
-        Optional<OptionMapping> channelBOption = context.options().stream().filter(o -> o.getName().equals("channel_b")).findFirst();
-        if(channelAOption.isEmpty() || channelBOption.isEmpty()) return;
-        GuildMessageChannel channelA = Main.getJDA().getChannelById(GuildMessageChannel.class, channelAOption.get().getAsString());
-        GuildMessageChannel channelB = Main.getJDA().getChannelById(GuildMessageChannel.class, channelBOption.get().getAsString());
-        if(channelA == null) {
-            context.replyCallbackAction().setContent(Strings.getString("COMMAND_MIRROR_INVALID_CHANNEL").formatted(channelAOption.get().getAsString())).queue();
-            return;
-        }
-        if(channelB == null) {
-            context.replyCallbackAction().setContent(Strings.getString("COMMAND_MIRROR_INVALID_CHANNEL").formatted(channelBOption.get().getAsString())).queue();
-            return;
-        }
+        Map.Entry<GuildMessageChannel, GuildMessageChannel> channels = MirrorModule.validateChannels(context);
+        if(channels == null) return;
+        GuildMessageChannel channelA = channels.getKey();
+        GuildMessageChannel channelB = channels.getValue();
+
         if(!mirrorManager.existsLink(channelA, channelB)) {
             context.replyCallbackAction().setContent(Strings.getString("COMMAND_MIRRORUNLINK_LINK_DOESNT_EXISTS").formatted(channelA.getAsMention(), channelB.getAsMention())).queue();
             return;

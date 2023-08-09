@@ -16,7 +16,7 @@ import java.util.function.Supplier;
 public class EnableCommand implements Command {
 
     private final Long guildId;
-    public EnableCommand(Long guildId) {
+    EnableCommand(Long guildId) {
         this.guildId = guildId;
     }
     @Override

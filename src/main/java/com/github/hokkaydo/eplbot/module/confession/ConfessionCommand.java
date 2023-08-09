@@ -18,7 +18,7 @@ public class ConfessionCommand extends ListenerAdapter implements Command {
 
 
     private final ConfessionProcessor confessionProcessor;
-    public ConfessionCommand(ConfessionProcessor processor) {
+    ConfessionCommand(ConfessionProcessor processor) {
         this.confessionProcessor = processor;
     }
 
@@ -60,10 +60,6 @@ public class ConfessionCommand extends ListenerAdapter implements Command {
     @Override
     public Supplier<String> help() {
         return () -> Strings.getString("COMMAND_CONFESSION_HELP");
-    }
-
-    public ConfessionProcessor getProcessor() {
-        return confessionProcessor;
     }
 
 }

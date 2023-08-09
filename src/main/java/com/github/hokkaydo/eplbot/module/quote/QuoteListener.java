@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
 public class QuoteListener extends ListenerAdapter {
 
     private final Long guildId;
-    public QuoteListener(Long guildId) {
+    QuoteListener(Long guildId) {
         this.guildId = guildId;
     }
     private static final Pattern MESSAGE_URL_PATTERN = Pattern.compile("https?://(canary.|ptb.)?discord.com/channels/\\d*/\\d*/\\d*");
@@ -40,7 +40,7 @@ public class QuoteListener extends ListenerAdapter {
     private record Tuple3<A, B, C>(A a, B b, C c) {}
 
 
-    public Message toMessage(Tuple3<String, String, String> tuple3) {
+    private Message toMessage(Tuple3<String, String, String> tuple3) {
         GuildChannel guildChannel = Main.getJDA().getGuildChannelById(tuple3.b);
         if(!(guildChannel instanceof MessageChannel)) return null;
         return ((MessageChannel)guildChannel).retrieveMessageById(tuple3.c).complete();

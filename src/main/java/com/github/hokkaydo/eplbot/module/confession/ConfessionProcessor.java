@@ -38,6 +38,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.logging.Level;
 
 public class ConfessionProcessor extends ListenerAdapter {
 
@@ -60,7 +61,7 @@ public class ConfessionProcessor extends ListenerAdapter {
     private final Map<Long, Long> lastFollowingConfessionValidation;
     private final List<WarnedConfessionRecord> warnedConfessions = new ArrayList<>();
 
-    public ConfessionProcessor(Long guildId, Map<Long, Long> lastMainConfession) {
+    ConfessionProcessor(Long guildId, Map<Long, Long> lastMainConfession) {
         this.guildId = guildId;
         this.lastMainConfession = lastMainConfession;
         this.lastFollowingConfessionValidation = new HashMap<>();
@@ -68,7 +69,7 @@ public class ConfessionProcessor extends ListenerAdapter {
         loadWarnedConfessions();
     }
 
-    public void process(CommandContext context, boolean following) {
+    void process(CommandContext context, boolean following) {
         TextChannel validationChannel = Main.getJDA().getChannelById(TextChannel.class, Config.getGuildVariable(guildId, "CONFESSION_VALIDATION_CHANNEL_ID"));
         if(validationChannel == null) {
             MessageUtil.sendAdminMessage(Strings.getString("WARNING_CONFESSION_VALIDATION_CHANNEL_ID_INVALID"), guildId);
@@ -213,7 +214,7 @@ public class ConfessionProcessor extends ListenerAdapter {
         message.editMessageEmbeds(builder.build()).queue();
     }
 
-    public void loadWarnedConfessions() {
+    private void loadWarnedConfessions() {
         if(!Files.exists(WARNED_CONFESSION_STORAGE_PATH)) {
             try {
                 Files.createFile(WARNED_CONFESSION_STORAGE_PATH);
@@ -229,7 +230,7 @@ public class ConfessionProcessor extends ListenerAdapter {
                 warnedConfessions.add(WarnedConfessionRecord.of(line));
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            Main.LOGGER.log(Level.WARNING, "Could not load warned confessions");
         }
     }
 
@@ -239,7 +240,7 @@ public class ConfessionProcessor extends ListenerAdapter {
                 stream.append(warnedConfessions.size() == 1 ? "" : "\n").append(warnedConfession.toString());
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            Main.LOGGER.log(Level.WARNING, "Could not store warned confessions");
         }
     }
 

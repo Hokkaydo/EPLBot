@@ -30,7 +30,7 @@ public class MirroredMessage {
     private OffsetDateTime lastUpdated;
     private boolean threadOwner;
     private final Map<Emoji, Integer> reactions = new HashMap<>();
-    public MirroredMessage(Message initialMessage, GuildMessageChannel textChannel) {
+    MirroredMessage(Message initialMessage, GuildMessageChannel textChannel) {
         this.channel = textChannel;
         this.lastUpdated = initialMessage.getTimeCreated();
         this.message = initialMessage;
@@ -44,7 +44,7 @@ public class MirroredMessage {
             runnable.run();
         });
     }
-    public void mirrorMessage(Message replyTo, Consumer<Message> sentMessage) {
+    void mirrorMessage(Message replyTo, Consumer<Message> sentMessage) {
         checkBanTimeOut(message.getAuthor(), () -> {
             MessageCreateAction createAction;
             String content = getContent(message);
@@ -98,7 +98,7 @@ public class MirroredMessage {
         return content == null ? "" : content;
     }
 
-    public void update(Message initialMessage) {
+    void update(Message initialMessage) {
         updatePin(initialMessage.isPinned());
         checkBanTimeOut(initialMessage.getAuthor(), () -> {
             if(!(initialMessage.getTimeEdited() == null ? initialMessage.getTimeCreated() : initialMessage.getTimeEdited()).isAfter(lastUpdated)) return;
@@ -124,32 +124,32 @@ public class MirroredMessage {
             message.unpin().queue();
     }
 
-    public Long getMessageId() {
+    Long getMessageId() {
         return message == null ? 0 : message.getIdLong();
     }
 
-    public void delete() {
+    void delete() {
         message.delete().queue();
     }
 
-    public long getChannelId() {
+    long getChannelId() {
         return channel.getIdLong();
     }
 
-    public void setThreadOwner(boolean threadOwner) {
-        this.threadOwner = threadOwner;
+    void setThreadOwner() {
+        this.threadOwner = true;
     }
 
-    public boolean isThreadOwner() {
+    boolean isThreadOwner() {
         return this.threadOwner;
     }
 
-    public void addReaction(MessageReaction reaction) {
+    void addReaction(MessageReaction reaction) {
         reactions.put(reaction.getEmoji(), reactions.getOrDefault(reaction.getEmoji(), 0) + 1);
-        updateReactionsField();
+        updateReactionField();
     }
 
-    private void updateReactionsField() {
+    private void updateReactionField() {
         StringBuilder reactionString = new StringBuilder();
         List<Map.Entry<Emoji, Integer>> entries = new ArrayList<>(reactions.entrySet());
         for (int i = 0; i < entries.size() - 1; i++) {
@@ -170,10 +170,10 @@ public class MirroredMessage {
         message.editMessageEmbeds(otherEmbeds).queue();
     }
 
-    public void removeReaction(MessageReaction reaction) {
+    void removeReaction(MessageReaction reaction) {
         reactions.computeIfPresent(reaction.getEmoji(), (e, i) -> i-1);
         if(reactions.getOrDefault(reaction.getEmoji(), 1) <= 0) reactions.remove(reaction.getEmoji());
-        updateReactionsField();
+        updateReactionField();
     }
 
     private record Tuple3<A, B, C>(A a, B b, C c) {

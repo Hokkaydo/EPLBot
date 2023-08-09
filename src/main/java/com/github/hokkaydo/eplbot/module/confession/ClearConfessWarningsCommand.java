@@ -17,7 +17,7 @@ import java.util.function.Supplier;
 public class ClearConfessWarningsCommand implements Command {
 
     private final ConfessionProcessor processor;
-    public ClearConfessWarningsCommand(ConfessionProcessor processor) {
+    ClearConfessWarningsCommand(ConfessionProcessor processor) {
         this.processor = processor;
     }
     @Override

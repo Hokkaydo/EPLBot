@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 
 public class MirrorManager extends ListenerAdapter {
 
@@ -38,7 +39,7 @@ public class MirrorManager extends ListenerAdapter {
     private final List<Mirror> mirrors = new ArrayList<>();
     private final List<MirroredMessages> mirroredMessages = new ArrayList<>();
 
-    public void createLink(GuildMessageChannel first, GuildMessageChannel second) {
+    void createLink(GuildMessageChannel first, GuildMessageChannel second) {
         if(existsLink(first, second)) return;
         mirrors.add(new Mirror(first, second));
         storeMirrors();
@@ -49,22 +50,22 @@ public class MirrorManager extends ListenerAdapter {
         Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> mirroredMessages.removeIf(MirroredMessages::isOutdated), 0, 1, TimeUnit.HOURS);
     }
 
-    public List<Mirror> getLinks(GuildMessageChannel idLong) {
+    List<Mirror> getLinks(GuildMessageChannel idLong) {
         return mirrors.stream().filter(m -> m.has(idLong)).toList();
     }
 
-    public Optional<Mirror> getLink(GuildMessageChannel first, GuildMessageChannel second) {
+    private Optional<Mirror> getLink(GuildMessageChannel first, GuildMessageChannel second) {
         return mirrors.stream()
                        .filter(mirror -> (mirror.first.equals(first) && mirror.second.equals(second)) ||
                                                  (mirror.second.equals(first) && mirror.first.equals(second)))
                        .findFirst();
     }
 
-    public boolean existsLink(GuildMessageChannel first, GuildMessageChannel second) {
+    boolean existsLink(GuildMessageChannel first, GuildMessageChannel second) {
         return getLink(first, second).isPresent();
     }
 
-    public void destroyLink(GuildMessageChannel first, GuildMessageChannel second) {
+    void destroyLink(GuildMessageChannel first, GuildMessageChannel second) {
         getLink(first, second).ifPresent(mirrors::remove);
         storeMirrors();
     }
@@ -86,7 +87,7 @@ public class MirrorManager extends ListenerAdapter {
                         .findFirst()
                         .ifPresentOrElse(message -> {
                             createThread(message.getMessageId(), other.getIdLong(), threadChannel);
-                            message.setThreadOwner(true);
+                            message.setThreadOwner();
                         }, () -> createThread(other.getLatestMessageIdLong(), other.getIdLong(), threadChannel));
             }));
             return;
@@ -171,7 +172,7 @@ public class MirrorManager extends ListenerAdapter {
     }
 
     private boolean noMirrors = false;
-    public void loadLinks() {
+    void loadLinks() {
         if(noMirrors) return;
         if(!Files.exists(MIRROR_STORAGE_PATH)) {
             try {
@@ -193,7 +194,7 @@ public class MirrorManager extends ListenerAdapter {
                 mirrors.add(new Mirror(a, b));
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            Main.LOGGER.log(Level.WARNING, "Could not load mirrors");
         }
     }
 
@@ -207,7 +208,7 @@ public class MirrorManager extends ListenerAdapter {
                 }
             });
         } catch (IOException e) {
-            e.printStackTrace();
+            Main.LOGGER.log(Level.WARNING, "Could not store mirrors");
         }
     }
 
@@ -224,17 +225,17 @@ public class MirrorManager extends ListenerAdapter {
             this.outdatedTime = Instant.now().plus(24, ChronoUnit.HOURS);
         }
 
-        public boolean match(Long messageId) {
+        boolean match(Long messageId) {
             return initial.getMessageId().equals(messageId) || mirrored.containsKey(messageId);
         }
 
-        public Map<Long, MirroredMessage> getMessages() {
+        Map<Long, MirroredMessage> getMessages() {
             Map<Long, MirroredMessage> map = new HashMap<>(mirrored);
             map.put(initial.getMessageId(), initial);
             return map;
         }
 
-        public void update(Message message) {
+        void update(Message message) {
             if(updatedIds.contains(message.getIdLong())) return;
             for (Map.Entry<Long, MirroredMessage> mirroredMessage : getMessages().entrySet()) {
                 if(mirroredMessage.getKey() == message.getIdLong()) continue;
@@ -244,7 +245,7 @@ public class MirrorManager extends ListenerAdapter {
             updatedIds.clear();
         }
 
-        public boolean isOutdated() {
+        boolean isOutdated() {
             return Instant.now().isAfter(outdatedTime);
         }
 
@@ -252,11 +253,11 @@ public class MirrorManager extends ListenerAdapter {
 
     record Mirror(@NotNull GuildMessageChannel first, @NotNull GuildMessageChannel second) {
 
-        public GuildMessageChannel other(GuildMessageChannel channel) {
+        GuildMessageChannel other(GuildMessageChannel channel) {
             return first.getIdLong()  == channel.getIdLong() ? second : first;
         }
 
-        public boolean has(GuildMessageChannel channel) {
+        boolean has(GuildMessageChannel channel) {
             return first.getIdLong() == channel.getIdLong() || second.getIdLong() == channel.getIdLong();
         }
 

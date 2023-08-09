@@ -6,6 +6,7 @@ import com.github.hokkaydo.eplbot.command.Command;
 import com.github.hokkaydo.eplbot.command.CommandContext;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.MessageHistory;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
@@ -30,32 +31,36 @@ public class MoveMessagesCommand implements Command {
         long idB = idBOption.get().getAsLong();
         TextChannel newChannel = channelOption.get().getAsChannel().asTextChannel();
         context.replyCallbackAction().setContent("Processing ...").queue();
-        context.channel().retrieveMessageById(idA).queue(m -> context.channel().getHistoryAfter(idA, 100).queue(history -> {
-            List<Message> sortedMessages = new ArrayList<>(history.getRetrievedHistory());
-            sortedMessages.add(m);
-            sortedMessages.sort((a, b) -> OffsetDateTime.timeLineOrder().compare(a.getTimeCreated(), b.getTimeCreated()));
-            int endIndex = -1;
-            for (int i = 0; i < sortedMessages.size(); i++) {
-                if(sortedMessages.get(i).getIdLong() == idB) {
-                    endIndex = i;
-                    break;
-                }
-            }
-            if(endIndex != -1) {
-                sortedMessages = sortedMessages.subList(0, endIndex + 1);
-            }
-            for (int i = 0; i < sortedMessages.size(); i++) {
-                Message message = sortedMessages.get(i);
-                MessageEmbed embed = MessageUtil.toEmbed(message).build();
-                if(i == sortedMessages.size() - 1) {
-                    List<Message> finalSortedMessages = sortedMessages;
-                    newChannel.sendMessageEmbeds(embed).and(message.delete()).queue(s -> context.hook().sendMessage(String.format(Strings.getString("COMMAND_MOVE_MESSAGES_MOVED"), finalSortedMessages.size())).queue());
-                    break;
-                }
-                newChannel.sendMessageEmbeds(embed).queue(s -> message.delete().queue());
-            }
-        }));
+        context.channel().retrieveMessageById(idA).queue(m -> context.channel().getHistoryAfter(idA, 100).queue(history -> parseHistory(m, idB, history, newChannel, context)));
+    }
 
+    private void parseHistory(Message m, long idB, MessageHistory history, TextChannel newChannel, CommandContext context) {
+        List<Message> sortedMessages = new ArrayList<>(history.getRetrievedHistory());
+        sortedMessages.add(m);
+        sortedMessages.sort((a, b) -> OffsetDateTime.timeLineOrder().compare(a.getTimeCreated(), b.getTimeCreated()));
+        int endIndex = -1;
+        for (int i = 0; i < sortedMessages.size(); i++) {
+            if(sortedMessages.get(i).getIdLong() == idB) {
+                endIndex = i;
+                break;
+            }
+        }
+        if(endIndex != -1) {
+            sortedMessages.removeAll(sortedMessages.subList(endIndex+1, sortedMessages.size()));
+        }
+        for (int i = 0; i < sortedMessages.size(); i++) {
+            Message message = sortedMessages.get(i);
+            MessageEmbed embed = MessageUtil.toEmbed(message).build();
+            if(i == sortedMessages.size() - 1) {
+                newChannel.sendMessageEmbeds(embed).and(message.delete()).queue(s -> sendMovedAmountMessage(context, sortedMessages.size()));
+                break;
+            }
+            newChannel.sendMessageEmbeds(embed).queue(s -> message.delete().queue());
+        }
+    }
+
+    private void sendMovedAmountMessage(CommandContext context, int amount) {
+        context.hook().sendMessage(String.format(Strings.getString("COMMAND_MOVE_MESSAGES_MOVED"), amount)).queue();
     }
 
     @Override

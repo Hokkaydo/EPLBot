@@ -18,7 +18,7 @@ public class StateCommand implements Command {
 
     private final Long guildId;
     private static final String RESET = "reset";
-    public StateCommand(Long guildId) {
+    StateCommand(Long guildId) {
         this.guildId = guildId;
     }
     @Override

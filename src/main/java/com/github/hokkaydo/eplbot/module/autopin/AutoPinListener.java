@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 public class AutoPinListener extends ListenerAdapter {
 
     private final Long guildId;
-    protected AutoPinListener(Long guildId) {
+    AutoPinListener(Long guildId) {
         this.guildId = guildId;
     }
 

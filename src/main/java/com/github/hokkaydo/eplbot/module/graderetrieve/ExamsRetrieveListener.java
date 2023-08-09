@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -39,22 +40,24 @@ public class ExamsRetrieveListener extends ListenerAdapter {
 
     public static final Path MESSAGE_IDS_STORAGE_PATH = Path.of(Main.PERSISTENCE_DIR_PATH + "/message_ids");
     private static final Path ZIP_PATH = Path.of(Main.PERSISTENCE_DIR_PATH + "/exams.zip");
+    private static final String THREAD_MESSAGE_FORMAT = "%s - %s (BAC%d - %s)";
+    private static final String EXAMEN_STORING_PATH_FORMAT = "%s/Q%d/%s";
     private final Long guildId;
     private Long examsRetrieveChannelId;
-    private int quarter = 1;
+    private int selectedQuarterToRetrieve = 1;
     private final Map<Long, String> threadIdToPath = new HashMap<>();
     private final Map<String, Group> groups = new HashMap<>();
     private Long zipMessageId = 0L;
 
-    public ExamsRetrieveListener(Long guildId) throws IOException {
+    ExamsRetrieveListener(Long guildId) throws IOException {
         this.guildId = guildId;
         loadMessageIdsPath();
         loadLectures();
     }
 
-    public void setGradeRetrieveChannelId(Long examsRetrieveChannelId, int quarter) {
+    void setGradeRetrieveChannelId(Long examsRetrieveChannelId, int quarter) {
         this.examsRetrieveChannelId = examsRetrieveChannelId;
-        this.quarter = quarter;
+        this.selectedQuarterToRetrieve = quarter;
         sendMessages();
     }
 
@@ -99,7 +102,7 @@ public class ExamsRetrieveListener extends ListenerAdapter {
                         Path nf = fs.getPath(path, t.a);
                         Files.write(nf, Files.readAllBytes(tempPath), StandardOpenOption.CREATE);
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        Main.LOGGER.log(Level.WARNING, "Could not update exams zip file");
                     }
                 }).join());
         updateSentZip();
@@ -163,25 +166,33 @@ public class ExamsRetrieveListener extends ListenerAdapter {
     private void sendMessages() {
         TextChannel channel = Main.getJDA().getChannelById(TextChannel.class, examsRetrieveChannelId);
         if(channel == null) return;
-        for (Map.Entry<String, Group> entry : groups.entrySet()) {
-            List<List<String[]>> lectures = entry.getValue().lectures;
-            for (int i = 0; i < lectures.size(); i++) {
-                if((i+1)%2 != Math.abs(quarter-2)) continue;
-                List<String[]> quarterLectures = lectures.get(i);
-                for (int j = 0; j < quarterLectures.size(); j++) {
-                    String[] strings = quarterLectures.get(j);
-                    int finalI = i;
-                    int finalJ = j;
-                    channel.sendMessage("%s - %s (BAC%d - %s)".formatted(strings[0], strings[1], (int)Math.ceil((i+1) /2.0), entry.getValue().groupName.toUpperCase())).queue(m -> {
-                        m.createThreadChannel(strings[0]).queue();
-                        threadIdToPath.put(m.getIdLong(), "%s/Q%d/%s".formatted(entry.getKey(), finalI + 1, strings[0]));
-                        if(finalI == lectures.size() - 1 && finalJ == quarterLectures.size() - 1) {
-                            storeMessageIds();
-                        }
-                    });
+        groups.forEach((englishGroupName, group) -> {
+            List<List<String[]>> lectures = group.lectures;
+            for (int quarter = 0; quarter < lectures.size(); quarter++) {
+                if ((quarter + 1) % 2 != Math.abs(this.selectedQuarterToRetrieve - 2)) continue; // Check if the looped quarter is the selected one
+                List<String[]> quarterLectures = lectures.get(quarter);
+                for (int quarterCourseIndex = 0; quarterCourseIndex < quarterLectures.size(); quarterCourseIndex++) {
+
+                    String[] lecturesInformation = quarterLectures.get(quarterCourseIndex);
+                    String lecturesCode = lecturesInformation[0];
+                    String lecturesName = lecturesInformation[1];
+
+                    int finalQuarter = quarter;
+                    int finalQuarterCourseIndex = quarterCourseIndex;
+
+                    channel.sendMessage(
+                                    THREAD_MESSAGE_FORMAT.formatted(lecturesCode, lecturesName, (int) Math.ceil((quarter + 1) / 2.0), group.groupName.toUpperCase())
+                            )
+                            .queue(m -> {
+                                m.createThreadChannel(lecturesCode).queue();
+                                threadIdToPath.put(m.getIdLong(), EXAMEN_STORING_PATH_FORMAT.formatted(englishGroupName, finalQuarter + 1, lecturesCode));
+                                if (finalQuarter == lectures.size() - 1 && finalQuarterCourseIndex == quarterLectures.size() - 1) {
+                                    storeMessageIds();
+                                }
+                            });
                 }
             }
-        }
+        });
     }
 
     private void storeMessageIds() {
@@ -195,11 +206,11 @@ public class ExamsRetrieveListener extends ListenerAdapter {
             });
             stream.append("ZIP:").append(zipMessageId.toString()).append("\n");
         } catch (IOException e) {
-            e.printStackTrace();
+            Main.LOGGER.log(Level.WARNING, "Could not store examen message ids");
         }
     }
 
-    public void loadLectures() throws JSONException {
+    private void loadLectures() throws JSONException {
         InputStream stream = Strings.class.getClassLoader().getResourceAsStream("lectures.json");
         assert stream != null;
         JSONObject object = new JSONObject(new JSONTokener(stream));
@@ -226,10 +237,16 @@ public class ExamsRetrieveListener extends ListenerAdapter {
                 threadIdToPath.put(Long.parseLong(s[0]), s[1]);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            Main.LOGGER.log(Level.WARNING, "Could not load examen message ids");
         }
     }
 
+    /**
+     * Record representing a group of lectures
+     * @param groupName English group name (common, map, info, gbio, elec, meca, fyki, gc)
+     * @param name      French group name (Tronc commun, Filière en Mathématiques Appliquées, ...)
+     * @param lectures  Array of six arrays representing each year's group's lectures
+     * */
     private record Group(String groupName, String name, List<List<String[]>> lectures) {
 
         static Group of(String groupName, JSONObject object) {

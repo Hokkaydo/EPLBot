@@ -39,6 +39,7 @@ public class CommandManager extends ListenerAdapter {
         this.commandStatus.put(guildId, status);
     }
 
+    @SuppressWarnings("unused")
     public void disableGlobalCommands(List<Class<? extends Command>> commands) {
         for (Class<? extends Command> command : commands) {
             this.globalCommandStatus.put(command, false);

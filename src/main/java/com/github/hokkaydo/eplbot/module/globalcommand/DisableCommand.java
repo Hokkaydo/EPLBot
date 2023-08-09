@@ -16,7 +16,7 @@ import java.util.function.Supplier;
 public class DisableCommand implements Command {
 
     private final Long guildId;
-    public DisableCommand(Long guildId) {
+    DisableCommand(Long guildId) {
         this.guildId = guildId;
     }
     @Override

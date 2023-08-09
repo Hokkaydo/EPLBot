@@ -17,7 +17,7 @@ public class ConfessionFollowCommand implements Command {
     private final Map<Long, Long> lastConfession;
 
     private final ConfessionProcessor processor;
-    public ConfessionFollowCommand(Map<Long, Long> lastConfession, ConfessionProcessor processor) {
+    ConfessionFollowCommand(Map<Long, Long> lastConfession, ConfessionProcessor processor) {
         this.lastConfession = lastConfession;
         this.processor = processor;
     }
