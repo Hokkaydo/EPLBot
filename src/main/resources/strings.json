@@ -95,7 +95,10 @@
   "COMMAND_CONFIG_HELP": "Permet la configuration et consultation des paramètres du bot spécifiques au serveur via `/config <name> <value>`.\n- Si la valeur est omise, la commande renverra la valeur actuelle du paramètre `<name>`. \n- Si les 2 paramètres sont omis, la configuration totale du serveur sera affichée.\n- Si le nom est omis, mais pas la valeur, la commande renverra une erreur.",
   "COMMAND_NOTICE_SELECT_MESSAGE": "Veuillez sélectionner le cours pour lequel vous souhaitez donner un avis",
   "COMMAND_NOTICE_DESCRIPTION": "Permet d'ajouter ou éditer un avis sur un cours / groupe",
-  "COMMAND_NOTICE_HELP": "Permet d'ajouter ou éditer un avis sur :\n- un cours : identifié par son code cours (par exemple : AAAAA0000)\n- un groupe : permet de donner un avis général sur le tronc commun d'un quadrimestre ou une filière",
+  "COMMAND_NOTICE_HELP": "Permet d'ajouter / éditer ou lire un avis sur :\n- un cours : identifié par son code cours (par exemple : AAAAA0000)\n- un groupe : permet de donner un avis général sur le tronc commun d'un quadrimestre ou une filière\nLe mode d'utilisation se spécifie via le paramètre `action`. Si le mode `read`, on peut spécifier le paramètre optionnel `date` pour préciser qu'on ne veut lire les avis ajoutés ou modifiés qu'après cette date. \n:warning: Ce paramètre doit nécessairement être sous la forme `yyyy-mm-dd` ou `yyyy-mm-dd HH:mm:ss`",
   "COMMAND_NOTICE_OPTION_GROUP_DESCRIPTION": "Groupe du cours",
-  "COMMAND_NOTICE_OPTION_QUARTER_DESCRIPTION": "Quadrimestre du cours"
+  "COMMAND_NOTICE_OPTION_QUARTER_DESCRIPTION": "Quadrimestre du cours",
+  "COMMAND_NOTICE_OPTION_ACTION_DESCRIPTION": "Mode d'utilisation",
+  "COMMAND_NOTICE_OPTION_DATE_DESCRIPTION": "Plus ancienne date de modification",
+  "COMMAND_NOTICE_DATE_PARSING_ERROR": "La date spécifiée (%s) n'est pas au bon format. Veuillez respecter l'un des deux formats suivants : `yyyy-MM-dd` ou `yyyy-MM-dd HH:mm:ss`"
 }

@@ -21,7 +21,12 @@ import net.dv8tion.jda.api.requests.restaction.interactions.ReplyCallbackAction;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.format.DateTimeParseException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -34,10 +39,17 @@ public class NoticeCommand extends ListenerAdapter implements Command {
 
     private final Map<String, List<String[]>> courses;
     private final Map<String, Object[]> noticeData = new HashMap<>();
+    private static final DateTimeFormatter DATE_TIME_FORMATTER = new DateTimeFormatterBuilder()
+                                                                         .appendPattern("yyyy-MM-dd")
+                                                                         .appendOptional(DateTimeFormatter.ofPattern(" HH:mm:ss"))
+                                                                         .toFormatter();
+
     private static final String NOTICE_SELECT_MENU_NAME_SUFFIX = "-notice-select-menu";
     private static final String NOTICE_MODAL_NAME_SUFFIX = "-notice-modal";
     private static final String NOTICE = "notice";
     private static final String GROUP = "group";
+    private static final String WRITE_ACTION = "write";
+    private static final String READ_ACTION = "read";
 
     NoticeCommand(Map<String, List<String[]>> courses) {
         this.courses = courses;
@@ -47,10 +59,24 @@ public class NoticeCommand extends ListenerAdapter implements Command {
     public void executeCommand(CommandContext context) {
         Optional<String> groupOption = context.options().stream().filter(o -> o.getName().equals(GROUP)).map(OptionMapping::getAsString).findFirst();
         Optional<Integer> quarterOption = context.options().stream().filter(o -> o.getName().equals("quarter")).map(OptionMapping::getAsInt).findFirst();
-        if(groupOption.isEmpty() || quarterOption.isEmpty()) return;
+        Optional<String> actionOption = context.options().stream().filter(o -> o.getName().equals("action")).map(OptionMapping::getAsString).findFirst();
+        Optional<String> dateOption = context.options().stream().filter(o -> o.getName().equals("action")).map(OptionMapping::getAsString).findFirst();
+        if(groupOption.isEmpty() || quarterOption.isEmpty() || actionOption.isEmpty()) return;
+
 
         String group = groupOption.get();
         int quarter = quarterOption.get();
+        String action = actionOption.get();
+        String date =  "";
+        if(action.equals(READ_ACTION) && dateOption.isPresent()) {
+            date = dateOption.get();
+            try {
+                date = dateOption.get();
+                DATE_TIME_FORMATTER.parse(date);
+            }catch (DateTimeParseException exception) {
+                context.replyCallbackAction().setContent(Strings.getString("COMMAND_NOTICE_DATE_PARSING_ERROR").formatted(date)).queue();
+            }
+        }
 
         String key = context.author().getId() + NOTICE_SELECT_MENU_NAME_SUFFIX;
 
@@ -60,7 +86,7 @@ public class NoticeCommand extends ListenerAdapter implements Command {
                                               .setMinValues(1)
                                               .setMaxValues(1)
                                               .build();
-        noticeData.put(key, new Object[]{group, quarter});
+        noticeData.put(key, new Object[]{group, quarter, action, date});
 
         context.replyCallbackAction().setContent(Strings.getString("COMMAND_NOTICE_SELECT_MESSAGE")).addActionRow(selectMenu).queue();
     }
@@ -69,24 +95,62 @@ public class NoticeCommand extends ListenerAdapter implements Command {
     public void onGenericSelectMenuInteraction(@NotNull GenericSelectMenuInteractionEvent event) {
         String name = event.getComponentId();
         if(!name.contains(NOTICE_SELECT_MENU_NAME_SUFFIX)) return;
+
         String authorId = name.split(NOTICE_SELECT_MENU_NAME_SUFFIX)[0];
+
         Object[] data = noticeData.remove(name);
         String groupName = (String)data[0];
         int quarter = (int)data[1];
-        String key = authorId + NOTICE_MODAL_NAME_SUFFIX;
-        noticeData.put(key, new Object[]{event.getInteraction().getValues().get(0)});
+        String action = (String)data[2];
+        String date = (String)data[3];
+        String selectedCourse = (String) event.getInteraction().getValues().get(0);
 
+        if(action.equals(WRITE_ACTION)) {
+            event.replyModal(writeNotice(authorId + NOTICE_MODAL_NAME_SUFFIX, selectedCourse, authorId, groupName, quarter)).queue();
+        } else if(action.equals(READ_ACTION)) {
+            Date timestamp = new Date((date.isEmpty() ? Instant.MIN : Instant.from(DATE_TIME_FORMATTER.parse((String)data[3]))).toEpochMilli());
+            event.reply(readNotices(selectedCourse, timestamp)).queue();
+        }
+    }
+
+    private Modal writeNotice(String modalKey, String selectedValue, String authorId, String groupName, int quarter) {
+        noticeData.put(modalKey, new Object[]{selectedValue});
         String oldValue = getOldValue(authorId, groupName, quarter);
-
-        Modal modal = Modal.create(key, String.format("Formulaire d'avis - %s %s", groupName, quarter))
+        return Modal.create(modalKey, String.format("Formulaire d'avis - %s %s - %s", groupName, quarter, selectedValue))
                               .addActionRow(TextInput.create(NOTICE, "Avis", TextInputStyle.PARAGRAPH).setPlaceholder("Entre votre avis").setValue(oldValue).build())
                               .build();
-        event.replyModal(modal).queue();
+    }
+
+    private String readNotices(String selectedCourse, Date timestamp) {
+        boolean isCourse = courses.containsKey(selectedCourse);
+        long subjectId = getSubjectId(selectedCourse, isCourse);
+        List<String> notices = getNotices(subjectId, isCourse, timestamp);
+        StringBuilder content = new StringBuilder("```");
+        for (String notice : notices) {
+            content.append(notice);
+        }
+        content.append("```");
+        return content.toString();
+    }
+
+    private List<String> getNotices(long subjectId, boolean isCourse, Date timestamp) {
+        //TODO retrieve from notices table
+        return Collections.singletonList("%s %s %s".formatted(subjectId, isCourse, timestamp));
+    }
+
+    private long getSubjectId(String subject, boolean isCourse) {
+        if(isCourse) {
+            //TODO retrieve from groups table
+            return subject.length();
+        }else {
+            //TODO retrieve from courses table
+            return subject.length() * 2L;
+        }
     }
 
     private String getOldValue(String authorId, String groupName, int quarter) {
         //TODO retrieve from database
-        return "";
+        return "%s %s %s".formatted(authorId, groupName, quarter);
     }
 
     @Override
@@ -129,7 +193,11 @@ public class NoticeCommand extends ListenerAdapter implements Command {
                         .addChoices(courses.keySet().stream().map(s -> new Choice(s, s)).toList()),
                 new OptionData(OptionType.INTEGER, "quarter", Strings.getString("COMMAND_NOTICE_OPTION_QUARTER_DESCRIPTION"))
                         .setMinValue(1)
-                        .setMaxValue(6)
+                        .setMaxValue(6),
+                new OptionData(OptionType.STRING, "action", Strings.getString("COMMAND_NOTICE_OPTION_ACTION_DESCRIPTION"))
+                        .addChoice(WRITE_ACTION, WRITE_ACTION)
+                        .addChoice(READ_ACTION, READ_ACTION),
+                new OptionData(OptionType.STRING, "date", Strings.getString("COMMAND_NOTICE_OPTION_DATE_DESCRIPTION"))
         );
     }
 

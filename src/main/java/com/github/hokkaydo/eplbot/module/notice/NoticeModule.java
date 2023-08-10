@@ -12,11 +12,9 @@ import java.util.Map;
 public class NoticeModule extends Module {
 
     private final NoticeCommand noticeCommand;
-    private final ListNoticesCommand listNoticesCommand;
     public NoticeModule(@NotNull Long guildId) {
         super(guildId);
         this.noticeCommand = new NoticeCommand(listCourses());
-        this.listNoticesCommand = new ListNoticesCommand();
     }
 
     private Map<String, List<String[]>> listCourses() {
@@ -31,12 +29,12 @@ public class NoticeModule extends Module {
 
     @Override
     public List<Command> getCommands() {
-        return List.of(noticeCommand, listNoticesCommand);
+        return List.of(noticeCommand);
     }
 
     @Override
     public List<ListenerAdapter> getListeners() {
-        return List.of(noticeCommand, listNoticesCommand);
+        return List.of(noticeCommand);
     }
 
 }
