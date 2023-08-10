@@ -92,5 +92,10 @@
   "COMMAND_ISSUE_DESCRIPTION": "Permet d'envoyer une suggestion/bug sur le dépôt public.",
   "COMMAND_ISSUE_LABEL_OPTION_DESCRIPTION": "Label de l'issue",
   "COMMAND_ISSUE_FILE_OPTION_DESCRIPTION": "Fichier optionnel à ajouter à l'issue",
-  "COMMAND_CONFIG_HELP": "Permet la configuration et consultation des paramètres du bot spécifiques au serveur via `/config <name> <value>`.\n- Si la valeur est omise, la commande renverra la valeur actuelle du paramètre `<name>`. \n- Si les 2 paramètres sont omis, la configuration totale du serveur sera affichée.\n- Si le nom est omis mais pas la valeur, la commande renverra une erreur."
+  "COMMAND_CONFIG_HELP": "Permet la configuration et consultation des paramètres du bot spécifiques au serveur via `/config <name> <value>`.\n- Si la valeur est omise, la commande renverra la valeur actuelle du paramètre `<name>`. \n- Si les 2 paramètres sont omis, la configuration totale du serveur sera affichée.\n- Si le nom est omis, mais pas la valeur, la commande renverra une erreur.",
+  "COMMAND_NOTICE_SELECT_MESSAGE": "Veuillez sélectionner le cours pour lequel vous souhaitez donner un avis",
+  "COMMAND_NOTICE_DESCRIPTION": "Permet d'ajouter ou éditer un avis sur un cours / groupe",
+  "COMMAND_NOTICE_HELP": "Permet d'ajouter ou éditer un avis sur :\n- un cours : identifié par son code cours (par exemple : AAAAA0000)\n- un groupe : permet de donner un avis général sur le tronc commun d'un quadrimestre ou une filière",
+  "COMMAND_NOTICE_OPTION_GROUP_DESCRIPTION": "Groupe du cours",
+  "COMMAND_NOTICE_OPTION_QUARTER_DESCRIPTION": "Quadrimestre du cours"
 }
