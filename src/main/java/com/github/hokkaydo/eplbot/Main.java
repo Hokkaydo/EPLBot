@@ -29,6 +29,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -99,7 +100,7 @@ public class Main {
         Config.load();
         Strings.load();
         jda = JDABuilder.createDefault(token)
-                      .enableIntents(GatewayIntent.MESSAGE_CONTENT)
+                      .enableIntents(EnumSet.allOf(GatewayIntent.class))
                       .disableCache(CacheFlag.MEMBER_OVERRIDES, CacheFlag.VOICE_STATE)
                       .setBulkDeleteSplittingEnabled(false)
                       .setActivity(Activity.playing("compter les moutons"))
