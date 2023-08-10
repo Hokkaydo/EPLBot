@@ -29,6 +29,13 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -37,6 +44,7 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class Main {
+
     private static JDA jda;
     private static DataSource dataSource;
     private static ModuleManager moduleManager;
@@ -96,12 +104,12 @@ public class Main {
         Config.load();
         Strings.load();
         jda = JDABuilder.createDefault(token)
-                .enableIntents(GatewayIntent.MESSAGE_CONTENT)
-                .disableCache(CacheFlag.MEMBER_OVERRIDES, CacheFlag.VOICE_STATE)
-                .setBulkDeleteSplittingEnabled(false)
-                .setActivity(Activity.playing("compter les moutons"))
-                .addEventListeners(commandManager, guildStateListener)
-                .build();
+                      .enableIntents(EnumSet.allOf(GatewayIntent.class))
+                      .disableCache(CacheFlag.MEMBER_OVERRIDES, CacheFlag.VOICE_STATE)
+                      .setBulkDeleteSplittingEnabled(false)
+                      .setActivity(Activity.playing("compter les moutons"))
+                      .addEventListeners(commandManager, guildStateListener)
+                      .build();
         jda.awaitReady();
         //redirectError(); //TODO not working properly
         registerModules();
@@ -124,6 +132,7 @@ public class Main {
                     LOGGER.log(Level.INFO, logS);
                 }
         );
+        launchPeriodicStatusUpdate();
     }
 
     protected static final List<Long> globalModuleRegisteredGuilds = new ArrayList<>();
