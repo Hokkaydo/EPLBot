@@ -11,6 +11,8 @@ repositories {
 }
 
 dependencies {
+    compileOnly 'org.projectlombok:lombok:1.18.28'
+    annotationProcessor 'org.projectlombok:lombok:1.18.28'
     testImplementation platform('org.junit:junit-bom:5.9.1')
     testImplementation 'org.junit.jupiter:junit-jupiter'
     implementation("net.dv8tion:JDA:5.0.0-beta.8")
@@ -19,6 +21,8 @@ dependencies {
     implementation group: 'org.json', name: 'json', version: '20230227'
     implementation 'io.github.cdimascio:dotenv-java:3.0.0'
     implementation 'com.auth0:java-jwt:4.4.0'
+    implementation 'org.springframework:spring-jdbc:6.0.11'
+    implementation 'org.xerial:sqlite-jdbc:3.42.0.0'
     // https://mvnrepository.com/artifact/org.kohsuke/github-api
     implementation group: 'org.kohsuke', name: 'github-api', version: '1.315'
 

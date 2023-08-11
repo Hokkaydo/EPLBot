@@ -13,6 +13,7 @@ import com.github.hokkaydo.eplbot.module.mirror.MirrorModule;
 import com.github.hokkaydo.eplbot.module.quote.QuoteModule;
 import com.github.hokkaydo.eplbot.module.ratio.RatioModule;
 import com.github.hokkaydo.eplbot.module.rss.RssModule;
+import lombok.Getter;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
@@ -20,7 +21,9 @@ import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
+import javax.sql.DataSource;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -41,9 +44,13 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class Main {
-
-    private static JDA jda;
+    @Getter
+    private static JDA JDA;
+    @Getter
+    private static DataSource dataSource;
+    @Getter
     private static ModuleManager moduleManager;
+    @Getter
     private static CommandManager commandManager;
     public static final Long EPL_DISCORD_ID = 517720163223601153L;
     private static Long testDiscordId;
@@ -57,7 +64,7 @@ public class Main {
             Activity.playing("bâtir des ponts (solides) entre nous et le ciel"),
             Activity.playing("démontrer que l²(N) est un honnête espace de fonctions"),
             Activity.playing("calculer le meilleur angle d'artillerie par Newton-Raphson"),
-            Activity.of(Activity.ActivityType.LISTENING,"@POISSON?!", "https://youtu.be/580gEIVVKe8"),
+            Activity.of(Activity.ActivityType.LISTENING, "@POISSON?!", "https://youtu.be/580gEIVVKe8"),
             Activity.of(Activity.ActivityType.LISTENING, "les FEZZZZZZZ", "https://www.youtube.com/watch?v=KUDJOsaAFOs"),
             Activity.playing("comprendre la doc de Oz2"),
             Activity.playing("à observer les SINFs faire des bêtises (comme d'hab)"),
@@ -70,7 +77,7 @@ public class Main {
             Activity.playing("relire toutes les confessions"),
             Activity.playing("Please wait, your data are sent to Google ..."),
             Activity.playing("chercher du sens sous la place des Sciences"),
-            Activity.of(Activity.ActivityType.LISTENING,"Apocalypse894", "https://open.spotify.com/track/0A6FdQB9XVIbjP6Kr4vsa1?si=8cbfc79518df45d1"),
+            Activity.of(Activity.ActivityType.LISTENING, "Apocalypse894", "https://open.spotify.com/track/0A6FdQB9XVIbjP6Kr4vsa1?si=8cbfc79518df45d1"),
             Activity.competing("Affond 13h"),
             Activity.competing("un beerpong"),
             Activity.competing("Procrastination"),
@@ -81,43 +88,43 @@ public class Main {
         launch(args);
     }
 
-    private static void launch(String[] args) throws InterruptedException, IOException{
+    private static void launch(String[] args) throws InterruptedException, IOException {
         LOGGER.log(Level.INFO, "--------- START ---------");
         String token = System.getenv("DISCORD_BOT_TOKEN");
         String testDiscordIdStr = System.getenv("TEST_DISCORD_ID");
         testDiscordId = testDiscordIdStr == null ? 1108141461498777722L : Long.parseLong(testDiscordIdStr);
         prodDiscordId = testDiscordIdStr == null ? EPL_DISCORD_ID : testDiscordId;
-        if(token == null && args.length > 0) token = args[0];
-        if(token == null) throw new IllegalStateException("No token specified !");
+        if (token == null && args.length > 0) token = args[0];
+        if (token == null) throw new IllegalStateException("No token specified !");
         moduleManager = new ModuleManager();
         commandManager = new CommandManager();
         final GuildStateListener guildStateListener = new GuildStateListener();
         Path path = Path.of(Main.PERSISTENCE_DIR_PATH);
-        if(!Files.exists(path))
+        if (!Files.exists(path))
             Files.createDirectory(path);
 
         Config.load();
         Strings.load();
-        jda = JDABuilder.createDefault(token)
-                      .enableIntents(GatewayIntent.MESSAGE_CONTENT)
-                      .disableCache(CacheFlag.MEMBER_OVERRIDES, CacheFlag.VOICE_STATE)
-                      .setBulkDeleteSplittingEnabled(false)
-                      .setActivity(Activity.playing("compter les moutons"))
-                      .addEventListeners(commandManager, guildStateListener)
-                      .build();
-        jda.awaitReady();
+        JDA = JDABuilder.createDefault(token)
+                .enableIntents(GatewayIntent.MESSAGE_CONTENT)
+                .disableCache(CacheFlag.MEMBER_OVERRIDES, CacheFlag.VOICE_STATE)
+                .setBulkDeleteSplittingEnabled(false)
+                .setActivity(Activity.playing("compter les moutons"))
+                .addEventListeners(commandManager, guildStateListener)
+                .build();
+        JDA.awaitReady();
         //redirectError(); //TODO not working properly
         registerModules();
-        jda.getGuilds().forEach(guild -> {
+        JDA.getGuilds().forEach(guild -> {
                     List<String> modules = Config.getModulesStatus(
                                     guild.getIdLong(),
                                     moduleManager.getModuleNames()
                             )
-                                                   .entrySet()
-                                                   .stream()
-                                                   .filter(Map.Entry::getValue)
-                                                   .map(Map.Entry::getKey)
-                                                   .toList();
+                            .entrySet()
+                            .stream()
+                            .filter(Map.Entry::getValue)
+                            .map(Map.Entry::getKey)
+                            .toList();
                     moduleManager.enableModules(guild.getIdLong(), modules);
                     StringBuilder log = new StringBuilder("Registering modules for %s :%n".formatted(guild.getName()));
                     for (String module : modules) {
@@ -127,7 +134,8 @@ public class Main {
                     LOGGER.log(Level.INFO, logS);
                 }
         );
-        launchPeriodicStatusUpdate();
+
+        dataSource = SqliteDatasourceFactory.create("./dev.db");
     }
 
     protected static final List<Long> globalModuleRegisteredGuilds = new ArrayList<>();
@@ -149,38 +157,38 @@ public class Main {
                 RatioModule.class
         );
         Map<Long, List<Command>> guildCommands = new HashMap<>();
-        for(Long guildId : List.of(EPL_DISCORD_ID, testDiscordId)) {
-            Guild guild = jda.getGuildById(guildId);
-            if(eplModuleRegisteredGuilds.contains(guildId) || guild == null) continue;
+        for (Long guildId : List.of(EPL_DISCORD_ID, testDiscordId)) {
+            Guild guild = JDA.getGuildById(guildId);
+            if (eplModuleRegisteredGuilds.contains(guildId) || guild == null) continue;
             eplModuleRegisteredGuilds.add(guildId);
             guildCommands.put(guildId, new ArrayList<>());
             List<Module> modules = eplModules.stream()
-                                           .map(clazz -> instantiate(clazz, guildId))
-                                           .map(o -> (Module)o)
-                                           .toList();
+                    .map(clazz -> instantiate(clazz, guildId))
+                    .map(o -> (Module) o)
+                    .toList();
 
             modules.forEach(m -> guildCommands.get(guildId).addAll(m.getCommands()));
             moduleManager.addModules(modules);
         }
 
         for (Long guildId : List.of(EPL_DISCORD_ID, testDiscordId, SINF_DISCORD_ID)) {
-            Guild guild = jda.getGuildById(guildId);
-            if(globalModuleRegisteredGuilds.contains(guildId) || guild == null) continue;
-            if(!guildCommands.containsKey(guildId)) {
+            Guild guild = JDA.getGuildById(guildId);
+            if (globalModuleRegisteredGuilds.contains(guildId) || guild == null) continue;
+            if (!guildCommands.containsKey(guildId)) {
                 guildCommands.put(guildId, new ArrayList<>());
             }
             globalModuleRegisteredGuilds.add(guildId);
             List<Module> modules = globalModules.stream()
-                                           .map(clazz -> instantiate(clazz, guildId))
-                                           .map(o -> (Module)o)
-                                           .toList();
+                    .map(clazz -> instantiate(clazz, guildId))
+                    .map(o -> (Module) o)
+                    .toList();
 
             modules.forEach(m -> guildCommands.get(guildId).addAll(m.getCommands()));
             moduleManager.addModules(modules);
         }
         for (Map.Entry<Long, List<Command>> guildListEntry : guildCommands.entrySet()) {
-            Guild guild = jda.getGuildById(guildListEntry.getKey());
-            if(guild == null) continue;
+            Guild guild = JDA.getGuildById(guildListEntry.getKey());
+            if (guild == null) continue;
             Main.getCommandManager().addCommands(guild, guildListEntry.getValue());
         }
         getModuleManager().getModuleByName("confession", prodDiscordId, ConfessionModule.class).ifPresent(m -> {
@@ -193,7 +201,7 @@ public class Main {
     private static void redirectError() {
         ByteArrayOutputStream b = new ByteArrayOutputStream();
         System.setErr(new PrintStream(b));
-        jda.retrieveUserById(347348560389603329L).flatMap(User::openPrivateChannel).queue(privateChannel -> new Thread(() -> {
+        JDA.retrieveUserById(347348560389603329L).flatMap(User::openPrivateChannel).queue(privateChannel -> new Thread(() -> {
             while (true) {
                 byte[] arr = new byte[0];
                 while (arr.length == 0) {
@@ -205,6 +213,7 @@ public class Main {
             }
         }).start());
     }
+
     private static <T> T instantiate(Class<T> clazz, Long guildId) {
         try {
             return clazz.getDeclaredConstructor(Long.class).newInstance(guildId);
@@ -213,19 +222,9 @@ public class Main {
             throw new IllegalStateException(e);
         }
     }
+
     private static void launchPeriodicStatusUpdate() {
         ScheduledExecutorService service = Executors.newScheduledThreadPool(1);
-        service.scheduleAtFixedRate(() -> jda.getPresence().setActivity(status.get(RANDOM.nextInt(status.size()))),10L, 26*6L, TimeUnit.SECONDS); // 2min30
-    }
-
-    public static JDA getJDA() {
-        return jda;
-    }
-    public static ModuleManager getModuleManager() {
-        return moduleManager;
-    }
-
-    public static CommandManager getCommandManager() {
-        return commandManager;
+        service.scheduleAtFixedRate(() -> JDA.getPresence().setActivity(status.get(RANDOM.nextInt(status.size()))), 10L, 26 * 6L, TimeUnit.SECONDS); // 2min30
     }
 }
