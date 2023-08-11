@@ -124,7 +124,7 @@ public class Main {
                 }
         );
 
-        dataSource = SQLiteDatasourceFactory.create("./dev.db");
+        dataSource = SQLiteDatasourceFactory.create(PERSISTENCE_DIR_PATH + "/database.sqlite");
     }
 
     protected static final List<Long> globalModuleRegisteredGuilds = new ArrayList<>();
