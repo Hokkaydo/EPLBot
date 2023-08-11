@@ -5,15 +5,14 @@ import com.github.hokkaydo.eplbot.command.CommandManager;
 import com.github.hokkaydo.eplbot.module.Module;
 import com.github.hokkaydo.eplbot.module.ModuleManager;
 import com.github.hokkaydo.eplbot.module.autopin.AutoPinModule;
-import com.github.hokkaydo.eplbot.module.eplcommand.EPLCommandModule;
 import com.github.hokkaydo.eplbot.module.confession.ConfessionModule;
+import com.github.hokkaydo.eplbot.module.eplcommand.EPLCommandModule;
 import com.github.hokkaydo.eplbot.module.globalcommand.GlobalCommandModule;
 import com.github.hokkaydo.eplbot.module.graderetrieve.ExamsRetrieveModule;
 import com.github.hokkaydo.eplbot.module.mirror.MirrorModule;
 import com.github.hokkaydo.eplbot.module.quote.QuoteModule;
 import com.github.hokkaydo.eplbot.module.ratio.RatioModule;
 import com.github.hokkaydo.eplbot.module.rss.RssModule;
-import lombok.Getter;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
@@ -21,7 +20,6 @@ import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
 import javax.sql.DataSource;
 import java.io.ByteArrayOutputStream;
@@ -30,12 +28,7 @@ import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -44,13 +37,9 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class Main {
-    @Getter
-    private static JDA JDA;
-    @Getter
+    private static JDA jda;
     private static DataSource dataSource;
-    @Getter
     private static ModuleManager moduleManager;
-    @Getter
     private static CommandManager commandManager;
     public static final Long EPL_DISCORD_ID = 517720163223601153L;
     private static Long testDiscordId;
@@ -105,17 +94,17 @@ public class Main {
 
         Config.load();
         Strings.load();
-        JDA = JDABuilder.createDefault(token)
+        jda = JDABuilder.createDefault(token)
                 .enableIntents(GatewayIntent.MESSAGE_CONTENT)
                 .disableCache(CacheFlag.MEMBER_OVERRIDES, CacheFlag.VOICE_STATE)
                 .setBulkDeleteSplittingEnabled(false)
                 .setActivity(Activity.playing("compter les moutons"))
                 .addEventListeners(commandManager, guildStateListener)
                 .build();
-        JDA.awaitReady();
+        jda.awaitReady();
         //redirectError(); //TODO not working properly
         registerModules();
-        JDA.getGuilds().forEach(guild -> {
+        jda.getGuilds().forEach(guild -> {
                     List<String> modules = Config.getModulesStatus(
                                     guild.getIdLong(),
                                     moduleManager.getModuleNames()
@@ -135,7 +124,7 @@ public class Main {
                 }
         );
 
-        dataSource = SqliteDatasourceFactory.create("./dev.db");
+        dataSource = SQLiteDatasourceFactory.create("./dev.db");
     }
 
     protected static final List<Long> globalModuleRegisteredGuilds = new ArrayList<>();
@@ -158,7 +147,7 @@ public class Main {
         );
         Map<Long, List<Command>> guildCommands = new HashMap<>();
         for (Long guildId : List.of(EPL_DISCORD_ID, testDiscordId)) {
-            Guild guild = JDA.getGuildById(guildId);
+            Guild guild = jda.getGuildById(guildId);
             if (eplModuleRegisteredGuilds.contains(guildId) || guild == null) continue;
             eplModuleRegisteredGuilds.add(guildId);
             guildCommands.put(guildId, new ArrayList<>());
@@ -172,7 +161,7 @@ public class Main {
         }
 
         for (Long guildId : List.of(EPL_DISCORD_ID, testDiscordId, SINF_DISCORD_ID)) {
-            Guild guild = JDA.getGuildById(guildId);
+            Guild guild = jda.getGuildById(guildId);
             if (globalModuleRegisteredGuilds.contains(guildId) || guild == null) continue;
             if (!guildCommands.containsKey(guildId)) {
                 guildCommands.put(guildId, new ArrayList<>());
@@ -187,7 +176,7 @@ public class Main {
             moduleManager.addModules(modules);
         }
         for (Map.Entry<Long, List<Command>> guildListEntry : guildCommands.entrySet()) {
-            Guild guild = JDA.getGuildById(guildListEntry.getKey());
+            Guild guild = jda.getGuildById(guildListEntry.getKey());
             if (guild == null) continue;
             Main.getCommandManager().addCommands(guild, guildListEntry.getValue());
         }
@@ -201,7 +190,7 @@ public class Main {
     private static void redirectError() {
         ByteArrayOutputStream b = new ByteArrayOutputStream();
         System.setErr(new PrintStream(b));
-        JDA.retrieveUserById(347348560389603329L).flatMap(User::openPrivateChannel).queue(privateChannel -> new Thread(() -> {
+        jda.retrieveUserById(347348560389603329L).flatMap(User::openPrivateChannel).queue(privateChannel -> new Thread(() -> {
             while (true) {
                 byte[] arr = new byte[0];
                 while (arr.length == 0) {
@@ -225,6 +214,22 @@ public class Main {
 
     private static void launchPeriodicStatusUpdate() {
         ScheduledExecutorService service = Executors.newScheduledThreadPool(1);
-        service.scheduleAtFixedRate(() -> JDA.getPresence().setActivity(status.get(RANDOM.nextInt(status.size()))), 10L, 26 * 6L, TimeUnit.SECONDS); // 2min30
+        service.scheduleAtFixedRate(() -> jda.getPresence().setActivity(status.get(RANDOM.nextInt(status.size()))), 10L, 26 * 6L, TimeUnit.SECONDS); // 2min30
+    }
+
+    public static JDA getJDA() {
+        return Main.jda;
+    }
+
+    public static DataSource getDataSource() {
+        return Main.dataSource;
+    }
+
+    public static ModuleManager getModuleManager() {
+        return Main.moduleManager;
+    }
+
+    public static CommandManager getCommandManager() {
+        return Main.commandManager;
     }
 }
