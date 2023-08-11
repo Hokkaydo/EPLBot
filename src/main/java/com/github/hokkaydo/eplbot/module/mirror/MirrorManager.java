@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 public class MirrorManager extends ListenerAdapter {
 
@@ -65,7 +66,7 @@ public class MirrorManager extends ListenerAdapter {
     public void onMessageReceived(@NotNull MessageReceivedEvent event) {
         if(event.getMessage().isEphemeral()) return;
         if(event.getMessage().getType().isSystem()) return;
-        if(event.getMessage().getAuthor().getIdLong() == Main.getJDA().getSelfUser().getIdLong()) return;
+        if(event.getMessage().isWebhookMessage()) return;
         if(mirroredMessages.stream().flatMap(m -> m.getMessages().entrySet().stream()).anyMatch(m -> m.getKey() == 0 || m.getKey() == event.getMessageIdLong())) return;
         if(event.getMessage().getType().equals(MessageType.THREAD_STARTER_MESSAGE) || event.getMessage().getType().equals(MessageType.THREAD_CREATED)) {
             ThreadChannel threadChannel = event.getMessage().getChannel().asThreadChannel();
@@ -89,6 +90,8 @@ public class MirrorManager extends ListenerAdapter {
         MirroredMessages messages = new MirroredMessages(initial, new HashMap<>());
         mirrorLinkRepository.all().stream().filter(m -> m.has(originalChannel)).forEach(mirror -> {
             GuildMessageChannel other = mirror.other(originalChannel);
+            MirroredMessage mirroredMessage = new MirroredMessage(event.getMessage(), other);
+            Consumer<Message> sentMessage = m -> messages.mirrored.put(m.getIdLong(), mirroredMessage);
             if(reply) {
                 mirroredMessages.stream()
                         .filter(m -> m.match(event.getMessage().getReferencedMessage().getIdLong()))
@@ -97,17 +100,10 @@ public class MirrorManager extends ListenerAdapter {
                         .map(m -> new Tuple2<>(m, Main.getJDA().getChannelById(GuildMessageChannel.class, m.getValue().getChannelId())))
                         .map(t -> new Tuple2<>(t.a, t.b.retrieveMessageById(t.a.getKey())))
                         .map(Tuple2::b)
-                        .ifPresentOrElse(a -> a.queue(replyMsg -> {
-                            MirroredMessage mirroredMessage = new MirroredMessage(event.getMessage(), other);
-                            mirroredMessage.mirrorMessage(replyMsg, m -> messages.mirrored.put(m.getIdLong(), mirroredMessage));
-                        }), () -> {
-                            MirroredMessage mirroredMessage = new MirroredMessage(event.getMessage(), other);
-                            mirroredMessage.mirrorMessage(null, m -> messages.mirrored.put(m.getIdLong(), mirroredMessage));
-                        });
+                        .ifPresentOrElse(a -> a.queue(replyMsg -> mirroredMessage.mirrorMessage(replyMsg, sentMessage)), () -> mirroredMessage.mirrorMessage(null, sentMessage));
             }
             else {
-                MirroredMessage mirroredMessage = new MirroredMessage(event.getMessage(), other);
-                mirroredMessage.mirrorMessage(null, m -> messages.mirrored.put(m.getIdLong(), mirroredMessage));
+                mirroredMessage.mirrorMessage(null, sentMessage);
             }
         });
         mirroredMessages.add(messages);

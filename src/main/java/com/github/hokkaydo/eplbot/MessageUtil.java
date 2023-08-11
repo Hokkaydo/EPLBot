@@ -2,7 +2,9 @@ package com.github.hokkaydo.eplbot;
 
 import com.github.hokkaydo.eplbot.configuration.Config;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
@@ -10,6 +12,8 @@ import net.dv8tion.jda.api.utils.FileUpload;
 
 import java.awt.*;
 import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.logging.Level;
 
@@ -61,6 +65,12 @@ public class MessageUtil {
             return;
         }
         adminChannel.sendMessage(message).queue();
+    }
+
+    public static String nameAndNickname(List<Member> members, User user) {
+        Optional<Member> authorMember = members.stream().filter(member -> member.getIdLong() == user.getIdLong()).findFirst();
+        boolean hasNickname = authorMember.isPresent() && authorMember.get().getNickname() != null;
+        return (hasNickname  ? authorMember.get().getNickname() + " (" : "") + user.getName() + (hasNickname ? ")" : "");
     }
 
     private record Tuple3<A, B, C>(A a, B b, C c) {}

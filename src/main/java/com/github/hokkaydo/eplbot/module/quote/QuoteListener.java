@@ -2,7 +2,6 @@ package com.github.hokkaydo.eplbot.module.quote;
 
 import com.github.hokkaydo.eplbot.Main;
 import com.github.hokkaydo.eplbot.MessageUtil;
-import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
@@ -11,7 +10,6 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
-import java.util.Optional;
 import java.util.regex.Pattern;
 
 public class QuoteListener extends ListenerAdapter {
@@ -25,17 +23,30 @@ public class QuoteListener extends ListenerAdapter {
     public void onMessageReceived(@NotNull MessageReceivedEvent event) {
         if(!event.isFromGuild()) return;
         if(event.getGuild().getIdLong() != guildId) return;
-        event.getGuild().loadMembers().onSuccess(members -> MESSAGE_URL_PATTERN.matcher(event.getMessage().getContentDisplay()).results()
-                .map(matchResult -> {String[] split = matchResult.group().split("/"); return new Tuple3<>(split[4], split[5], split[6]);})
-                .map(this::toMessage)
-                .filter(Objects::nonNull)
-                .forEach(m -> MessageUtil.toEmbedWithAttachements(m, e -> {
-                    Optional<Member> authorMember = members.stream().filter(member -> member.getIdLong() == m.getAuthor().getIdLong()).findFirst();
-                    boolean hasNickname = authorMember.isPresent() && authorMember.get().getNickname() != null;
-                    String authorNickAndTag = (hasNickname  ? authorMember.get().getNickname() + " (" : "") + m.getAuthor().getName() + (hasNickname ? ")" : "");
-
-                    return event.getMessage().replyEmbeds(e.setAuthor(authorNickAndTag, m.getJumpUrl(), m.getAuthor().getAvatarUrl()).build());
-                })));
+        event.getGuild()
+                .loadMembers()
+                .onSuccess(members ->
+                                   MESSAGE_URL_PATTERN
+                                           .matcher(event.getMessage().getContentDisplay())
+                                           .results()
+                                           .map(matchResult -> {
+                                               String[] split = matchResult.group().split("/");
+                                               return new Tuple3<>(split[4], split[5], split[6]);
+                                           })
+                                           .map(this::toMessage)
+                                           .filter(Objects::nonNull)
+                                           .forEach(m -> MessageUtil.toEmbedWithAttachements(
+                                                           m,
+                                                           e -> event.getMessage().replyEmbeds(
+                                                                   e.setAuthor(
+                                                                           MessageUtil.nameAndNickname(members, m.getAuthor()),
+                                                                           m.getJumpUrl(),
+                                                                           m.getAuthor().getAvatarUrl()
+                                                                   ).build()
+                                                           )
+                                                   )
+                                           )
+                );
     }
 
     private record Tuple3<A, B, C>(A a, B b, C c) {}

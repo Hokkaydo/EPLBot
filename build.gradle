@@ -19,6 +19,7 @@ dependencies {
     // https://mvnrepository.com/artifact/org.json/json
     implementation group: 'org.json', name: 'json', version: '20230227'
     implementation 'io.github.cdimascio:dotenv-java:3.0.0'
+    implementation("club.minnced:discord-webhooks:0.8.4")
     implementation 'com.auth0:java-jwt:4.4.0'
     implementation 'org.springframework:spring-jdbc:6.0.11'
     implementation 'org.xerial:sqlite-jdbc:3.42.0.0'
