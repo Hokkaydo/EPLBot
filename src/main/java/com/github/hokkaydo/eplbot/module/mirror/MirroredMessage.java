@@ -65,7 +65,12 @@ public class MirroredMessage {
     void mirrorMessage(Message replyTo, Consumer<Message> sentMessage) {
         TextChannel textChannel = Main.getJDA().getTextChannelById(channel.getId());
         if(textChannel == null) return;
-        cleanWebhooks(textChannel, () -> createWebhook(textChannel, members -> checkBanTimeOut(message.getAuthor(), ()-> createAndSendMessage(replyTo, members, sentMessage))));
+        channel.getGuild().loadMembers().onSuccess(members -> cleanWebhooks(
+                textChannel,
+                members,
+                () -> createWebhook(textChannel, members, () -> checkBanTimeOut(message.getAuthor(), ()-> createAndSendMessage(replyTo, members, sentMessage))),
+                () -> checkBanTimeOut(message.getAuthor(), ()-> createAndSendMessage(replyTo, members, sentMessage)))
+        );
     }
 
     private void createAndSendMessage(Message replyTo, List<Member> members, Consumer<Message> sentMessage) {
@@ -95,10 +100,10 @@ public class MirroredMessage {
                         () -> sendMessage(action.get(), message, sentMessage));
     }
 
-    private void createWebhook(TextChannel textChannel, Consumer<List<Member>> then) {
+    private void createWebhook(TextChannel textChannel, List<Member> members, Runnable then) {
         ImageProxy avatarProxy = message.getAuthor().getAvatar();
         CompletableFuture<InputStream> avatarFuture = avatarProxy == null ? CompletableFuture.completedFuture(null) : avatarProxy.download();
-        channel.getGuild().loadMembers().onSuccess(members -> textChannel.createWebhook(message.getAuthor().getName()).queue(w -> avatarFuture.thenAccept(is -> {
+        textChannel.createWebhook(message.getAuthor().getName()).queue(w -> avatarFuture.thenAccept(is -> {
             try {
                 WebhookManager manager = w.getManager().setName(MessageUtil.nameAndNickname(members, message.getAuthor())).setChannel((TextChannel) channel);
                 if (is != null)
@@ -109,22 +114,28 @@ public class MirroredMessage {
                     w.delete().queue();
                     this.webhook = null;
                 }, 10L, TimeUnit.MINUTES);
-                then.accept(members);
+                then.run();
             } catch (IOException e) {
                 Main.LOGGER.log(Level.WARNING, "Could not send webhook files");
             }
-        })));
+        }));
     }
 
-    private void cleanWebhooks(TextChannel channel, Runnable then) {
+    private void cleanWebhooks(TextChannel channel, List<Member> members, Runnable noSimilarWebhookFound, Runnable similarWebhookFound) {
         channel.retrieveWebhooks().queue(webhooks -> {
+            Optional<Webhook> webhookOpt = webhooks.stream().filter(w -> w.getName().equals(MessageUtil.nameAndNickname(members, message.getAuthor()))).findFirst();
+            if(webhookOpt.isPresent()) {
+                this.webhook = new WebhookWithMessage((WebhookImpl) webhookOpt.get());
+                similarWebhookFound.run();
+                return;
+            }
             if(webhooks.size() >= 10)
                 webhooks.stream().filter(w -> w.getOwner() != null && w.getOwner().getIdLong() == Main.getJDA().getSelfUser().getIdLong())
                         .sorted(Comparator.comparing(ISnowflake::getTimeCreated))
                         .limit(5)
                         .map(Webhook::delete)
                         .forEach(RestAction::queue);
-            then.run();
+            noSimilarWebhookFound.run();
         });
     }
 
