@@ -26,7 +26,7 @@ public class DebugCommand implements Command {
             context.replyCallbackAction().setContent("You're not allowed to execute this commande (only my boss can use it)").queue();
             return;
         }
-        List<String> filesNames = List.of(MirrorManager.MIRROR_STORAGE_PATH.toString(), ConfessionProcessor.WARNED_CONFESSION_STORAGE_PATH.toString(), Config.CONFIG_PATH, ExamsRetrieveListener.MESSAGE_IDS_STORAGE_PATH.toString());
+        List<String> filesNames = List.of(MirrorManager.MIRROR_STORAGE_PATH.toString(), Config.CONFIG_PATH, ExamsRetrieveListener.MESSAGE_IDS_STORAGE_PATH.toString());
         context.author().getUser().openPrivateChannel().queue(channel -> {
             for (String filesName : filesNames) {
                 StringBuilder stringBuilder = new StringBuilder();

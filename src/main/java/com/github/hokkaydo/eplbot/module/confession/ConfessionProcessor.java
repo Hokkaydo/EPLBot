@@ -5,6 +5,8 @@ import com.github.hokkaydo.eplbot.Main;
 import com.github.hokkaydo.eplbot.MessageUtil;
 import com.github.hokkaydo.eplbot.Strings;
 import com.github.hokkaydo.eplbot.command.CommandContext;
+import com.github.hokkaydo.eplbot.module.confession.model.WarnedConfession;
+import com.github.hokkaydo.eplbot.module.confession.repository.WarnedConfessionRepository;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
@@ -51,7 +53,6 @@ public class ConfessionProcessor extends ListenerAdapter {
     private static final int VALID = 0;
     private static final int REFUSED = 1;
     private static final int WARNED = 2;
-    public static final Path WARNED_CONFESSION_STORAGE_PATH = Path.of("%s/warned_confessions".formatted(Main.PERSISTENCE_DIR_PATH));
 
     private static final String CONFESSION = "confession";
 
@@ -59,14 +60,14 @@ public class ConfessionProcessor extends ListenerAdapter {
     private final Map<Long, Long> lastMainConfession;
     private final Map<Long, Long> lastMainConfessionValidation;
     private final Map<Long, Long> lastFollowingConfessionValidation;
-    private final List<WarnedConfessionRecord> warnedConfessions = new ArrayList<>();
+    private final WarnedConfessionRepository warnedConfessionRepository;
 
-    ConfessionProcessor(Long guildId, Map<Long, Long> lastMainConfession) {
+    ConfessionProcessor(Long guildId, Map<Long, Long> lastMainConfession, WarnedConfessionRepository warnedConfessionRepository) {
         this.guildId = guildId;
         this.lastMainConfession = lastMainConfession;
         this.lastFollowingConfessionValidation = new HashMap<>();
         this.lastMainConfessionValidation = new HashMap<>();
-        loadWarnedConfessions();
+        this.warnedConfessionRepository = warnedConfessionRepository;
     }
 
     void process(CommandContext context, boolean following) {
@@ -167,14 +168,14 @@ public class ConfessionProcessor extends ListenerAdapter {
     private void warn(Long moderatorId, UUID uuid) {
         Long confessionAuthorId = confessionAuthor.get(uuid);
         confessionAuthor.remove(uuid);
-        WarnedConfessionRecord warnedConfessionRecord = new WarnedConfessionRecord(confessionsContent.get(uuid), moderatorId, confessionAuthorId, Timestamp.from(Instant.now()));
-        warnedConfessions.add(warnedConfessionRecord);
+        WarnedConfession warnedConfession = new WarnedConfession(moderatorId, confessionAuthorId, confessionsContent.get(uuid) , Timestamp.from(Instant.now()));
+        warnedConfessionRepository.create(warnedConfession);
         confessionsContent.remove(uuid);
-        storeWarnedConfessions();
         int threshold = Config.<Integer>getGuildVariable(guildId, "CONFESSION_WARN_THRESHOLD");
         Guild guild = Main.getJDA().getGuildById(guildId);
         if(guild == null) return;
-        List<WarnedConfessionRecord> authorWarnedConfessions = warnedConfessions.stream().filter(r -> Objects.equals(r.authorId, confessionAuthorId)).toList();
+
+        List<WarnedConfession> authorWarnedConfessions = warnedConfessionRepository.readByAuthor(confessionAuthorId);
         Main.getJDA().retrieveUserById(confessionAuthorId).flatMap(User::openPrivateChannel).queue(privateChannel -> privateChannel.sendMessage(Strings.getString("COMMAND_CONFESSION_WARN_AUTHOR")).queue());
 
         if(authorWarnedConfessions.size() < threshold) return;
@@ -195,13 +196,13 @@ public class ConfessionProcessor extends ListenerAdapter {
                                        )
                                        .setColor(Color.ORANGE);
         validationChannel.sendMessageEmbeds(builder.build()).queue(m -> {
-            for (WarnedConfessionRecord confession : authorWarnedConfessions) {
-                Member mod = guild.getMemberById(confession.moderatorId);
+            for (WarnedConfession confession : authorWarnedConfessions) {
+                Member mod = guild.getMemberById(confession.moderatorId());
                 EmbedBuilder warned = new EmbedBuilder()
-                                              .setFooter(Strings.getString("CONFESSION_WARNED_BY").formatted(mod == null ? confession.moderatorId : mod.getUser().getAsTag()))
-                                              .setDescription(confession.content)
+                                              .setFooter(Strings.getString("CONFESSION_WARNED_BY").formatted(mod == null ? confession.moderatorId() : mod.getUser().getAsTag()))
+                                              .setDescription(confession.messageContent())
                                               .setColor(Color.BLACK)
-                                              .setTimestamp(confession.timestamp.toInstant())
+                                              .setTimestamp(confession.timestamp().toInstant())
                                               .setAuthor(user == null ? String.valueOf(confessionAuthorId) : user.getUser().getAsTag());
                 m.replyEmbeds(warned.build()).queue();
             }
@@ -214,40 +215,8 @@ public class ConfessionProcessor extends ListenerAdapter {
         message.editMessageEmbeds(builder.build()).queue();
     }
 
-    private void loadWarnedConfessions() {
-        if(!Files.exists(WARNED_CONFESSION_STORAGE_PATH)) {
-            try {
-                Files.createFile(WARNED_CONFESSION_STORAGE_PATH);
-            } catch (IOException e) {
-                throw new IllegalStateException(e);
-            }
-            return;
-        }
-        try(BufferedReader stream = new BufferedReader(new FileReader(WARNED_CONFESSION_STORAGE_PATH.toFile()))) {
-            String line;
-            while((line = stream.readLine()) != null) {
-                if(line.isBlank()) continue;
-                warnedConfessions.add(WarnedConfessionRecord.of(line));
-            }
-        } catch (IOException e) {
-            Main.LOGGER.log(Level.WARNING, "Could not load warned confessions");
-        }
-    }
-
-    private void storeWarnedConfessions() {
-        try(FileWriter stream = new FileWriter(WARNED_CONFESSION_STORAGE_PATH.toFile())) {
-            for (WarnedConfessionRecord warnedConfession : warnedConfessions) {
-                stream.append(warnedConfessions.size() == 1 ? "" : "\n").append(warnedConfession.toString());
-            }
-        } catch (IOException e) {
-            Main.LOGGER.log(Level.WARNING, "Could not store warned confessions");
-        }
-    }
-
-    public void clearWarnings(long idLong) {
-        List<WarnedConfessionRecord> toDelete = warnedConfessions.stream().filter(r -> r.authorId == idLong).toList();
-        toDelete.forEach(warnedConfessions::remove);
-        storeWarnedConfessions();
+    public void clearWarnings(long authorId) {
+        warnedConfessionRepository.deleteByAuthor(authorId);
     }
 
     private record WarnedConfessionRecord(String content, Long moderatorId, Long authorId, Timestamp timestamp) {

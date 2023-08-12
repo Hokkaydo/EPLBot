@@ -87,6 +87,7 @@ public class Main {
         if (token == null) throw new IllegalStateException("No token specified !");
         moduleManager = new ModuleManager();
         commandManager = new CommandManager();
+        dataSource = SQLiteDatasourceFactory.create(PERSISTENCE_DIR_PATH + "/database.sqlite");
         final GuildStateListener guildStateListener = new GuildStateListener();
         Path path = Path.of(Main.PERSISTENCE_DIR_PATH);
         if (!Files.exists(path))
@@ -123,8 +124,6 @@ public class Main {
                     LOGGER.log(Level.INFO, logS);
                 }
         );
-
-        dataSource = SQLiteDatasourceFactory.create(PERSISTENCE_DIR_PATH + "/database.sqlite");
     }
 
     protected static final List<Long> globalModuleRegisteredGuilds = new ArrayList<>();
