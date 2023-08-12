@@ -29,6 +29,8 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.logging.Level;
+import java.util.stream.Stream;
 
 public class MirrorManager extends ListenerAdapter {
 
@@ -67,6 +69,7 @@ public class MirrorManager extends ListenerAdapter {
         if(event.getMessage().isEphemeral()) return;
         if(event.getMessage().getType().isSystem()) return;
         if(event.getMessage().isWebhookMessage()) return;
+        // do not mirror already mirrored messages
         if(mirroredMessages.stream().flatMap(m -> m.getMessages().entrySet().stream()).anyMatch(m -> m.getKey() == 0 || m.getKey() == event.getMessageIdLong())) return;
         if(event.getMessage().getType().equals(MessageType.THREAD_STARTER_MESSAGE) || event.getMessage().getType().equals(MessageType.THREAD_CREATED)) {
             ThreadChannel threadChannel = event.getMessage().getChannel().asThreadChannel();
@@ -82,8 +85,18 @@ public class MirrorManager extends ListenerAdapter {
                             message.setThreadOwner();
                         }, () -> createThread(other.getLatestMessageIdLong(), other.getIdLong(), threadChannel));
             }));
+            threadChannel
+                    .retrieveParentMessage()
+                    .queue(parent ->
+                                   mirroredMessages.stream()
+                                           .flatMap(m -> m.getMirror(parent).filter(mirror -> !mirror.isThreadOwner())) // get all mirrors of parent
+                                           .forEach(parentMirror -> {
+                                               createThread(parentMirror.getMirrorMessageId(), parentMirror.getChannelId(), threadChannel);
+                                               parentMirror.setThreadOwner();
+                                           }));
             return;
         }
+
         GuildMessageChannel originalChannel = event.getChannel().asGuildMessageChannel();
         boolean reply = event.getMessage().getType().equals(MessageType.INLINE_REPLY) && event.getMessage().getReferencedMessage() != null;
         MirroredMessage initial = new MirroredMessage(event.getMessage(), originalChannel);
@@ -172,12 +185,12 @@ public class MirrorManager extends ListenerAdapter {
         }
 
         boolean match(Long messageId) {
-            return initial.getMessageId().equals(messageId) || mirrored.containsKey(messageId);
+            return initial.getOriginalMessageId().equals(messageId) || mirrored.containsKey(messageId);
         }
 
         Map<Long, MirroredMessage> getMessages() {
             Map<Long, MirroredMessage> map = new HashMap<>(mirrored);
-            map.put(initial.getMessageId(), initial);
+            map.put(initial.getOriginalMessageId(), initial);
             return map;
         }
 
@@ -185,7 +198,7 @@ public class MirrorManager extends ListenerAdapter {
             if(updatedIds.contains(message.getIdLong())) return;
             for (Map.Entry<Long, MirroredMessage> mirroredMessage : getMessages().entrySet()) {
                 if(mirroredMessage.getKey() == message.getIdLong()) continue;
-                updatedIds.add(mirroredMessage.getValue().getMessageId());
+                updatedIds.add(mirroredMessage.getValue().getMirrorMessageId());
                 mirroredMessage.getValue().update(message);
             }
             updatedIds.clear();
@@ -193,6 +206,10 @@ public class MirrorManager extends ListenerAdapter {
 
         boolean isOutdated() {
             return Instant.now().isAfter(outdatedTime);
+        }
+
+        public Stream<MirroredMessage> getMirror(Message message) {
+            return getMessages().values().stream().filter(msg -> msg.getOriginalMessageId() == message.getIdLong() && msg.isMirror());
         }
 
     }
