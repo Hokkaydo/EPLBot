@@ -130,7 +130,7 @@ public class MirrorManager extends ListenerAdapter {
         channel.retrieveMessageById(messageId).queue(m -> {
             if(m.getStartedThread() != null) return;
             m.createThreadChannel(firstThread.getName()).queue(t -> {
-                MessageUtil.sendWarning(Strings.getString("THREAD_FIRST_MESSAGE_NOT_SENT").formatted(firstThread.getAsMention()), t);
+                MessageUtil.sendWarning(Strings.getString("CANT_MIRROR_THREADS").formatted(firstThread.getAsMention()), t);
                 createLink(firstThread, t);
             });
         });
