@@ -121,7 +121,10 @@ public class JavaRunner {
             "javax.script",
             "java.util.logging",
             "java.lang.ProcessBuilder",
-            "java.lang.Runtime"
+            "java.lang.Runtime",
+            "com",
+            "net",
+            "org"
         );
         String regex = "(?i)import\\s+" + String.join("|", dangerousImports).replaceAll("\\.", "\\\\.") + "\\s*;";
         return input.replaceAll(regex, "");
