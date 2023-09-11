@@ -4,10 +4,14 @@ import com.github.hokkaydo.eplbot.command.Command;
 import com.github.hokkaydo.eplbot.module.Module;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.jetbrains.annotations.NotNull;
+import com.github.hokkaydo.eplbot.module.code.PythonCommand;
+import com.github.hokkaydo.eplbot.module.code.JavaCommand;
+import com.github.hokkaydo.eplbot.module.code.RustCommand;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.ArrayList;
 
 public class GlobalCommandModule extends Module {
 
@@ -21,6 +25,9 @@ public class GlobalCommandModule extends Module {
     private final HelpCommand helpCommand;
     private final ContributeCommand contributeCommand;
     private final IssueCommand issueCommand;
+    private final PythonCommand pythonCommand;
+    private final JavaCommand javaCommand;
+    private final RustCommand rustCommand;
 
     public GlobalCommandModule(@NotNull Long guildId) {
         super(guildId);
@@ -34,6 +41,9 @@ public class GlobalCommandModule extends Module {
         helpCommand = new HelpCommand(guildId);
         contributeCommand = new ContributeCommand();
         issueCommand = new IssueCommand();
+        pythonCommand = new PythonCommand();
+        javaCommand = new JavaCommand();
+        rustCommand = new RustCommand();
     }
 
     @Override
@@ -53,12 +63,20 @@ public class GlobalCommandModule extends Module {
                 pingCommand,
                 helpCommand,
                 contributeCommand,
-                issueCommand
+                issueCommand,
+                pythonCommand,
+                javaCommand,
+                rustCommand
         );
     }
 
     @Override
     public List<ListenerAdapter> getListeners() {
-        return Collections.singletonList(issueCommand);
+        List<ListenerAdapter> listeners = new ArrayList<>();
+        listeners.add(issueCommand);
+        listeners.add(pythonCommand);
+        listeners.add(javaCommand);
+        listeners.add(rustCommand);
+        return listeners;
     }
 }

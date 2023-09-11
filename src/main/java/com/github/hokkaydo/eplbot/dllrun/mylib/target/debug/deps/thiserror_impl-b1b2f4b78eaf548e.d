@@ -1,0 +1,12 @@
+C:\Users\kiwi_\code\rust\test_rust\mylib\target\debug\deps\thiserror_impl-b1b2f4b78eaf548e.dll: C:\Users\kiwi_\.cargo\registry\src\github.com-1ecc6299db9ec823\thiserror-impl-1.0.47\src\lib.rs C:\Users\kiwi_\.cargo\registry\src\github.com-1ecc6299db9ec823\thiserror-impl-1.0.47\src\ast.rs C:\Users\kiwi_\.cargo\registry\src\github.com-1ecc6299db9ec823\thiserror-impl-1.0.47\src\attr.rs C:\Users\kiwi_\.cargo\registry\src\github.com-1ecc6299db9ec823\thiserror-impl-1.0.47\src\expand.rs C:\Users\kiwi_\.cargo\registry\src\github.com-1ecc6299db9ec823\thiserror-impl-1.0.47\src\fmt.rs C:\Users\kiwi_\.cargo\registry\src\github.com-1ecc6299db9ec823\thiserror-impl-1.0.47\src\generics.rs C:\Users\kiwi_\.cargo\registry\src\github.com-1ecc6299db9ec823\thiserror-impl-1.0.47\src\prop.rs C:\Users\kiwi_\.cargo\registry\src\github.com-1ecc6299db9ec823\thiserror-impl-1.0.47\src\valid.rs
+
+C:\Users\kiwi_\code\rust\test_rust\mylib\target\debug\deps\thiserror_impl-b1b2f4b78eaf548e.d: C:\Users\kiwi_\.cargo\registry\src\github.com-1ecc6299db9ec823\thiserror-impl-1.0.47\src\lib.rs C:\Users\kiwi_\.cargo\registry\src\github.com-1ecc6299db9ec823\thiserror-impl-1.0.47\src\ast.rs C:\Users\kiwi_\.cargo\registry\src\github.com-1ecc6299db9ec823\thiserror-impl-1.0.47\src\attr.rs C:\Users\kiwi_\.cargo\registry\src\github.com-1ecc6299db9ec823\thiserror-impl-1.0.47\src\expand.rs C:\Users\kiwi_\.cargo\registry\src\github.com-1ecc6299db9ec823\thiserror-impl-1.0.47\src\fmt.rs C:\Users\kiwi_\.cargo\registry\src\github.com-1ecc6299db9ec823\thiserror-impl-1.0.47\src\generics.rs C:\Users\kiwi_\.cargo\registry\src\github.com-1ecc6299db9ec823\thiserror-impl-1.0.47\src\prop.rs C:\Users\kiwi_\.cargo\registry\src\github.com-1ecc6299db9ec823\thiserror-impl-1.0.47\src\valid.rs
+
+C:\Users\kiwi_\.cargo\registry\src\github.com-1ecc6299db9ec823\thiserror-impl-1.0.47\src\lib.rs:
+C:\Users\kiwi_\.cargo\registry\src\github.com-1ecc6299db9ec823\thiserror-impl-1.0.47\src\ast.rs:
+C:\Users\kiwi_\.cargo\registry\src\github.com-1ecc6299db9ec823\thiserror-impl-1.0.47\src\attr.rs:
+C:\Users\kiwi_\.cargo\registry\src\github.com-1ecc6299db9ec823\thiserror-impl-1.0.47\src\expand.rs:
+C:\Users\kiwi_\.cargo\registry\src\github.com-1ecc6299db9ec823\thiserror-impl-1.0.47\src\fmt.rs:
+C:\Users\kiwi_\.cargo\registry\src\github.com-1ecc6299db9ec823\thiserror-impl-1.0.47\src\generics.rs:
+C:\Users\kiwi_\.cargo\registry\src\github.com-1ecc6299db9ec823\thiserror-impl-1.0.47\src\prop.rs:
+C:\Users\kiwi_\.cargo\registry\src\github.com-1ecc6299db9ec823\thiserror-impl-1.0.47\src\valid.rs:
