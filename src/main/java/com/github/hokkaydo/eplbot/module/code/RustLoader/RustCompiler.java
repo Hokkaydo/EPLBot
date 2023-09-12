@@ -6,6 +6,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.FileSystems;
 import java.util.concurrent.TimeUnit;
 
 public class RustCompiler {
@@ -17,15 +18,20 @@ public class RustCompiler {
         try {
 
             String currentDir = System.getProperty("user.dir") + "/src/main/java/com/github/hokkaydo/eplbot/module/code/RustLoader/temp/";
+            File currentDirFile = new File(currentDir);
             File sourceFile = new File(currentDir, "temp.rs");
             sourceFile.deleteOnExit();
             FileWriter writer = new FileWriter(sourceFile);
             writer.write(input);
             writer.close();
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        
             ProcessBuilder compileProcess = new ProcessBuilder("rustc", sourceFile.getAbsolutePath());
+            compileProcess.directory(new File(currentDir)); // Set the working directory
             compileProcess.redirectErrorStream(true);
             Process compile = compileProcess.start();
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            compileProcess.redirectErrorStream(true);
+ 
             int compileExitCode = compile.waitFor();
             InputStream inputStream = compile.getInputStream();
             byte[] buffer = new byte[1024];
@@ -35,7 +41,12 @@ public class RustCompiler {
             }
 
             if (compileExitCode == 0) {
-                ProcessBuilder runProcess = new ProcessBuilder("./" + sourceFile.getName().replace(".rs", ""));
+                String executableFileName = sourceFile.getName().replace(".rs", "");
+                File executableFile = new File(currentDir, executableFileName);
+                executableFile.setExecutable(true);
+        
+                ProcessBuilder runProcess = new ProcessBuilder(new File(currentDir, executableFileName).getAbsolutePath());
+                runProcess.directory(new File(currentDir));
                 runProcess.redirectErrorStream(true);
                 Process run = runProcess.start();
                 outputStream.reset();
@@ -49,7 +60,10 @@ public class RustCompiler {
                 int runExitCode = run.waitFor();
 
                 if (runExitCode == 0) {
-                    Files.deleteIfExists(sourceFile.toPath());
+                    for(File file: currentDirFile.listFiles()) 
+                        if (!file.isDirectory()) 
+                            file.delete();  
+
                     return outputStream.toString();
                 } else {
                     Files.deleteIfExists(sourceFile.toPath());
