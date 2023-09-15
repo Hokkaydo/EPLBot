@@ -13,6 +13,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.net.URL;
+import java.net.URLClassLoader;
 public class JavaRunner {
     private static final String directoryPath = "/src/main/java/com/github/hokkaydo/eplbot/module/code/JavaLoader/temp/";
     private static final String outputPath = System.getProperty("user.dir") + directoryPath;
@@ -34,23 +36,41 @@ public class JavaRunner {
             int compilationResult = compiler.run(null, null, new PrintStream(errorStream), filePath);
 
             if (compilationResult == 0) {
-                String classNamePath = javaPath + "." + className;
-                ClassLoader classLoader = JavaRunner.class.getClassLoader();
-                Class<?> cls = classLoader.loadClass(classNamePath);
-                Method mainMethod = cls.getMethod("main", String[].class);
-                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                PrintStream customOut = new PrintStream(outputStream);
-                PrintStream originalOut = System.out;
-                System.setOut(customOut);
-                mainMethod.invoke(null, (Object) new String[0]);
-                System.setOut(originalOut);
-                String capturedOutput = outputStream.toString();
-                File directory = new File(outputPath);
-                File[] contents = directory.listFiles();
-                for (File file : contents) {
-                    file.delete();
-                }
-                return capturedOutput;
+                URLClassLoader classLoader = new URLClassLoader(new URL[]{new File(outputPath).toURI().toURL()});
+                try {
+                    Class<?> cls = Class.forName(javaPath + "." + className, true, classLoader);
+                    Method mainMethod = cls.getMethod("main", String[].class);
+                    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                    PrintStream customOut = new PrintStream(outputStream);
+                    PrintStream originalOut = System.out;
+                    System.setOut(customOut);
+                    mainMethod.invoke(null, (Object) new String[0]);
+                    System.setOut(originalOut);
+                    String capturedOutput = outputStream.toString();
+                    File directory = new File(outputPath);
+                    File[] contents = directory.listFiles();
+                    for (File file : contents) {
+                        file.delete();
+                    }
+                    return capturedOutput;
+                } catch (ClassNotFoundException e){
+                    Thread.sleep(500);
+                    Class<?> cls = Class.forName(javaPath + "." + className, true, classLoader);
+                    Method mainMethod = cls.getMethod("main", String[].class);
+                    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                    PrintStream customOut = new PrintStream(outputStream);
+                    PrintStream originalOut = System.out;
+                    System.setOut(customOut);
+                    mainMethod.invoke(null, (Object) new String[0]);
+                    System.setOut(originalOut);
+                    String capturedOutput = outputStream.toString();
+                    File directory = new File(outputPath);
+                    File[] contents = directory.listFiles();
+                    for (File file : contents) {
+                        file.delete();
+                    }
+                    return capturedOutput;
+                    }
             } else {
                 File directory = new File(outputPath);
                 File[] contents = directory.listFiles();
@@ -60,9 +80,9 @@ public class JavaRunner {
                 String compilationError = errorStream.toString();
                 return "Compilation failed:\n" + compilationError;
             }
-
+    
         } catch (Exception e) {
-            System.out.println(e.toString());
+            e.printStackTrace();
             return e.toString();
         }
     }
