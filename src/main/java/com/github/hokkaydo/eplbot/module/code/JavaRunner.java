@@ -66,19 +66,6 @@ public class JavaRunner {
             e.printStackTrace();
         }
     }
-    public static String packageBuilder(String input){
-        return "package "+JAVA_PATH+";\n" + input;
-
-    }
-    public static String regexDetector(String input){
-        Matcher matcher = Pattern.compile("import\\s+[^;]+;", Pattern.MULTILINE).matcher(input);
-        StringBuilder result = new StringBuilder();
-        while (matcher.find()) {
-            String importStatement = matcher.group(0);
-            result.append(importStatement).append("\n");
-        }
-        return result.toString();
-    }
     public static String regexClassName(String input){
         Matcher matcher = Pattern.compile("class\\s+(\\w+)\\s*\\{").matcher(input);
         if (matcher.find()) {
