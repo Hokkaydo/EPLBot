@@ -1,75 +1,76 @@
 package com.github.hokkaydo.eplbot.module.code;
 import java.io.ByteArrayOutputStream;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.IOException;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.InputStream;
 import java.nio.file.*;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.ArrayList;
 
 public class RustCompiler {
-    private static final Path current_dir = Paths.get("\\temp");
-
+    private static final String CURRENT_DIR = System.getProperty("user.dir") + "\\src\\temp\\";
     public static String run(String input) {
-        System.out.println(current_dir.toString());
-        if (containsUnsafeKeywords(input)) {
+        if (containsUnsafeKeywords(input)){
             return "Compilation failed:\nCheck if 'std' or 'use' are used";
         }
-
         try {
-            Files.createDirectories(current_dir);
-            Path sourceFile = current_dir.resolve("temp.rs");
-            Files.write(sourceFile, input.getBytes(), StandardOpenOption.CREATE);
-            ProcessBuilder compileProcess = new ProcessBuilder("rustc", sourceFile.toString());
-            compileProcess.directory(current_dir.toFile()); // Set the working directory
-            compileProcess.redirectErrorStream(true);
-            Process compile = compileProcess.start();
+
+            File sourceFile = new File(CURRENT_DIR, "temp.rs");
+            sourceFile.deleteOnExit();
+            FileWriter writer = new FileWriter(sourceFile);
+            writer.write(input);
+            writer.close();
+
+            Process compile = new ProcessBuilder("rustc", sourceFile.getAbsolutePath()).directory(new File(CURRENT_DIR)).redirectErrorStream(true).start();
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+ 
+            int compileExitCode = compile.waitFor();
             InputStream inputStream = compile.getInputStream();
-            List<String> compileOutput = new ArrayList<>();
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    compileOutput.add(line);
-                }
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, bytesRead);
             }
 
-            int compileExitCode = compile.waitFor();
-
             if (compileExitCode == 0) {
-                String executableFileName = sourceFile.getFileName().toString().replace(".rs", "");
-                ProcessBuilder runProcess = new ProcessBuilder(executableFileName);
-                runProcess.directory(current_dir.toFile());
-                runProcess.redirectErrorStream(true);
-                Process run = runProcess.start();
+                String executableFileName = sourceFile.getName().replace(".rs", "");
+                File executableFile = new File(CURRENT_DIR, executableFileName);
+                executableFile.setExecutable(true);
+                Process run = new ProcessBuilder(new File(CURRENT_DIR, executableFileName).getAbsolutePath()).directory(new File(CURRENT_DIR)).redirectErrorStream(true).start();
+                outputStream.reset();
                 inputStream = run.getInputStream();
-                List<String> runOutput = new ArrayList<>();
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        runOutput.add(line);
-                    }
+                buffer = new byte[1024];
+                while ((bytesRead = inputStream.read(buffer)) != -1) {
+                    outputStream.write(buffer, 0, bytesRead);
                 }
-
-                int runExitCode = run.waitFor();
-
-                if (runExitCode == 0) {
-                    return String.join("\n", runOutput);
+                if (run.waitFor() == 0) {
+                    for (File file : new File(CURRENT_DIR).listFiles()) {
+                        if (file.isFile() && file.getName().startsWith("temp")) {
+                            String[] validExtensions = {".exe", ".pdb", ".rs"};
+                            boolean shouldDelete = false;
+                            for (String extension : validExtensions) {
+                                if (file.getName().equals("temp"+extension)) {
+                                    shouldDelete = true;
+                                    break;
+                                }
+                            }
+                            if (shouldDelete) {
+                                file.delete();
+                            }
+                        }
+                    }
+                    return outputStream.toString();
                 } else {
-                    Files.deleteIfExists(sourceFile);
-                    return "Run failed:\n" + String.join("\n", runOutput);
+                    Files.deleteIfExists(sourceFile.toPath());
+                    return "Run failed:\n" + outputStream.toString();
                 }
             } else {
-                Files.deleteIfExists(sourceFile);
-                return "Compilation failed:\n" + String.join("\n", compileOutput);
+                Files.deleteIfExists(sourceFile.toPath());
+                return "Compilation failed:\n" + outputStream.toString();
             }
         } catch (Exception e) {
             e.printStackTrace();
             return e.toString();
         }
     }
-
     private static boolean containsUnsafeKeywords(String code) {
         String[] unsafeKeywords = {"std", "use"};
         for (String keyword : unsafeKeywords) {

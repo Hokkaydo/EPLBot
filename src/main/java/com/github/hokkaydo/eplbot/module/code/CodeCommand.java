@@ -39,7 +39,8 @@ public class CodeCommand extends ListenerAdapter implements Command{
     public void executeCommand(CommandContext context) {
         if (context.options().size() == 1) {
             context.interaction().replyModal(Modal.create(context.author().getId() + "submitCode","Execute du code")
-            .addActionRow(TextInput.create("body", "Code", TextInputStyle.PARAGRAPH).setPlaceholder("Corps").setRequired(true).build())
+            .addActionRow(TextInput.create("language", "Language choosed", TextInputStyle.PARAGRAPH).setPlaceholder("python|rust|java").setRequired(true).build())
+            .addActionRow(TextInput.create("body", "Code", TextInputStyle.PARAGRAPH).setPlaceholder("Code").setRequired(true).build())
             .build()).queue();
         } else {
             context.replyCallbackAction().setContent("Processing since: <t:" + Instant.now().getEpochSecond() + ":R>").setEphemeral(false).queue();
@@ -75,13 +76,13 @@ public class CodeCommand extends ListenerAdapter implements Command{
     public void onModalInteraction(@NotNull ModalInteractionEvent event) {
         if(event.getInteraction().getType() != InteractionType.MODAL_SUBMIT || !event.getModalId().contains("Code")) return;
             event.deferReply(true).setContent("Processing since: <t:" + Instant.now().getEpochSecond() + ":R>").setEphemeral(false).queue();  
-            String languageOption = event.getInteraction().getValue("language").getAsString();
+            String languageOption = Objects.requireNonNull(event.getInteraction().getValue("language").getAsString());
             String bodyStr = Objects.requireNonNull(event.getInteraction().getValue("body")).getAsString();
             try {
                 Class<?> tempClass = Class.forName(Strings.getString("COMMAND_CODE_"+languageOption.toUpperCase()+"_CLASS"));
                 messageLengthCheck(event.getMessageChannel(),bodyStr,(String) tempClass.getDeclaredMethod("run", String.class).invoke(tempClass.getDeclaredConstructor().newInstance(), bodyStr),languageOption);
             } catch (ClassNotFoundException e) {
-                System.err.println("Class not found: " + e.getMessage());
+                event.getMessageChannel().sendMessage("The language doesnt exist, verify that it is integrated").queue();
             } catch (NoSuchMethodException e) {
                 System.err.println("Method not found: " + e.getMessage());
             } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
@@ -92,14 +93,14 @@ public class CodeCommand extends ListenerAdapter implements Command{
     }
     private void messageLengthCheck(MessageChannel textChannel, String bodyStr, String result,String codeName){
         try {
-            textChannel.sendMessage("```"+codeName+"\n"+bodyStr+"\n```").queue();
+            textChannel.sendMessage("```"+codeName.toLowerCase()+"\n"+bodyStr+"\n```").queue();
         } catch (IllegalArgumentException error1){
             try {
-                FileWriter myWriter = new FileWriter(System.getProperty("user.dir")+"/src/main/java/com/github/hokkaydo/eplbot/code/temp/responseCode"+Strings.getString("COMMAND_CODE_"+codeName.toUpperCase()+"_EXT"));
+                FileWriter myWriter = new FileWriter(System.getProperty("user.dir")+"\\src\\temp\\responseCode.txt");
                 myWriter.write(bodyStr);
                 myWriter.close();
-                File serverFile = new File(System.getProperty("user.dir")+"/src/main/java/com/github/hokkaydo/eplbot/code/temp/responseCode"+Strings.getString("COMMAND_CODE_"+codeName.toUpperCase()+"_EXT"));
-                FileUpload file = FileUpload.fromData(serverFile,"responseCode"+Strings.getString("COMMAND_CODE_"+codeName.toUpperCase()+"_EXT"));
+                File serverFile = new File(System.getProperty("user.dir")+"\\src\\temp\\responseCode.txt");
+                FileUpload file = FileUpload.fromData(serverFile,"responseCode.txt");
                 textChannel.sendFiles(file).queue(s -> serverFile.delete());
               } catch (IOException error3) {
                 error1.printStackTrace();
@@ -111,16 +112,16 @@ public class CodeCommand extends ListenerAdapter implements Command{
             textChannel.sendMessage("`"+result+"`").queue();
         } catch (IllegalArgumentException error2){
             try {
-                FileWriter myWriter = new FileWriter(System.getProperty("user.dir")+"/src/main/java/com/github/hokkaydo/eplbot/code/temp/result"+Strings.getString("COMMAND_CODE_"+codeName.toUpperCase()+"_EXT"));
+                FileWriter myWriter = new FileWriter(System.getProperty("user.dir")+"\\src\\temp\\result.txt");
                 myWriter.write(result);
                 myWriter.close();
-                File serverFile = new File(System.getProperty("user.dir")+"/src/main/java/com/github/hokkaydo/eplbot/code/temp/result"+Strings.getString("COMMAND_CODE_"+codeName.toUpperCase()+"_EXT"));
-                FileUpload file = FileUpload.fromData(serverFile,"result.java");
+                File serverFile = new File(System.getProperty("user.dir")+"\\src\\temp\\result.txt");
+                FileUpload file = FileUpload.fromData(serverFile,"result.txt");
                 textChannel.sendFiles(file).queue(s -> serverFile.delete());
 
 
               } catch (IOException error3) {    
-                error2.printStackTrace();
+                error3.printStackTrace();
               } catch (Exception e) {
                 textChannel.sendMessage("the file produced exeeded 8mb");
             }       
@@ -142,11 +143,12 @@ public class CodeCommand extends ListenerAdapter implements Command{
     @Override
     public List<OptionData> getOptions() {
         return List.of(
-            new OptionData(OptionType.STRING, "language", Strings.getString("COMMAND_CODE_LANG_OPTION_DESCRIPTION"), true)
+
+            new OptionData(OptionType.ATTACHMENT, "file", Strings.getString("COMMAND_CODE_FILE_OPTION_DESCRIPTION"), false),
+            new OptionData(OptionType.STRING, "language", Strings.getString("COMMAND_CODE_LANG_OPTION_DESCRIPTION"), false)
             .addChoice("python", "python")
             .addChoice("rust", "rust")
-            .addChoice("java", "java"),
-            new OptionData(OptionType.ATTACHMENT, "file", Strings.getString("COMMAND_CODE_FILE_OPTION_DESCRIPTION"), false)
+            .addChoice("java", "java")
 
         );
     }

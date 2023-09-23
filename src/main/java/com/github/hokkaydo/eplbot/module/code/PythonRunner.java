@@ -10,13 +10,11 @@ public class PythonRunner {
         }
         try {
             Process process = new ProcessBuilder("python", "-c", input).redirectErrorStream(true).start();
-
             StringBuilder output = new StringBuilder();
             String line;
             while ((line = new BufferedReader(new InputStreamReader(process.getInputStream())).readLine()) != null) {
                 output.append(line).append("\n");
             }
-
             if (process.waitFor() == 0) {
                 return output.toString();
             } else {
