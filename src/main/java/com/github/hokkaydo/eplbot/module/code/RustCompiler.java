@@ -1,36 +1,26 @@
-package com.github.hokkaydo.eplbot.module.code.RustLoader;
-import com.github.hokkaydo.eplbot.Strings;
+package com.github.hokkaydo.eplbot.module.code;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.FileSystems;
-import java.util.concurrent.TimeUnit;
+import java.nio.file.*;
 
 public class RustCompiler {
-
+    private static final String CURRENT_DIR = System.getProperty("user.dir") + "\\src\\temp\\";
     public static String run(String input) {
         if (containsUnsafeKeywords(input)){
             return "Compilation failed:\nCheck if 'std' or 'use' are used";
         }
         try {
 
-            String currentDir = System.getProperty("user.dir") + "/src/main/java/com/github/hokkaydo/eplbot/module/code/RustLoader/temp/";
-            File currentDirFile = new File(currentDir);
-            File sourceFile = new File(currentDir, "temp.rs");
+            File sourceFile = new File(CURRENT_DIR, "temp.rs");
             sourceFile.deleteOnExit();
             FileWriter writer = new FileWriter(sourceFile);
             writer.write(input);
             writer.close();
-        
-            ProcessBuilder compileProcess = new ProcessBuilder("rustc", sourceFile.getAbsolutePath());
-            compileProcess.directory(new File(currentDir)); // Set the working directory
-            compileProcess.redirectErrorStream(true);
-            Process compile = compileProcess.start();
+
+            Process compile = new ProcessBuilder("rustc", sourceFile.getAbsolutePath()).directory(new File(CURRENT_DIR)).redirectErrorStream(true).start();
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            compileProcess.redirectErrorStream(true);
  
             int compileExitCode = compile.waitFor();
             InputStream inputStream = compile.getInputStream();
@@ -42,28 +32,31 @@ public class RustCompiler {
 
             if (compileExitCode == 0) {
                 String executableFileName = sourceFile.getName().replace(".rs", "");
-                File executableFile = new File(currentDir, executableFileName);
+                File executableFile = new File(CURRENT_DIR, executableFileName);
                 executableFile.setExecutable(true);
-        
-                ProcessBuilder runProcess = new ProcessBuilder(new File(currentDir, executableFileName).getAbsolutePath());
-                runProcess.directory(new File(currentDir));
-                runProcess.redirectErrorStream(true);
-                Process run = runProcess.start();
+                Process run = new ProcessBuilder(new File(CURRENT_DIR, executableFileName).getAbsolutePath()).directory(new File(CURRENT_DIR)).redirectErrorStream(true).start();
                 outputStream.reset();
-
                 inputStream = run.getInputStream();
                 buffer = new byte[1024];
                 while ((bytesRead = inputStream.read(buffer)) != -1) {
                     outputStream.write(buffer, 0, bytesRead);
                 }
-
-                int runExitCode = run.waitFor();
-
-                if (runExitCode == 0) {
-                    for(File file: currentDirFile.listFiles()) 
-                        if (!file.isDirectory()) 
-                            file.delete();  
-
+                if (run.waitFor() == 0) {
+                    for (File file : new File(CURRENT_DIR).listFiles()) {
+                        if (file.isFile() && file.getName().startsWith("temp")) {
+                            String[] validExtensions = {".exe", ".pdb", ".rs"};
+                            boolean shouldDelete = false;
+                            for (String extension : validExtensions) {
+                                if (file.getName().equals("temp"+extension)) {
+                                    shouldDelete = true;
+                                    break;
+                                }
+                            }
+                            if (shouldDelete) {
+                                file.delete();
+                            }
+                        }
+                    }
                     return outputStream.toString();
                 } else {
                     Files.deleteIfExists(sourceFile.toPath());
@@ -85,8 +78,6 @@ public class RustCompiler {
                 return true;
             }
         }
-
         return false;
     }
-
 }
