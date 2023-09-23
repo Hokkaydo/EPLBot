@@ -1,5 +1,4 @@
-package com.github.hokkaydo.eplbot.module.code.JavaLoader;
-import com.github.hokkaydo.eplbot.Strings;
+package com.github.hokkaydo.eplbot.module.code;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -15,30 +14,54 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Path;
+import java.util.Enumeration;
+import java.util.jar.JarFile;
+import java.util.jar.JarEntry;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
+
 public class JavaRunner {
-    private static final String directoryPath = "/src/main/java/com/github/hokkaydo/eplbot/module/code/JavaLoader/temp/";
-    private static final String outputPath = System.getProperty("user.dir") + directoryPath;
-    private static final String javaPath = "com.github.hokkaydo.eplbot.module.code.JavaLoader.temp";
-    public static String javaParse(String input) {
+    private static final Path output_path = Path.of("\\temp");
+    private static final String java_path = "com.github.hokkaydo.eplbot.temp";
+    public static String run(String input) {
         String safe = safeImports(input);
         if (!input.equals(safe)){return "Unvalid imports";};
         String className = regexClassName(input);
-        String packagedInput = packageBuilder(input);
-        writeFile(packagedInput,outputPath+"/"+className+".java");
-        String res =  run(className);
-        return res;
-    }
-    public static String run(String className) {
-        String filePath = outputPath + "/" + className + ".java";
+        writeFile(input,Path.of(output_path+"\\"+className+".java"));
+        String filePath = output_path + "\\" + className + ".java";
         try {
-            JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
             ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
-            int compilationResult = compiler.run(null, null, new PrintStream(errorStream), filePath);
-
+            System.out.println("here1");
+            int compilationResult = ToolProvider.getSystemJavaCompiler().run(null, null, new PrintStream(errorStream), filePath);
+            System.out.println("here2");
             if (compilationResult == 0) {
-                URLClassLoader classLoader = new URLClassLoader(new URL[]{new File(outputPath).toURI().toURL()});
+                System.out.println("here3");
+                URLClassLoader classLoader = new URLClassLoader(new URL[]{new File(output_path.toString()).toURI().toURL()});
+                String classpath = System.getProperty("java.class.path");
+                String[] classpathEntries = classpath.split(File.pathSeparator);
+                System.out.println("here4");
+                for (String classpathEntry : classpathEntries) {
+                    File entry = new File(classpathEntry);
+                    if (entry.isFile() && entry.getName().toLowerCase().endsWith(".jar")) {
+                        try (JarFile jarFile = new JarFile(entry)) {
+                            Enumeration<JarEntry> jarEntries = jarFile.entries();
+                            while (jarEntries.hasMoreElements()) {
+                                JarEntry jarEntry = jarEntries.nextElement();
+                                String entryName = jarEntry.getName();
+                                if (entryName.startsWith("com/github")) {
+                                    System.out.println("Classpath entry: " + entryName);
+                                }
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
                 try {
-                    Class<?> cls = Class.forName(javaPath + "." + className, true, classLoader);
+                    System.out.println("here5");
+                    Class<?> cls = Class.forName(java_path + "." + className, true, classLoader);
+                    System.out.println("here6");
                     Method mainMethod = cls.getMethod("main", String[].class);
                     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                     PrintStream customOut = new PrintStream(outputStream);
@@ -47,15 +70,11 @@ public class JavaRunner {
                     mainMethod.invoke(null, (Object) new String[0]);
                     System.setOut(originalOut);
                     String capturedOutput = outputStream.toString();
-                    File directory = new File(outputPath);
-                    File[] contents = directory.listFiles();
-                    for (File file : contents) {
-                        file.delete();
-                    }
+
                     return capturedOutput;
                 } catch (ClassNotFoundException e){
                     Thread.sleep(500);
-                    Class<?> cls = Class.forName(javaPath + "." + className, true, classLoader);
+                    Class<?> cls = Class.forName(java_path + "." + className, true, classLoader);
                     Method mainMethod = cls.getMethod("main", String[].class);
                     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                     PrintStream customOut = new PrintStream(outputStream);
@@ -64,21 +83,12 @@ public class JavaRunner {
                     mainMethod.invoke(null, (Object) new String[0]);
                     System.setOut(originalOut);
                     String capturedOutput = outputStream.toString();
-                    File directory = new File(outputPath);
-                    File[] contents = directory.listFiles();
-                    for (File file : contents) {
-                        file.delete();
-                    }
+
                     return capturedOutput;
                     }
             } else {
-                File directory = new File(outputPath);
-                File[] contents = directory.listFiles();
-                for (File file : contents) {
-                    file.delete();
-                }
-                String compilationError = errorStream.toString();
-                return "Compilation failed:\n" + compilationError;
+
+                return "Compilation failed:\n" + errorStream.toString();
             }
     
         } catch (Exception e) {
@@ -87,20 +97,18 @@ public class JavaRunner {
         }
     }
 
-    public static void writeFile(String  input, String path){
-        File file = new File(path);
-
+    public static void writeFile(String input, Path path) {
         try {
-            FileWriter fileWriter = new FileWriter(file);
-            BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
-            bufferedWriter.write(input);
-            bufferedWriter.close();
+            Files.createDirectories(path.getParent()); // Create parent directories if they don't exist
+            Files.write(path, input.getBytes(), StandardOpenOption.CREATE);
+            System.out.println("File written: " + path);
         } catch (IOException e) {
             e.printStackTrace();
+            // Handle the IOException
         }
     }
     public static String packageBuilder(String input){
-        return "package "+javaPath+";\n" + input;
+        return "package "+java_path+";\n" + input;
 
     }
     public static String regexDetector(String input){

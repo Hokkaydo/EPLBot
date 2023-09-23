@@ -1,0 +1,171 @@
+package com.github.hokkaydo.eplbot.module.code;
+import com.github.hokkaydo.eplbot.Strings;
+import com.github.hokkaydo.eplbot.command.Command;
+import com.github.hokkaydo.eplbot.command.CommandContext;
+
+import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
+import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
+import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.InteractionType;
+
+import net.dv8tion.jda.api.interactions.commands.OptionType;
+import net.dv8tion.jda.api.interactions.commands.build.OptionData;
+import net.dv8tion.jda.api.interactions.components.text.TextInput;
+import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
+import net.dv8tion.jda.api.interactions.modals.Modal;
+import net.dv8tion.jda.api.utils.FileUpload;
+import org.jetbrains.annotations.NotNull;
+import java.util.function.Supplier;
+import java.io.FileWriter; 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.stream.Collectors;
+import java.util.List;
+import java.util.Objects;
+import java.time.Instant;
+
+import java.lang.InstantiationException;
+import java.lang.IllegalAccessException;
+import java.lang.reflect.InvocationTargetException;
+
+public class CodeCommand extends ListenerAdapter implements Command{
+
+
+
+    
+    @Override
+    public void executeCommand(CommandContext context) {
+        if (context.options().size() == 1) {
+            context.interaction().replyModal(Modal.create(context.author().getId() + "submitCode","Execute du code")
+            .addActionRow(TextInput.create("body", "Code", TextInputStyle.PARAGRAPH).setPlaceholder("Corps").setRequired(true).build())
+            .build()).queue();
+        } else {
+            context.replyCallbackAction().setContent("Processing since: <t:" + Instant.now().getEpochSecond() + ":R>").setEphemeral(false).queue();
+            context.options().get(1).getAsAttachment().downloadToFile()
+                .thenAcceptAsync(file -> {
+                    try {
+
+                        try {
+                            Class<?> tempClass = Class.forName(Strings.getString("COMMAND_CODE_"+context.options().get(0).getAsString().toUpperCase()+"_CLASS"));
+                            String content = readFromFile(file);
+                            messageLengthCheck(context.channel(), content, (String) tempClass.getDeclaredMethod("run", String.class).invoke(tempClass.getDeclaredConstructor().newInstance(), content),context.options().get(0).getAsString());
+
+                        } catch (ClassNotFoundException e) {
+                            System.err.println("Class not found: " + e.getMessage());
+                        } catch (NoSuchMethodException e) {
+                            System.err.println("Method not found: " + e.getMessage());
+                        } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+                            System.err.println("Failed to create instance or invoke method: " + e.getMessage());
+                        }
+                        file.delete();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                })
+                .exceptionally(t -> {
+                    t.printStackTrace();
+                    return null;
+                });
+            
+        }
+    }
+    @Override
+    public void onModalInteraction(@NotNull ModalInteractionEvent event) {
+        if(event.getInteraction().getType() != InteractionType.MODAL_SUBMIT || !event.getModalId().contains("Code")) return;
+            event.deferReply(true).setContent("Processing since: <t:" + Instant.now().getEpochSecond() + ":R>").setEphemeral(false).queue();  
+            String languageOption = event.getInteraction().getValue("language").getAsString();
+            String bodyStr = Objects.requireNonNull(event.getInteraction().getValue("body")).getAsString();
+            try {
+                Class<?> tempClass = Class.forName(Strings.getString("COMMAND_CODE_"+languageOption.toUpperCase()+"_CLASS"));
+                messageLengthCheck(event.getMessageChannel(),bodyStr,(String) tempClass.getDeclaredMethod("run", String.class).invoke(tempClass.getDeclaredConstructor().newInstance(), bodyStr),languageOption);
+            } catch (ClassNotFoundException e) {
+                System.err.println("Class not found: " + e.getMessage());
+            } catch (NoSuchMethodException e) {
+                System.err.println("Method not found: " + e.getMessage());
+            } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+                System.err.println("Failed to create instance or invoke method: " + e.getMessage());
+            }
+
+
+    }
+    private void messageLengthCheck(MessageChannel textChannel, String bodyStr, String result,String codeName){
+        try {
+            textChannel.sendMessage("```"+codeName+"\n"+bodyStr+"\n```").queue();
+        } catch (IllegalArgumentException error1){
+            try {
+                FileWriter myWriter = new FileWriter(System.getProperty("user.dir")+"/src/main/java/com/github/hokkaydo/eplbot/code/temp/responseCode"+Strings.getString("COMMAND_CODE_"+codeName.toUpperCase()+"_EXT"));
+                myWriter.write(bodyStr);
+                myWriter.close();
+                File serverFile = new File(System.getProperty("user.dir")+"/src/main/java/com/github/hokkaydo/eplbot/code/temp/responseCode"+Strings.getString("COMMAND_CODE_"+codeName.toUpperCase()+"_EXT"));
+                FileUpload file = FileUpload.fromData(serverFile,"responseCode"+Strings.getString("COMMAND_CODE_"+codeName.toUpperCase()+"_EXT"));
+                textChannel.sendFiles(file).queue(s -> serverFile.delete());
+              } catch (IOException error3) {
+                error1.printStackTrace();
+              } catch (Exception e) {
+                textChannel.sendMessage("the file given exeeded 8mb");
+            }       
+        }
+        try {
+            textChannel.sendMessage("`"+result+"`").queue();
+        } catch (IllegalArgumentException error2){
+            try {
+                FileWriter myWriter = new FileWriter(System.getProperty("user.dir")+"/src/main/java/com/github/hokkaydo/eplbot/code/temp/result"+Strings.getString("COMMAND_CODE_"+codeName.toUpperCase()+"_EXT"));
+                myWriter.write(result);
+                myWriter.close();
+                File serverFile = new File(System.getProperty("user.dir")+"/src/main/java/com/github/hokkaydo/eplbot/code/temp/result"+Strings.getString("COMMAND_CODE_"+codeName.toUpperCase()+"_EXT"));
+                FileUpload file = FileUpload.fromData(serverFile,"result.java");
+                textChannel.sendFiles(file).queue(s -> serverFile.delete());
+
+
+              } catch (IOException error3) {    
+                error2.printStackTrace();
+              } catch (Exception e) {
+                textChannel.sendMessage("the file produced exeeded 8mb");
+            }       
+        }
+    }
+    private String readFromFile(File file) throws IOException {
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            return reader.lines().collect(Collectors.joining(System.lineSeparator()));
+        }
+    }
+    @Override
+    public String getName() {
+        return "compile";
+    }
+    @Override
+    public Supplier<String> getDescription() {
+        return () -> Strings.getString("COMMAND_CODE_DESC");
+    }
+    @Override
+    public List<OptionData> getOptions() {
+        return List.of(
+            new OptionData(OptionType.STRING, "language", Strings.getString("COMMAND_CODE_LANG_OPTION_DESCRIPTION"), true)
+            .addChoice("python", "python")
+            .addChoice("rust", "rust")
+            .addChoice("java", "java"),
+            new OptionData(OptionType.ATTACHMENT, "file", Strings.getString("COMMAND_CODE_FILE_OPTION_DESCRIPTION"), false)
+
+        );
+    }
+    @Override
+    public boolean ephemeralReply() {
+        return false;
+    }
+    @Override
+    public boolean validateChannel(MessageChannel channel) {
+        return true;
+    }
+    @Override
+    public boolean adminOnly() {
+        return false;
+    }
+    @Override
+    public Supplier<String> help() {
+        return () -> Strings.getString("COMMAND_CODE_HELP");
+    }
+
+}
+
