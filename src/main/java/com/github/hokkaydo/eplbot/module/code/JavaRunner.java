@@ -43,7 +43,6 @@ public class JavaRunner {
                     return "Run failed:\n" + e.toString();
                 }
             } else {
-
                 return "Compilation failed:\n" + error_stream.toString();
             }
     
@@ -52,7 +51,6 @@ public class JavaRunner {
             return e.toString();
         }
     }
-
     public static void writeFile(String input, Path path) {
         try {
             Files.createDirectories(path.getParent());
@@ -91,5 +89,4 @@ public class JavaRunner {
         String regex = "(?i)import\\s+" + String.join("|", dangerousImports).replaceAll("\\.", "\\\\.") + "\\s*;";
         return input.replaceAll(regex, "");
     }
-
 }
