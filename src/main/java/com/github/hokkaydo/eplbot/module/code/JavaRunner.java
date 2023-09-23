@@ -11,13 +11,10 @@ import java.util.regex.Pattern;
 import java.nio.file.Path;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
-import java.io.InputStream;
 public class JavaRunner {
     private static final String OUTPUT_PATH = System.getProperty("user.dir")+"\\src\\temp\\";
-    private static final String JAVA_PATH = "temp";
     public static String run(String input) {
-        String safe = safeImports(input);
-        if (!input.equals(safe)){return "Unvalid imports";};
+        if (!input.equals(safeImports(input))){return "Unvalid imports";};
         String class_name = regexClassName(input);
         writeFile(input,Path.of(OUTPUT_PATH+"\\"+class_name+".java"));
         String filePath = OUTPUT_PATH + "\\" + class_name + ".java";
@@ -26,11 +23,10 @@ public class JavaRunner {
             if (ToolProvider.getSystemJavaCompiler().run(null, null, new PrintStream(error_stream), filePath) == 0) {
                 try {
                     Process process = new ProcessBuilder(System.getProperty("java.home") + File.separator + "bin" + File.separator + "java", "-cp", System.getProperty("java.class.path") + File.pathSeparator + OUTPUT_PATH,regexClassName(input) ).redirectErrorStream(true).start();
-                    InputStream inputStream = process.getInputStream();
                     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                     byte[] buffer = new byte[1024];
                     int bytesRead;
-                    while ((bytesRead = inputStream.read(buffer)) != -1) {
+                    while ((bytesRead = process.getInputStream().read(buffer)) != -1) {
                         outputStream.write(buffer, 0, bytesRead);
                     }
                     if (process.waitFor() == 0) {
@@ -59,7 +55,7 @@ public class JavaRunner {
 
     public static void writeFile(String input, Path path) {
         try {
-            Files.createDirectories(path.getParent()); // Create parent directories if they don't exist
+            Files.createDirectories(path.getParent());
             Files.write(path, input.getBytes(), StandardOpenOption.CREATE);
             System.out.println("File written: " + path);
         } catch (IOException e) {
