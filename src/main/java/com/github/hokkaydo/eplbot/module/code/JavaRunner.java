@@ -37,12 +37,27 @@ public class JavaRunner {
                         }
                     return outputStream.toString();
                     } else {
+                        for (File file : new File(OUTPUT_PATH).listFiles()) {
+                            if (file.isFile() && file.getName().startsWith(class_name)) {
+                                file.delete();
+                            }                            
+                        }
                         return "Run failed:\n" + outputStream.toString();
                     }
                 } catch (IOException | InterruptedException e) {
+                    for (File file : new File(OUTPUT_PATH).listFiles()) {
+                        if (file.isFile() && file.getName().startsWith(class_name)) {
+                            file.delete();
+                        }                            
+                    }
                     return "Run failed:\n" + e.toString();
                 }
             } else {
+                for (File file : new File(OUTPUT_PATH).listFiles()) {
+                    if (file.isFile() && file.getName().startsWith(class_name)) {
+                        file.delete();
+                    }                            
+                }
                 return "Compilation failed:\n" + error_stream.toString();
             }
     
