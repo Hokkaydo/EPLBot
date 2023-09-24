@@ -4,7 +4,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.InputStream;
 import java.nio.file.*;
-
+import com.github.hokkaydo.eplbot.Strings;
 public class RustCompiler {
     private static final String CURRENT_DIR = System.getProperty("user.dir") + "\\src\\temp\\";
     public static String run(String input) {
@@ -35,6 +35,13 @@ public class RustCompiler {
                 File executableFile = new File(CURRENT_DIR, executableFileName);
                 executableFile.setExecutable(true);
                 Process run = new ProcessBuilder(new File(CURRENT_DIR, executableFileName).getAbsolutePath()).directory(new File(CURRENT_DIR)).redirectErrorStream(true).start();
+                Thread timeoutThread = new Thread(() -> {
+                    try {
+                        Thread.sleep(1000*Integer.parseInt(Strings.getString("COMMAND_CODE_TIMELIMIT")));
+                        run.destroy();
+                    } catch (InterruptedException e) {}
+                });
+                timeoutThread.start();
                 outputStream.reset();
                 inputStream = run.getInputStream();
                 buffer = new byte[1024];
@@ -42,28 +49,21 @@ public class RustCompiler {
                     outputStream.write(buffer, 0, bytesRead);
                 }
                 if (run.waitFor() == 0) {
-                    for (File file : new File(CURRENT_DIR).listFiles()) {
-                        if (file.isFile() && file.getName().startsWith("temp")) {
-                            String[] validExtensions = {".exe", ".pdb", ".rs"};
-                            boolean shouldDelete = false;
-                            for (String extension : validExtensions) {
-                                if (file.getName().equals("temp"+extension)) {
-                                    shouldDelete = true;
-                                    break;
-                                }
-                            }
-                            if (shouldDelete) {
-                                file.delete();
-                            }
-                        }
-                    }
+                    timeoutThread.interrupt();
+                    deleteFiles();
                     return outputStream.toString();
                 } else {
-                    Files.deleteIfExists(sourceFile.toPath());
-                    return "Run failed:\n" + outputStream.toString();
+                    timeoutThread.interrupt();
+                    deleteFiles();
+                    String output = outputStream.toString().trim();
+                    if (output.isEmpty()) {
+                        return "Run failed: Timelimit exceeded "+Strings.getString("COMMAND_CODE_TIMELIMIT")+" s";
+                    } else {
+                        return "Run failed:\n" + output;
+                    }
                 }
             } else {
-                Files.deleteIfExists(sourceFile.toPath());
+                deleteFiles();
                 return "Compilation failed:\n" + outputStream.toString();
             }
         } catch (Exception e) {
@@ -79,5 +79,22 @@ public class RustCompiler {
             }
         }
         return false;
+    }
+    private static void deleteFiles(){
+        for (File file : new File(CURRENT_DIR).listFiles()) {
+            if (file.isFile() && file.getName().startsWith("temp")) {
+                String[] validExtensions = {".exe", ".pdb", ".rs"};
+                boolean shouldDelete = false;
+                for (String extension : validExtensions) {
+                    if (file.getName().equals("temp"+extension)) {
+                        shouldDelete = true;
+                        break;
+                    }
+                }
+                if (shouldDelete) {
+                    file.delete();
+                }
+            }
+        }
     }
 }
