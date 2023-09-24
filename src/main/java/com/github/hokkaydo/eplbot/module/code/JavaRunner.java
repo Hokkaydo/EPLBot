@@ -2,6 +2,9 @@ package com.github.hokkaydo.eplbot.module.code;
 import java.io.File;
 import java.io.IOException;
 import javax.tools.ToolProvider;
+
+import com.github.hokkaydo.eplbot.Strings;
+
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.Arrays;
@@ -23,6 +26,13 @@ public class JavaRunner {
             if (ToolProvider.getSystemJavaCompiler().run(null, null, new PrintStream(error_stream), filePath) == 0) {
                 try {
                     Process process = new ProcessBuilder(System.getProperty("java.home") + File.separator + "bin" + File.separator + "java", "-cp", System.getProperty("java.class.path") + File.pathSeparator + OUTPUT_PATH,regexClassName(input) ).redirectErrorStream(true).start();
+                    Thread timeoutThread = new Thread(() -> {
+                        try {
+                            Thread.sleep(1000*Integer.parseInt(Strings.getString("COMMAND_CODE_TIMELIMIT")));
+                            process.destroy();
+                        } catch (InterruptedException e) {}
+                    });
+                    timeoutThread.start();
                     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                     byte[] buffer = new byte[1024];
                     int bytesRead;
@@ -30,6 +40,7 @@ public class JavaRunner {
                         outputStream.write(buffer, 0, bytesRead);
                     }
                     if (process.waitFor() == 0) {
+                        timeoutThread.interrupt();
                         for (File file : new File(OUTPUT_PATH).listFiles()) {
                             if (file.isFile() && file.getName().startsWith(class_name)) {
                                 file.delete();
@@ -37,12 +48,18 @@ public class JavaRunner {
                         }
                     return outputStream.toString();
                     } else {
+                        timeoutThread.interrupt();
                         for (File file : new File(OUTPUT_PATH).listFiles()) {
                             if (file.isFile() && file.getName().startsWith(class_name)) {
                                 file.delete();
                             }                            
                         }
-                        return "Run failed:\n" + outputStream.toString();
+                        String output = outputStream.toString().trim();
+                        if (output.isEmpty()) {
+                            return "Run failed: Timelimit exceeded "+Strings.getString("COMMAND_CODE_TIMELIMIT")+" s";
+                        } else {
+                            return "Run failed:\n" + output;
+                        }
                     }
                 } catch (IOException | InterruptedException e) {
                     for (File file : new File(OUTPUT_PATH).listFiles()) {

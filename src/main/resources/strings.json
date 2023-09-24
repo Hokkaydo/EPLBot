@@ -102,5 +102,6 @@
   "COMMAND_CODE_DESC":"allow you to compile and run code in java, python, rust",
   "COMMAND_CODE_LANG_OPTION_DESCRIPTION":"The chosen language",
   "COMMAND_CODE_FILE_OPTION_DESCRIPTION":"The file to be written and compiled",
-  "COMMAND_CODE_HELP":"Allow you to run and compile code in the following languages : python,java, rust"
+  "COMMAND_CODE_HELP":"Allow you to run and compile code in the following languages : python,java, rust",
+  "COMMAND_CODE_TIMELIMIT":"60"
 }
