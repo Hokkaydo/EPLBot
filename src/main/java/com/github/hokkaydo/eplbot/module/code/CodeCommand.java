@@ -32,9 +32,6 @@ import java.lang.reflect.InvocationTargetException;
 
 public class CodeCommand extends ListenerAdapter implements Command{
 
-
-
-    
     @Override
     public void executeCommand(CommandContext context) {
         if (context.options().size() == 1) {
@@ -44,10 +41,9 @@ public class CodeCommand extends ListenerAdapter implements Command{
             .build()).queue();
         } else {
             context.replyCallbackAction().setContent("Processing since: <t:" + Instant.now().getEpochSecond() + ":R>").setEphemeral(false).queue();
-            context.options().get(1).getAsAttachment().downloadToFile()
+            context.options().get(1).getAsAttachment().getProxy().downloadToFile(new File(System.getProperty("user.dir")+"\\src\\temp\\input.txt"))
                 .thenAcceptAsync(file -> {
                     try {
-
                         try {
                             Class<?> tempClass = Class.forName(Strings.getString("COMMAND_CODE_"+context.options().get(0).getAsString().toUpperCase()+"_CLASS"));
                             String content = readFromFile(file);
