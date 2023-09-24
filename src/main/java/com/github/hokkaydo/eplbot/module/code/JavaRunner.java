@@ -55,7 +55,6 @@ public class JavaRunner {
         try {
             Files.createDirectories(path.getParent());
             Files.write(path, input.getBytes(), StandardOpenOption.CREATE);
-            System.out.println("File written: " + path);
         } catch (IOException e) {
             e.printStackTrace();
         }
