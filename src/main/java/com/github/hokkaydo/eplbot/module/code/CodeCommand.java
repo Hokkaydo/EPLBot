@@ -32,9 +32,6 @@ import java.lang.reflect.InvocationTargetException;
 
 public class CodeCommand extends ListenerAdapter implements Command{
 
-
-
-    
     @Override
     public void executeCommand(CommandContext context) {
         if (context.options().size() == 1) {
@@ -44,21 +41,20 @@ public class CodeCommand extends ListenerAdapter implements Command{
             .build()).queue();
         } else {
             context.replyCallbackAction().setContent("Processing since: <t:" + Instant.now().getEpochSecond() + ":R>").setEphemeral(false).queue();
-            context.options().get(1).getAsAttachment().downloadToFile()
+            context.options().get(1).getAsAttachment().getProxy().downloadToFile(new File(System.getProperty("user.dir")+"\\src\\temp\\input.txt"))
                 .thenAcceptAsync(file -> {
                     try {
-
                         try {
                             Class<?> tempClass = Class.forName(Strings.getString("COMMAND_CODE_"+context.options().get(0).getAsString().toUpperCase()+"_CLASS"));
                             String content = readFromFile(file);
                             messageLengthCheck(context.channel(), content, (String) tempClass.getDeclaredMethod("run", String.class).invoke(tempClass.getDeclaredConstructor().newInstance(), content),context.options().get(0).getAsString());
 
                         } catch (ClassNotFoundException e) {
-                            System.err.println("Class not found: " + e.getMessage());
+                            context.channel().sendMessage("The language doesnt exist, verify that it is integrated").queue();
                         } catch (NoSuchMethodException e) {
-                            System.err.println("Method not found: " + e.getMessage());
+                            context.channel().sendMessage("The methdod doesn t exist, check you main method or class (public)"+ e.getMessage()).queue();
                         } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-                            System.err.println("Failed to create instance or invoke method: " + e.getMessage());
+                            context.channel().sendMessage("The methdod couldn t be called, check you main method or class (public)"+ e.getMessage()).queue();
                         }
                         file.delete();
                     } catch (IOException e) {
@@ -84,9 +80,9 @@ public class CodeCommand extends ListenerAdapter implements Command{
             } catch (ClassNotFoundException e) {
                 event.getMessageChannel().sendMessage("The language doesnt exist, verify that it is integrated").queue();
             } catch (NoSuchMethodException e) {
-                System.err.println("Method not found: " + e.getMessage());
+                event.getMessageChannel().sendMessage("The methdod doesn t exist, check you main method or class (public)"+ e.getMessage()).queue();
             } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-                System.err.println("Failed to create instance or invoke method: " + e.getMessage());
+                event.getMessageChannel().sendMessage("The methdod couldn t be called, check you main method or class (public)"+ e.getMessage()).queue();
             }
 
 

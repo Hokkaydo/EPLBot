@@ -37,12 +37,27 @@ public class JavaRunner {
                         }
                     return outputStream.toString();
                     } else {
+                        for (File file : new File(OUTPUT_PATH).listFiles()) {
+                            if (file.isFile() && file.getName().startsWith(class_name)) {
+                                file.delete();
+                            }                            
+                        }
                         return "Run failed:\n" + outputStream.toString();
                     }
                 } catch (IOException | InterruptedException e) {
+                    for (File file : new File(OUTPUT_PATH).listFiles()) {
+                        if (file.isFile() && file.getName().startsWith(class_name)) {
+                            file.delete();
+                        }                            
+                    }
                     return "Run failed:\n" + e.toString();
                 }
             } else {
+                for (File file : new File(OUTPUT_PATH).listFiles()) {
+                    if (file.isFile() && file.getName().startsWith(class_name)) {
+                        file.delete();
+                    }                            
+                }
                 return "Compilation failed:\n" + error_stream.toString();
             }
     
@@ -55,7 +70,6 @@ public class JavaRunner {
         try {
             Files.createDirectories(path.getParent());
             Files.write(path, input.getBytes(), StandardOpenOption.CREATE);
-            System.out.println("File written: " + path);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -66,7 +80,6 @@ public class JavaRunner {
             return matcher.group(1).replaceAll("\\s+", "");
         } else {
             throw new RuntimeException("No class definition found.");}
-
     }
     public static String safeImports(String input){
         List<String> dangerousImports = Arrays.asList(
