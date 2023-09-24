@@ -50,11 +50,11 @@ public class CodeCommand extends ListenerAdapter implements Command{
                             messageLengthCheck(context.channel(), content, (String) tempClass.getDeclaredMethod("run", String.class).invoke(tempClass.getDeclaredConstructor().newInstance(), content),context.options().get(0).getAsString());
 
                         } catch (ClassNotFoundException e) {
-                            System.err.println("Class not found: " + e.getMessage());
+                            context.channel().sendMessage("The language doesnt exist, verify that it is integrated").queue();
                         } catch (NoSuchMethodException e) {
-                            System.err.println("Method not found: " + e.getMessage());
+                            context.channel().sendMessage("The methdod doesn t exist, check you main method or class (public)"+ e.getMessage()).queue();
                         } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-                            System.err.println("Failed to create instance or invoke method: " + e.getMessage());
+                            context.channel().sendMessage("The methdod couldn t be called, check you main method or class (public)"+ e.getMessage()).queue();
                         }
                         file.delete();
                     } catch (IOException e) {

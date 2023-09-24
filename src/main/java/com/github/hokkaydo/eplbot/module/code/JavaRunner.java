@@ -65,7 +65,6 @@ public class JavaRunner {
             return matcher.group(1).replaceAll("\\s+", "");
         } else {
             throw new RuntimeException("No class definition found.");}
-
     }
     public static String safeImports(String input){
         List<String> dangerousImports = Arrays.asList(
