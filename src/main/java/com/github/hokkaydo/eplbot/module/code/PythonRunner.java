@@ -35,9 +35,11 @@ public class PythonRunner {
             }
             if (process.waitFor() == 0) {
                 timeoutThread.interrupt();
+                deleteFiles();
                 return output.toString();
             } else {
                 timeoutThread.interrupt();
+                deleteFiles();
                 String outProcess = output.toString();
                 if (outProcess.isEmpty()) {
                     return "Run failed: Timelimit exceeded " + Strings.getString("COMMAND_CODE_TIMELIMIT") + " s";
