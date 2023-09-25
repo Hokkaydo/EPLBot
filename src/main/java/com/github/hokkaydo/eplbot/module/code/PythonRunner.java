@@ -54,7 +54,7 @@ public class PythonRunner {
         
     }
     private static boolean containsUnsafeKeywords(String code) {
-        String[] unsafeKeywords = {"std", "use", "exec", "eval", "subprocess", "os.system", "open", "__import__", "pickle"};
+        String[] unsafeKeywords = {"exec", "eval", "subprocess", "os.system", "open", "__import__", "pickle"};
         for (String keyword : unsafeKeywords) {
             if (code.contains(keyword)) {
                 return true;
