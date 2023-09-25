@@ -22,7 +22,6 @@ public class PythonRunner {
             Thread timeoutThread = new Thread(() -> {
                 try {
                     Thread.sleep(1000 * Integer.parseInt(Strings.getString("COMMAND_CODE_TIMELIMIT")));
-                    System.out.println("Thread cancel");
                     process.destroy();
                 } catch (InterruptedException e) {
                 }
