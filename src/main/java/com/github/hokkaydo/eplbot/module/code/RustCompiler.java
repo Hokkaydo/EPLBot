@@ -3,7 +3,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.InputStream;
-import com.github.hokkaydo.eplbot.Strings;
+
 public class RustCompiler {
     private static final String CURRENT_DIR = System.getProperty("user.dir") + "\\src\\temp\\";
     public static String run(String input, Integer runTimeout) {

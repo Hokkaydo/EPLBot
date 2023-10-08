@@ -3,7 +3,6 @@ import java.io.File;
 import java.io.IOException;
 import javax.tools.ToolProvider;
 
-import com.github.hokkaydo.eplbot.Strings;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;

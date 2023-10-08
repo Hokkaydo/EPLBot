@@ -3,7 +3,6 @@ package com.github.hokkaydo.eplbot.module.code;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import com.github.hokkaydo.eplbot.Strings;
 import java.io.File;
 import java.io.FileWriter;
 public class PythonRunner {

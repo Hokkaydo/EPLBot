@@ -8,7 +8,6 @@ import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.InteractionType;
-import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.interactions.components.text.TextInput;
@@ -27,8 +26,6 @@ import java.util.List;
 import java.util.Objects;
 import java.time.Instant;
 
-import java.lang.InstantiationException;
-import java.lang.IllegalAccessException;
 import java.lang.reflect.InvocationTargetException;
 
 public class CodeCommand extends ListenerAdapter implements Command{
