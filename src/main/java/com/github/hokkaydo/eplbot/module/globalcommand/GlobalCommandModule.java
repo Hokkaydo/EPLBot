@@ -9,6 +9,7 @@ import com.github.hokkaydo.eplbot.module.code.CodeCommand;
 import java.util.Arrays;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Collections;
 
 public class GlobalCommandModule extends Module {
 
@@ -66,6 +67,6 @@ public class GlobalCommandModule extends Module {
         List<ListenerAdapter> listeners = new ArrayList<>();
         listeners.add(issueCommand);
         listeners.add(codeCommand);
-        return Arrays.asList(issueCommand);
+        return Collections.unmodifiableList(listeners);
     }
 }

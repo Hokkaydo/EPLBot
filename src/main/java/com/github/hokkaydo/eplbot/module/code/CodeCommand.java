@@ -28,18 +28,15 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.HashMap;
 
-import java.lang.reflect.InvocationTargetException;
 
 public class CodeCommand extends ListenerAdapter implements Command{
     private final Map<String, Runner> RUNNER_MAP = new HashMap<>();
-    public CodeCommand() {
-        RUNNER_MAP.put("python", new PythonRunner());
-        RUNNER_MAP.put("rust", new RustCompiler());
-        RUNNER_MAP.put("java", new JavaRunner());
-    }
 
     @Override
     public void executeCommand(CommandContext context) {
+        RUNNER_MAP.put("python", new PythonRunner());
+        RUNNER_MAP.put("rust", new RustCompiler());
+        RUNNER_MAP.put("java", new JavaRunner());
         if (context.options().size() <= 1) {
             context.interaction().replyModal(Modal.create(context.author().getId() + "submitCode","Execute du code")
             .addActionRow(TextInput.create("language", "Language", TextInputStyle.PARAGRAPH).setPlaceholder("python|rust|java").setRequired(true).build())
@@ -52,7 +49,8 @@ public class CodeCommand extends ListenerAdapter implements Command{
                     .thenAcceptAsync(file -> {
                         try {
                             String content = readFromFile(file);
-                            Runner runner = RUNNER_MAP.get(context.options().get(1));
+                            Runner runner = RUNNER_MAP.get(context.options().get(1).getAsString());
+                            
                             messageLengthCheck(context.channel(), content, (String) runner.run(content, Config.getGuildVariable(Long.parseLong(context.interaction().getGuild().getId()), "COMMAND_CODE_TIMELIMIT")),context.options().get(1).getAsString());
                             file.delete();
                         } catch (IOException e) {
