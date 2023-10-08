@@ -43,10 +43,10 @@ public class CodeCommand extends ListenerAdapter implements Command{
             .addActionRow(TextInput.create("body", "Code", TextInputStyle.PARAGRAPH).setPlaceholder("Code").setRequired(true).build())
             .build()).queue();
         } else {
-            
             context.replyCallbackAction().setContent("Processing since: <t:" + Instant.now().getEpochSecond() + ":R>").setEphemeral(false).queue();
             context.options().get(0).getAsAttachment().getProxy().downloadToFile(new File(System.getProperty("user.dir")+"\\src\\temp\\input.txt"))
                     .thenAcceptAsync(file -> {
+                        
                         try {
                             String content = readFromFile(file);
                             Runner runner = RUNNER_MAP.get(context.options().get(1).getAsString());
@@ -71,7 +71,7 @@ public class CodeCommand extends ListenerAdapter implements Command{
     public void onModalInteraction(@NotNull ModalInteractionEvent event) {
         if(event.getInteraction().getType() != InteractionType.MODAL_SUBMIT || !event.getModalId().contains("Code")) return;
             Integer runTimeout = Config.getGuildVariable(Long.parseLong(event.getGuild().getId()), "COMMAND_CODE_TIMELIMIT");
-            event.deferReply(true).setContent("Processing since: <t:" + Instant.now().getEpochSecond() + ":R>").setEphemeral(false).queue();  
+            event.getInteraction().reply("Processing since: <t:" + Instant.now().getEpochSecond() + ":R>").queue();
             String languageOption = Objects.requireNonNull(event.getInteraction().getValue("language").getAsString());
             String bodyStr = Objects.requireNonNull(event.getInteraction().getValue("body")).getAsString();
             Runner runner = RUNNER_MAP.get(languageOption);
