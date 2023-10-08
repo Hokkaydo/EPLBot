@@ -46,16 +46,16 @@ public class CodeCommand extends ListenerAdapter implements Command{
             context.replyCallbackAction().setContent("Processing since: <t:" + Instant.now().getEpochSecond() + ":R>").setEphemeral(false).queue();
             context.options().get(0).getAsAttachment().getProxy().downloadToFile(new File(System.getProperty("user.dir")+"\\src\\temp\\input.txt"))
                     .thenAcceptAsync(file -> {
-                        
+                        String content;
                         try {
-                            String content = readFromFile(file);
-                            Runner runner = RUNNER_MAP.get(context.options().get(1).getAsString());
-                            
-                            messageLengthCheck(context.channel(), content, (String) runner.run(content, Config.getGuildVariable(Long.parseLong(context.interaction().getGuild().getId()), "COMMAND_CODE_TIMELIMIT")),context.options().get(1).getAsString());
-                            file.delete();
+                            content = readFromFile(file);
                         } catch (IOException e) {
+                            content = "";
                             e.printStackTrace();
                         }
+                        Runner runner = RUNNER_MAP.get(context.options().get(1).getAsString());
+                        messageLengthCheck(context.channel(), content, (String) runner.run(content, Config.getGuildVariable(Long.parseLong(context.interaction().getGuild().getId()), "COMMAND_CODE_TIMELIMIT")),context.options().get(1).getAsString());
+                        file.delete();
                     })
                     .exceptionally(t -> {
                         t.printStackTrace();
