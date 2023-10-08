@@ -41,7 +41,7 @@ public class PythonRunner {
                 deleteFiles();
                 String outProcess = output.toString();
                 if (outProcess.isEmpty()) {
-                    return "Run failed: Timelimit exceeded " + Strings.getString("COMMAND_CODE_TIMELIMIT") + " s";
+                    return "Run failed: Timelimit exceeded " + runTimeout + " s";
                 } else {
                     return "Run failed:\n" + outProcess;
                 }
