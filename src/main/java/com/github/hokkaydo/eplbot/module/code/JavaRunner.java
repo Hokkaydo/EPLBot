@@ -13,23 +13,24 @@ import java.util.regex.Pattern;
 import java.nio.file.Path;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
-public class JavaRunner {
+public class JavaRunner implements Runner{
     private static final String OUTPUT_PATH = System.getProperty("user.dir")+"\\src\\temp\\";
-    public static String run(String input, Integer runTimeout) {
+    @Override
+    public String run(String input, Integer runTimeout) {
         if (!input.equals(safeImports(input))){return "Invalid imports";};
-        String class_name = regexClassName(input);
-        writeFile(input,Path.of(OUTPUT_PATH+"\\"+class_name+".java"));
-        String filePath = OUTPUT_PATH + "\\" + class_name + ".java";
+        String className = regexClassName(input);
+        writeFile(input,Path.of(OUTPUT_PATH+"\\"+className+".java"));
+        String filePath = OUTPUT_PATH + File.pathSeparator + className + ".java";
         try {
-            ByteArrayOutputStream error_stream = new ByteArrayOutputStream();
-            if (ToolProvider.getSystemJavaCompiler().run(null, null, new PrintStream(error_stream), filePath) == 0) {
+            ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
+            if (ToolProvider.getSystemJavaCompiler().run(null, null, new PrintStream(errorStream), filePath) == 0) {
                 try {
                     Process process = new ProcessBuilder(System.getProperty("java.home") + File.separator + "bin" + File.separator + "java", "-cp", System.getProperty("java.class.path") + File.pathSeparator + OUTPUT_PATH,regexClassName(input) ).redirectErrorStream(true).start();
                     Thread timeoutThread = new Thread(() -> {
                         try {
-                            Thread.sleep(1000*runTimeout);
+                            Thread.sleep(1000L*runTimeout);
                             process.destroy();
-                        } catch (InterruptedException e) {}
+                        } catch (InterruptedException ignored) {}
                     });
                     timeoutThread.start();
                     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -40,19 +41,11 @@ public class JavaRunner {
                     }
                     if (process.waitFor() == 0) {
                         timeoutThread.interrupt();
-                        for (File file : new File(OUTPUT_PATH).listFiles()) {
-                            if (file.isFile() && file.getName().startsWith(class_name)) {
-                                file.delete();
-                            }                            
-                        }
-                    return outputStream.toString();
+                        deleteFiles( className);
+                       return outputStream.toString();
                     } else {
                         timeoutThread.interrupt();
-                        for (File file : new File(OUTPUT_PATH).listFiles()) {
-                            if (file.isFile() && file.getName().startsWith(class_name)) {
-                                file.delete();
-                            }                            
-                        }
+                        deleteFiles( className);
                         String output = outputStream.toString().trim();
                         if (output.isEmpty()) {
                             return "Run failed: Timelimit exceeded "+ runTimeout +" s";
@@ -60,26 +53,31 @@ public class JavaRunner {
                             return "Run failed:\n" + output;
                         }
                     }
-                } catch (IOException | InterruptedException e) {
-                    for (File file : new File(OUTPUT_PATH).listFiles()) {
-                        if (file.isFile() && file.getName().startsWith(class_name)) {
-                            file.delete();
-                        }                            
-                    }
+                } catch (IOException e) {
+                    deleteFiles( className);
                     return "Run failed:\n" + e.toString();
                 }
             } else {
-                for (File file : new File(OUTPUT_PATH).listFiles()) {
-                    if (file.isFile() && file.getName().startsWith(class_name)) {
-                        file.delete();
-                    }                            
-                }
-                return "Compilation failed:\n" + error_stream.toString();
+                deleteFiles( className);
+                return "Compilation failed:\n" + errorStream;
             }
     
         } catch (Exception e) {
             e.printStackTrace();
             return e.toString();
+        }
+    }
+    public static void deleteFiles(String className){
+        File outputDirectory = new File(OUTPUT_PATH);
+        File[] files = outputDirectory.listFiles();
+        if (files == null){
+            System.out.println("NPE trying to delete created files");
+        } else {
+            for (File file : files) {
+                if (file.isFile() && file.getName().startsWith(className)) {
+                    file.delete();
+                }                            
+            }
         }
     }
     public static void writeFile(String input, Path path) {
@@ -116,6 +114,6 @@ public class JavaRunner {
             "org"
         );
         String regex = "(?i)import\\s+" + String.join("|", dangerousImports).replaceAll("\\.", "\\\\.") + "\\s*;";
-        return input.replaceAll(regex, "");
+        return input.replace(regex, "");
     }
 }

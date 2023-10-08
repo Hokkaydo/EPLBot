@@ -5,9 +5,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.File;
 import java.io.FileWriter;
-public class PythonRunner {
+public class PythonRunner implements Runner {
     private static final String CURRENT_DIR = System.getProperty("user.dir") + "\\src\\temp\\";
-    public static String run(String input, Integer runTimeout) {
+    @Override
+    public String run(String input, Integer runTimeout) {
         if (containsUnsafeKeywords(input)){
             return "Compilation failed:\nCheck if 'exec' or 'eval' are used";
         }
@@ -20,9 +21,9 @@ public class PythonRunner {
             Process process = new ProcessBuilder("python",  sourceFile.getAbsolutePath()).redirectErrorStream(true).start();
             Thread timeoutThread = new Thread(() -> {
                 try {
-                    Thread.sleep(1000 * runTimeout);
+                    Thread.sleep(1000L * runTimeout);
                     process.destroy();
-                } catch (InterruptedException e) {
+                } catch (InterruptedException ignored) {
                 }
             });
             timeoutThread.start();
@@ -61,22 +62,27 @@ public class PythonRunner {
         return false;
     }
     private static void deleteFiles(){
-        for (File file : new File(CURRENT_DIR).listFiles()) {
-            if (file.isFile() && file.getName().startsWith("temp")) {
-                String[] validExtensions = {".py"};
-                boolean shouldDelete = false;
-                for (String extension : validExtensions) {
-                    if (file.getName().equals("temp"+extension)) {
-                        shouldDelete = true;
-                        break;
+        File outputDirectory = new File(CURRENT_DIR);
+        File[] files = outputDirectory.listFiles();
+        if (files == null){
+            System.out.println("NPE trying to delete created files");
+        } else {
+            for (File file : files) {
+                if (file.isFile() && file.getName().startsWith("temp")) {
+                    String[] validExtensions = {".py"};
+                    boolean shouldDelete = false;
+                    for (String extension : validExtensions) {
+                        if (file.getName().equals("temp"+extension)) {
+                            shouldDelete = true;
+                            break;
+                        }
                     }
-                }
-                if (shouldDelete) {
-                    file.delete();
+                    if (shouldDelete) {
+                        file.delete();
+                    }
                 }
             }
         }
     }
-
 }
     

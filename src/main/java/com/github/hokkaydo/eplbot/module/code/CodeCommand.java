@@ -25,16 +25,24 @@ import java.util.stream.Collectors;
 import java.util.List;
 import java.util.Objects;
 import java.time.Instant;
+import java.util.Map;
+import java.util.HashMap;
 
 import java.lang.reflect.InvocationTargetException;
 
 public class CodeCommand extends ListenerAdapter implements Command{
+    private final Map<String, Runner> RUNNER_MAP = new HashMap<>();
+    public CodeCommand() {
+        RUNNER_MAP.put("python", new PythonRunner());
+        RUNNER_MAP.put("rust", new RustCompiler());
+        RUNNER_MAP.put("java", new JavaRunner());
+    }
 
     @Override
     public void executeCommand(CommandContext context) {
         if (context.options().size() <= 1) {
             context.interaction().replyModal(Modal.create(context.author().getId() + "submitCode","Execute du code")
-            .addActionRow(TextInput.create("language", "Language choosed", TextInputStyle.PARAGRAPH).setPlaceholder("python|rust|java").setRequired(true).build())
+            .addActionRow(TextInput.create("language", "Language", TextInputStyle.PARAGRAPH).setPlaceholder("python|rust|java").setRequired(true).build())
             .addActionRow(TextInput.create("body", "Code", TextInputStyle.PARAGRAPH).setPlaceholder("Code").setRequired(true).build())
             .build()).queue();
         } else {
@@ -44,18 +52,8 @@ public class CodeCommand extends ListenerAdapter implements Command{
                     .thenAcceptAsync(file -> {
                         try {
                             String content = readFromFile(file);
-                            try {
-                                Class<?> tempClass = Class.forName(Strings.getString("COMMAND_CODE_"+context.options().get(1).getAsString().toUpperCase()+"_CLASS"));
-                                
-                                messageLengthCheck(context.channel(), content, (String) tempClass.getDeclaredMethod("run", String.class, Integer.class).invoke(tempClass.getDeclaredConstructor().newInstance(), content, Config.getGuildVariable(Long.parseLong(context.interaction().getGuild().getId()), "COMMAND_CODE_TIMELIMIT")),context.options().get(1).getAsString());
-    
-                            } catch (ClassNotFoundException e) {
-                                context.channel().sendMessage(Strings.getString("COMMAND_CODE_UNKNOWNLANG")).queue();
-                            } catch (NoSuchMethodException e) {
-                                context.channel().sendMessage(Strings.getString("COMMAND_CODE_UNEXISTENDMETHOD") + e.getMessage()).queue();
-                            } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-                                context.channel().sendMessage(Strings.getString("COMMAND_CODE_UNCALLABLEMETHOD")+ e.getMessage()).queue();
-                            }
+                            Runner runner = RUNNER_MAP.get(context.options().get(1));
+                            messageLengthCheck(context.channel(), content, (String) runner.run(content, Config.getGuildVariable(Long.parseLong(context.interaction().getGuild().getId()), "COMMAND_CODE_TIMELIMIT")),context.options().get(1).getAsString());
                             file.delete();
                         } catch (IOException e) {
                             e.printStackTrace();
@@ -78,18 +76,8 @@ public class CodeCommand extends ListenerAdapter implements Command{
             event.deferReply(true).setContent("Processing since: <t:" + Instant.now().getEpochSecond() + ":R>").setEphemeral(false).queue();  
             String languageOption = Objects.requireNonNull(event.getInteraction().getValue("language").getAsString());
             String bodyStr = Objects.requireNonNull(event.getInteraction().getValue("body")).getAsString();
-            try {
-                Class<?> tempClass = Class.forName(Strings.getString("COMMAND_CODE_"+languageOption.toUpperCase()+"_CLASS"));
-                messageLengthCheck(event.getMessageChannel(),bodyStr,(String) tempClass.getDeclaredMethod("run", String.class, Integer.class).invoke(tempClass.getDeclaredConstructor().newInstance(), bodyStr, runTimeout),languageOption);
-            } catch (ClassNotFoundException e) {
-                event.getMessageChannel().sendMessage(Strings.getString("COMMAND_CODE_UNKNOWNLANG")).queue();
-            } catch (NoSuchMethodException e) {
-                event.getMessageChannel().sendMessage(Strings.getString("COMMAND_CODE_UNEXISTENDMETHOD") + e.getMessage()).queue();
-            } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-                event.getMessageChannel().sendMessage(Strings.getString("COMMAND_CODE_UNCALLABLEMETHOD")+ e.getMessage()).queue();
-            }
-
-
+            Runner runner = RUNNER_MAP.get(languageOption);
+            messageLengthCheck(event.getMessageChannel(),bodyStr,(String) runner.run( bodyStr, runTimeout),languageOption);
     }
     private void messageLengthCheck(MessageChannel textChannel, String bodyStr, String result,String codeName){
         try {

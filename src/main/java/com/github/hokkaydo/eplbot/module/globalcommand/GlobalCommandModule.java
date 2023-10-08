@@ -66,6 +66,6 @@ public class GlobalCommandModule extends Module {
         List<ListenerAdapter> listeners = new ArrayList<>();
         listeners.add(issueCommand);
         listeners.add(codeCommand);
-        return listeners;
+        return Arrays.asList(issueCommand);
     }
 }
