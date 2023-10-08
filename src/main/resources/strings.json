@@ -105,5 +105,6 @@
   "COMMAND_CODE_HELP":"Permet de compiler et executer du code en : python,java, rust",
   "COMMAND_CODE_UNKNOWNLANG":"Le language donne n'existe pas, etes-vous sur qu'il est supporté",
   "COMMAND_CODE_UNEXISTENDMETHOD":"La fonction main n'existe pas, vérifier que la méthode main est publique et prend en argument String[] args ",
-  "COMMAND_CODE_UNCALLABLEMETHOD" : "La fonction main n'a pas pu être appelée, vérifier que la méthode main est publique et prend en argument String[] args "
+  "COMMAND_CODE_UNCALLABLEMETHOD" : "La fonction main n'a pas pu être appelée, vérifier que la méthode main est publique et prend en argument String[] args ",
+  "COMMAND_CODE_EXCEEDEDFILESIZE":"Le fichier a atteint la taille de plus de 8mb"
 }

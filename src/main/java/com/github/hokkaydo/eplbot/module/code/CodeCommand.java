@@ -43,9 +43,10 @@ public class CodeCommand extends ListenerAdapter implements Command{
             context.options().get(0).getAsAttachment().getProxy().downloadToFile(new File(System.getProperty("user.dir")+"\\src\\temp\\input.txt"))
                     .thenAcceptAsync(file -> {
                         try {
+                            String content = readFromFile(file);
                             try {
                                 Class<?> tempClass = Class.forName(Strings.getString("COMMAND_CODE_"+context.options().get(1).getAsString().toUpperCase()+"_CLASS"));
-                                String content = readFromFile(file);
+                                
                                 messageLengthCheck(context.channel(), content, (String) tempClass.getDeclaredMethod("run", String.class, Integer.class).invoke(tempClass.getDeclaredConstructor().newInstance(), content, Config.getGuildVariable(Long.parseLong(context.interaction().getGuild().getId()), "COMMAND_CODE_TIMELIMIT")),context.options().get(1).getAsString());
     
                             } catch (ClassNotFoundException e) {
@@ -104,7 +105,7 @@ public class CodeCommand extends ListenerAdapter implements Command{
               } catch (IOException error3) {
                 error1.printStackTrace();
               } catch (Exception e) {
-                textChannel.sendMessage("the file given exeeded 8mb");
+                textChannel.sendMessage(Strings.getString("COMMAND_CODE_EXCEEDEDFILESIZE"));
             }       
         }
         try {
@@ -122,7 +123,7 @@ public class CodeCommand extends ListenerAdapter implements Command{
               } catch (IOException error3) {    
                 error3.printStackTrace();
               } catch (Exception e) {
-                textChannel.sendMessage("the file produced exeeded 8mb");
+                textChannel.sendMessage(Strings.getString("COMMAND_CODE_EXCEEDEDFILESIZE"));
             }       
         }
     }
