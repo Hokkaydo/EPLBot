@@ -4,17 +4,24 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import com.github.hokkaydo.eplbot.Strings;
+import java.io.File;
+import java.io.FileWriter;
 public class PythonRunner {
+    private static final String CURRENT_DIR = System.getProperty("user.dir") + "\\src\\temp\\";
     public static String run(String input) {
         if (containsUnsafeKeywords(input)){
             return "Compilation failed:\nCheck if 'exec' or 'eval' are used";
         }
         try {
-            Process process = new ProcessBuilder("python", "-c", input.replace("\"", "'")).redirectErrorStream(true).start();
+            File sourceFile = new File(CURRENT_DIR,"temp.py");
+            sourceFile.deleteOnExit();
+            FileWriter writer = new FileWriter(sourceFile);
+            writer.write(input);
+            writer.close();
+            Process process = new ProcessBuilder("python",  sourceFile.getAbsolutePath()).redirectErrorStream(true).start();
             Thread timeoutThread = new Thread(() -> {
                 try {
                     Thread.sleep(1000 * Integer.parseInt(Strings.getString("COMMAND_CODE_TIMELIMIT")));
-                    System.out.println("Thread cancel");
                     process.destroy();
                 } catch (InterruptedException e) {
                 }
@@ -27,9 +34,11 @@ public class PythonRunner {
             }
             if (process.waitFor() == 0) {
                 timeoutThread.interrupt();
+                deleteFiles();
                 return output.toString();
             } else {
                 timeoutThread.interrupt();
+                deleteFiles();
                 String outProcess = output.toString();
                 if (outProcess.isEmpty()) {
                     return "Run failed: Timelimit exceeded " + Strings.getString("COMMAND_CODE_TIMELIMIT") + " s";
@@ -44,13 +53,30 @@ public class PythonRunner {
         
     }
     private static boolean containsUnsafeKeywords(String code) {
-        String[] unsafeKeywords = {"std", "use", "exec", "eval", "subprocess", "os.system", "open", "__import__", "pickle"};
+        String[] unsafeKeywords = {"exec", "eval", "subprocess", "os.system", "open", "__import__", "pickle"};
         for (String keyword : unsafeKeywords) {
             if (code.contains(keyword)) {
                 return true;
             }
         }
         return false;
+    }
+    private static void deleteFiles(){
+        for (File file : new File(CURRENT_DIR).listFiles()) {
+            if (file.isFile() && file.getName().startsWith("temp")) {
+                String[] validExtensions = {".exe", ".pdb", ".rs"};
+                boolean shouldDelete = false;
+                for (String extension : validExtensions) {
+                    if (file.getName().equals("temp"+extension)) {
+                        shouldDelete = true;
+                        break;
+                    }
+                }
+                if (shouldDelete) {
+                    file.delete();
+                }
+            }
+        }
     }
 
 }
