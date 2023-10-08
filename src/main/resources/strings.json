@@ -102,5 +102,8 @@
   "COMMAND_CODE_DESC":"execute du code en java, python, rust en envoyant des fichier lisibles ex : .txt",
   "COMMAND_CODE_LANG_OPTION_DESCRIPTION":"Le language choisis, indispensable a lier avec un fichier",
   "COMMAND_CODE_FILE_OPTION_DESCRIPTION":"Le fichier compilé et executé, doit etre lier a un language",
-  "COMMAND_CODE_HELP":"Permet de compiler et executer du code en : python,java, rust"
+  "COMMAND_CODE_HELP":"Permet de compiler et executer du code en : python,java, rust",
+  "COMMAND_CODE_UNKNOWNLANG":"The language doesnt exist, verify that it is integrated",
+  "COMMAND_CODE_UNEXISTENDMETHOD":"The method doesn t exist, check you main method or class (public) ",
+  "COMMAND_CODE_UNCALLABLEMETHOD" : "The methdod couldn t be called, check you main method or class (public) "
 }

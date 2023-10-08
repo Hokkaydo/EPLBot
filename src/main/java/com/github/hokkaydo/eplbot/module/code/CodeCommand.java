@@ -52,11 +52,11 @@ public class CodeCommand extends ListenerAdapter implements Command{
                                 messageLengthCheck(context.channel(), content, (String) tempClass.getDeclaredMethod("run", String.class, Integer.class).invoke(tempClass.getDeclaredConstructor().newInstance(), content, Config.getGuildVariable(Long.parseLong(context.interaction().getGuild().getId()), "COMMAND_CODE_TIMELIMIT")),context.options().get(1).getAsString());
     
                             } catch (ClassNotFoundException e) {
-                                context.channel().sendMessage("The language doesnt exist, verify that it is integrated").queue();
+                                context.channel().sendMessage(Strings.getString("COMMAND_CODE_UNKNOWNLANG")).queue();
                             } catch (NoSuchMethodException e) {
-                                context.channel().sendMessage("The method doesn t exist, check you main method or class (public)"+ e.getMessage()).queue();
+                                context.channel().sendMessage(Strings.getString("COMMAND_CODE_UNEXISTENDMETHOD") + e.getMessage()).queue();
                             } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-                                context.channel().sendMessage("The methdod couldn t be called, check you main method or class (public)"+ e.getMessage()).queue();
+                                context.channel().sendMessage(Strings.getString("COMMAND_CODE_UNCALLABLEMETHOD")+ e.getMessage()).queue();
                             }
                             file.delete();
                         } catch (IOException e) {
@@ -84,14 +84,11 @@ public class CodeCommand extends ListenerAdapter implements Command{
                 Class<?> tempClass = Class.forName(Strings.getString("COMMAND_CODE_"+languageOption.toUpperCase()+"_CLASS"));
                 messageLengthCheck(event.getMessageChannel(),bodyStr,(String) tempClass.getDeclaredMethod("run", String.class, Integer.class).invoke(tempClass.getDeclaredConstructor().newInstance(), bodyStr, runTimeout),languageOption);
             } catch (ClassNotFoundException e) {
-                System.out.println("error1");
-                event.getMessageChannel().sendMessage("The language doesnt exist, verify that it is integrated").queue();
+                event.getMessageChannel().sendMessage(Strings.getString("COMMAND_CODE_UNKNOWNLANG")).queue();
             } catch (NoSuchMethodException e) {
-                System.out.println("error2");
-                event.getMessageChannel().sendMessage("The method doesn t exist, check you main method or class (public)"+ e.getMessage()).queue();
+                event.getMessageChannel().sendMessage(Strings.getString("COMMAND_CODE_UNEXISTENDMETHOD") + e.getMessage()).queue();
             } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-                System.out.println("error3");
-                event.getMessageChannel().sendMessage("The methdod couldn t be called, check you main method or class (public)"+ e.getMessage()).queue();
+                event.getMessageChannel().sendMessage(Strings.getString("COMMAND_CODE_UNCALLABLEMETHOD")+ e.getMessage()).queue();
             }
 
 
