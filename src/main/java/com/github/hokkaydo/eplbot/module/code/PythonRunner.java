@@ -8,7 +8,7 @@ import java.io.File;
 import java.io.FileWriter;
 public class PythonRunner {
     private static final String CURRENT_DIR = System.getProperty("user.dir") + "\\src\\temp\\";
-    public static String run(String input) {
+    public static String run(String input, Integer runTimeout) {
         if (containsUnsafeKeywords(input)){
             return "Compilation failed:\nCheck if 'exec' or 'eval' are used";
         }
@@ -21,7 +21,7 @@ public class PythonRunner {
             Process process = new ProcessBuilder("python",  sourceFile.getAbsolutePath()).redirectErrorStream(true).start();
             Thread timeoutThread = new Thread(() -> {
                 try {
-                    Thread.sleep(1000 * Integer.parseInt(Strings.getString("COMMAND_CODE_TIMELIMIT")));
+                    Thread.sleep(1000 * runTimeout);
                     process.destroy();
                 } catch (InterruptedException e) {
                 }

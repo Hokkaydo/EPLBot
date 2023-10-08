@@ -3,11 +3,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.InputStream;
-import java.nio.file.*;
 import com.github.hokkaydo.eplbot.Strings;
 public class RustCompiler {
     private static final String CURRENT_DIR = System.getProperty("user.dir") + "\\src\\temp\\";
-    public static String run(String input) {
+    public static String run(String input, Integer runTimeout) {
         if (containsUnsafeKeywords(input)){
             return "Compilation failed:\nCheck if 'std' or 'use' are used";
         }
@@ -37,7 +36,7 @@ public class RustCompiler {
                 Process run = new ProcessBuilder(new File(CURRENT_DIR, executableFileName).getAbsolutePath()).directory(new File(CURRENT_DIR)).redirectErrorStream(true).start();
                 Thread timeoutThread = new Thread(() -> {
                     try {
-                        Thread.sleep(1000*Integer.parseInt(Strings.getString("COMMAND_CODE_TIMELIMIT")));
+                        Thread.sleep(1000*runTimeout);
                         run.destroy();
                     } catch (InterruptedException e) {}
                 });

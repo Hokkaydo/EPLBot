@@ -1,4 +1,5 @@
 package com.github.hokkaydo.eplbot.module.code;
+import com.github.hokkaydo.eplbot.Config;
 import com.github.hokkaydo.eplbot.Strings;
 import com.github.hokkaydo.eplbot.command.Command;
 import com.github.hokkaydo.eplbot.command.CommandContext;
@@ -40,6 +41,7 @@ public class CodeCommand extends ListenerAdapter implements Command{
             .addActionRow(TextInput.create("body", "Code", TextInputStyle.PARAGRAPH).setPlaceholder("Code").setRequired(true).build())
             .build()).queue();
         } else {
+            
             context.replyCallbackAction().setContent("Processing since: <t:" + Instant.now().getEpochSecond() + ":R>").setEphemeral(false).queue();
             context.options().get(0).getAsAttachment().getProxy().downloadToFile(new File(System.getProperty("user.dir")+"\\src\\temp\\input.txt"))
                     .thenAcceptAsync(file -> {
@@ -47,12 +49,12 @@ public class CodeCommand extends ListenerAdapter implements Command{
                             try {
                                 Class<?> tempClass = Class.forName(Strings.getString("COMMAND_CODE_"+context.options().get(1).getAsString().toUpperCase()+"_CLASS"));
                                 String content = readFromFile(file);
-                                messageLengthCheck(context.channel(), content, (String) tempClass.getDeclaredMethod("run", String.class).invoke(tempClass.getDeclaredConstructor().newInstance(), content),context.options().get(1).getAsString());
+                                messageLengthCheck(context.channel(), content, (String) tempClass.getDeclaredMethod("run", String.class, Integer.class).invoke(tempClass.getDeclaredConstructor().newInstance(), content, Config.getGuildVariable(Long.parseLong(context.interaction().getGuild().getId()), "COMMAND_CODE_TIMELIMIT")),context.options().get(1).getAsString());
     
                             } catch (ClassNotFoundException e) {
                                 context.channel().sendMessage("The language doesnt exist, verify that it is integrated").queue();
                             } catch (NoSuchMethodException e) {
-                                context.channel().sendMessage("The methdod doesn t exist, check you main method or class (public)"+ e.getMessage()).queue();
+                                context.channel().sendMessage("The method doesn t exist, check you main method or class (public)"+ e.getMessage()).queue();
                             } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
                                 context.channel().sendMessage("The methdod couldn t be called, check you main method or class (public)"+ e.getMessage()).queue();
                             }
@@ -74,17 +76,21 @@ public class CodeCommand extends ListenerAdapter implements Command{
     @Override
     public void onModalInteraction(@NotNull ModalInteractionEvent event) {
         if(event.getInteraction().getType() != InteractionType.MODAL_SUBMIT || !event.getModalId().contains("Code")) return;
+            Integer runTimeout = Config.getGuildVariable(Long.parseLong(event.getGuild().getId()), "COMMAND_CODE_TIMELIMIT");
             event.deferReply(true).setContent("Processing since: <t:" + Instant.now().getEpochSecond() + ":R>").setEphemeral(false).queue();  
             String languageOption = Objects.requireNonNull(event.getInteraction().getValue("language").getAsString());
             String bodyStr = Objects.requireNonNull(event.getInteraction().getValue("body")).getAsString();
             try {
                 Class<?> tempClass = Class.forName(Strings.getString("COMMAND_CODE_"+languageOption.toUpperCase()+"_CLASS"));
-                messageLengthCheck(event.getMessageChannel(),bodyStr,(String) tempClass.getDeclaredMethod("run", String.class).invoke(tempClass.getDeclaredConstructor().newInstance(), bodyStr),languageOption);
+                messageLengthCheck(event.getMessageChannel(),bodyStr,(String) tempClass.getDeclaredMethod("run", String.class, Integer.class).invoke(tempClass.getDeclaredConstructor().newInstance(), bodyStr, runTimeout),languageOption);
             } catch (ClassNotFoundException e) {
+                System.out.println("error1");
                 event.getMessageChannel().sendMessage("The language doesnt exist, verify that it is integrated").queue();
             } catch (NoSuchMethodException e) {
-                event.getMessageChannel().sendMessage("The methdod doesn t exist, check you main method or class (public)"+ e.getMessage()).queue();
+                System.out.println("error2");
+                event.getMessageChannel().sendMessage("The method doesn t exist, check you main method or class (public)"+ e.getMessage()).queue();
             } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+                System.out.println("error3");
                 event.getMessageChannel().sendMessage("The methdod couldn t be called, check you main method or class (public)"+ e.getMessage()).queue();
             }
 

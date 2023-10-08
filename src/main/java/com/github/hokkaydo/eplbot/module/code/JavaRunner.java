@@ -16,7 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 public class JavaRunner {
     private static final String OUTPUT_PATH = System.getProperty("user.dir")+"\\src\\temp\\";
-    public static String run(String input) {
+    public static String run(String input, Integer runTimeout) {
         if (!input.equals(safeImports(input))){return "Unvalid imports";};
         String class_name = regexClassName(input);
         writeFile(input,Path.of(OUTPUT_PATH+"\\"+class_name+".java"));
@@ -28,7 +28,7 @@ public class JavaRunner {
                     Process process = new ProcessBuilder(System.getProperty("java.home") + File.separator + "bin" + File.separator + "java", "-cp", System.getProperty("java.class.path") + File.pathSeparator + OUTPUT_PATH,regexClassName(input) ).redirectErrorStream(true).start();
                     Thread timeoutThread = new Thread(() -> {
                         try {
-                            Thread.sleep(1000*Integer.parseInt(Strings.getString("COMMAND_CODE_TIMELIMIT")));
+                            Thread.sleep(1000*runTimeout);
                             process.destroy();
                         } catch (InterruptedException e) {}
                     });
