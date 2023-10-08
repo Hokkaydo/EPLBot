@@ -16,7 +16,7 @@ import java.nio.file.StandardOpenOption;
 public class JavaRunner {
     private static final String OUTPUT_PATH = System.getProperty("user.dir")+"\\src\\temp\\";
     public static String run(String input, Integer runTimeout) {
-        if (!input.equals(safeImports(input))){return "Unvalid imports";};
+        if (!input.equals(safeImports(input))){return "Invalid imports";};
         String class_name = regexClassName(input);
         writeFile(input,Path.of(OUTPUT_PATH+"\\"+class_name+".java"));
         String filePath = OUTPUT_PATH + "\\" + class_name + ".java";
