@@ -7,7 +7,7 @@ import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.InteractionType;
-
+import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.interactions.components.text.TextInput;
@@ -34,37 +34,40 @@ public class CodeCommand extends ListenerAdapter implements Command{
 
     @Override
     public void executeCommand(CommandContext context) {
-        if (context.options().size() == 1) {
+        if (context.options().size() <= 1) {
             context.interaction().replyModal(Modal.create(context.author().getId() + "submitCode","Execute du code")
             .addActionRow(TextInput.create("language", "Language choosed", TextInputStyle.PARAGRAPH).setPlaceholder("python|rust|java").setRequired(true).build())
             .addActionRow(TextInput.create("body", "Code", TextInputStyle.PARAGRAPH).setPlaceholder("Code").setRequired(true).build())
             .build()).queue();
         } else {
             context.replyCallbackAction().setContent("Processing since: <t:" + Instant.now().getEpochSecond() + ":R>").setEphemeral(false).queue();
-            context.options().get(1).getAsAttachment().getProxy().downloadToFile(new File(System.getProperty("user.dir")+"\\src\\temp\\input.txt"))
-                .thenAcceptAsync(file -> {
-                    try {
+            context.options().get(0).getAsAttachment().getProxy().downloadToFile(new File(System.getProperty("user.dir")+"\\src\\temp\\input.txt"))
+                    .thenAcceptAsync(file -> {
                         try {
-                            Class<?> tempClass = Class.forName(Strings.getString("COMMAND_CODE_"+context.options().get(0).getAsString().toUpperCase()+"_CLASS"));
-                            String content = readFromFile(file);
-                            messageLengthCheck(context.channel(), content, (String) tempClass.getDeclaredMethod("run", String.class).invoke(tempClass.getDeclaredConstructor().newInstance(), content),context.options().get(0).getAsString());
-
-                        } catch (ClassNotFoundException e) {
-                            context.channel().sendMessage("The language doesnt exist, verify that it is integrated").queue();
-                        } catch (NoSuchMethodException e) {
-                            context.channel().sendMessage("The methdod doesn t exist, check you main method or class (public)"+ e.getMessage()).queue();
-                        } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-                            context.channel().sendMessage("The methdod couldn t be called, check you main method or class (public)"+ e.getMessage()).queue();
+                            try {
+                                Class<?> tempClass = Class.forName(Strings.getString("COMMAND_CODE_"+context.options().get(1).getAsString().toUpperCase()+"_CLASS"));
+                                String content = readFromFile(file);
+                                messageLengthCheck(context.channel(), content, (String) tempClass.getDeclaredMethod("run", String.class).invoke(tempClass.getDeclaredConstructor().newInstance(), content),context.options().get(1).getAsString());
+    
+                            } catch (ClassNotFoundException e) {
+                                context.channel().sendMessage("The language doesnt exist, verify that it is integrated").queue();
+                            } catch (NoSuchMethodException e) {
+                                context.channel().sendMessage("The methdod doesn t exist, check you main method or class (public)"+ e.getMessage()).queue();
+                            } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+                                context.channel().sendMessage("The methdod couldn t be called, check you main method or class (public)"+ e.getMessage()).queue();
+                            }
+                            file.delete();
+                        } catch (IOException e) {
+                            e.printStackTrace();
                         }
-                        file.delete();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                })
-                .exceptionally(t -> {
-                    t.printStackTrace();
-                    return null;
-                });
+                    })
+                    .exceptionally(t -> {
+                        t.printStackTrace();
+                        return null;
+                    });
+
+            
+                
             
         }
     }

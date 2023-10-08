@@ -64,7 +64,7 @@ public class PythonRunner {
     private static void deleteFiles(){
         for (File file : new File(CURRENT_DIR).listFiles()) {
             if (file.isFile() && file.getName().startsWith("temp")) {
-                String[] validExtensions = {".exe", ".pdb", ".rs"};
+                String[] validExtensions = {".py"};
                 boolean shouldDelete = false;
                 for (String extension : validExtensions) {
                     if (file.getName().equals("temp"+extension)) {
