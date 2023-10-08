@@ -69,6 +69,12 @@ public class Config {
                     Object::toString,
                     Long::parseLong,
                     INTEGER_FORMAT
+            ),
+            "COMMAND_CODE_TIMELIMIT", new ConfigurationParser(
+                    () -> 60,
+                    Object::toString,
+                    Integer::parseInt,
+                    INTEGER_FORMAT
             )
     ));
 
