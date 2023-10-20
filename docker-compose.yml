@@ -1,6 +1,7 @@
 services:
     eplbot:
         image: hokkaydo/eplbot
+        restart: unless-stopped
         volumes:
             - /home/docker/data/eplbot:/home/eplbot/persistence
         environment:
