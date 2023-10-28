@@ -5,8 +5,17 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.File;
 import java.io.FileWriter;
+import java.util.Arrays;
+import java.util.Optional;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
 public class PythonRunner implements Runner {
     private static final String CURRENT_DIR = System.getProperty("user.dir") + "\\src\\temp\\";
+    private static final ScheduledExecutorService SCHEDULER = new ScheduledThreadPoolExecutor(1);
+
     @Override
     public String run(String input, Integer runTimeout) {
         if (containsUnsafeKeywords(input)){
@@ -19,25 +28,14 @@ public class PythonRunner implements Runner {
             writer.write(input);
             writer.close();
             Process process = new ProcessBuilder("python",  sourceFile.getAbsolutePath()).redirectErrorStream(true).start();
-            Thread timeoutThread = new Thread(() -> {
-                try {
-                    Thread.sleep(1000L * runTimeout);
-                    process.destroy();
-                } catch (InterruptedException ignored) {
-                }
-            });
-            timeoutThread.start();
+            ScheduledFuture<?> timeOut = SCHEDULER.schedule(() -> {}, runTimeout, TimeUnit.SECONDS);
+
             StringBuilder output = new StringBuilder();
             String line;
             while ((line = new BufferedReader(new InputStreamReader(process.getInputStream())).readLine()) != null) {
                 output.append(line).append("\n");
             }
-            if (process.waitFor() == 0) {
-                timeoutThread.interrupt();
-                deleteFiles();
-                return output.toString();
-            } else {
-                timeoutThread.interrupt();
+            if (timeOut.isDone()) {
                 deleteFiles();
                 String outProcess = output.toString();
                 if (outProcess.isEmpty()) {
@@ -45,12 +43,15 @@ public class PythonRunner implements Runner {
                 } else {
                     return "Run failed:\n" + outProcess;
                 }
+            } else {
+                deleteFiles();
+                return output.toString();
             }
-        } catch (IOException | InterruptedException e) {
+        } catch (IOException e) {
             e.printStackTrace();
             return "An error occurred: " + e.getMessage();
         }
-        
+
     }
     private static boolean containsUnsafeKeywords(String code) {
         String[] unsafeKeywords = {"exec", "eval", "subprocess", "os.system", "open", "__import__", "pickle"};
@@ -62,27 +63,11 @@ public class PythonRunner implements Runner {
         return false;
     }
     private static void deleteFiles(){
-        File outputDirectory = new File(CURRENT_DIR);
-        File[] files = outputDirectory.listFiles();
-        if (files == null){
-            System.out.println("NPE trying to delete created files");
-        } else {
-            for (File file : files) {
-                if (file.isFile() && file.getName().startsWith("temp")) {
-                    String[] validExtensions = {".py"};
-                    boolean shouldDelete = false;
-                    for (String extension : validExtensions) {
-                        if (file.getName().equals("temp"+extension)) {
-                            shouldDelete = true;
-                            break;
-                        }
-                    }
-                    if (shouldDelete) {
-                        file.delete();
-                    }
-                }
-            }
-        }
+        Optional.ofNullable(new File(CURRENT_DIR).listFiles())
+                .stream()
+                .flatMap(Arrays::stream)
+                .filter(f -> f.isFile() && f.getName().equals("temp.py"))
+                .forEach(File::delete);
     }
 }
     
