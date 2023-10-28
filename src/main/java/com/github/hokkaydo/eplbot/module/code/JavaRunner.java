@@ -18,7 +18,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 public class JavaRunner implements Runner{
     private static final String OUTPUT_PATH = System.getProperty("user.dir")+"\\src\\temp\\";
-    private static final ScheduledExecutorService scheduler = new ScheduledThreadPoolExecutor(1);
+    private static final ScheduledExecutorService SCHEDULER = new ScheduledThreadPoolExecutor(1);
 
     @Override
     public String run(String input, Integer runTimeout) {
@@ -33,7 +33,7 @@ public class JavaRunner implements Runner{
             if (ToolProvider.getSystemJavaCompiler().run(null, null, new PrintStream(errorStream), filePath) == 0) {
                 Process process = new ProcessBuilder(System.getProperty("java.home") + File.separator + "bin" + File.separator + "java", "-cp", System.getProperty("java.class.path") + File.pathSeparator + OUTPUT_PATH,regexClassName(input) ).redirectErrorStream(true).start();
 
-                ScheduledFuture<?> timeOut = scheduler.schedule(() -> {}, runTimeout, TimeUnit.SECONDS);
+                ScheduledFuture<?> timeOut = SCHEDULER.schedule(() -> {}, runTimeout, TimeUnit.SECONDS);
 
                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                 byte[] buffer = new byte[1024];
