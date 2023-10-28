@@ -32,7 +32,7 @@ public class RustCompiler implements Runner{
 
             Process compile = new ProcessBuilder("rustc", sourceFile.getAbsolutePath()).directory(new File(CURRENT_DIR)).redirectErrorStream(true).start();
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
- 
+
             int compileExitCode = compile.waitFor();
             InputStream inputStream = compile.getInputStream();
             byte[] buffer = new byte[1024];
@@ -41,38 +41,38 @@ public class RustCompiler implements Runner{
                 outputStream.write(buffer, 0, bytesRead);
             }
 
-            if (compileExitCode == 0) {
-                String executableFileName = sourceFile.getName().replace(".rs", "");
-                File executableFile = new File(CURRENT_DIR, executableFileName);
-
-                if (executableFile.setExecutable(true)) {
-                    return "Couldn't make file executable";
-                }
-                Process run = new ProcessBuilder(new File(CURRENT_DIR, executableFileName).getAbsolutePath()).directory(new File(CURRENT_DIR)).redirectErrorStream(true).start();
-
-                ScheduledFuture<?> timeOut = SCHEDULER.schedule(() -> {}, runTimeout, TimeUnit.SECONDS);
-
-                outputStream.reset();
-                inputStream = run.getInputStream();
-                buffer = new byte[1024];
-                while ((bytesRead = inputStream.read(buffer)) != -1) {
-                    outputStream.write(buffer, 0, bytesRead);
-                }
-                if (timeOut.isDone()) {
-                    deleteFiles();
-                    String output = outputStream.toString().trim();
-                    if (output.isEmpty()) {
-                        return "Run failed: Timelimit exceeded "+ runTimeout +" s";
-                    } else {
-                        return "Run failed:\n" + output;
-                    }
-                } else {
-                    deleteFiles();
-                    return outputStream.toString();
-                }
-            } else {
+            if (compileExitCode != 0) {
                 deleteFiles();
                 return "Compilation failed:\n" + outputStream;
+            }
+            String executableFileName = sourceFile.getName().replace(".rs", "");
+            File executableFile = new File(CURRENT_DIR, executableFileName);
+
+            if (executableFile.setExecutable(true)) {
+                return "Couldn't make file executable";
+            }
+
+            Process run = new ProcessBuilder(new File(CURRENT_DIR, executableFileName).getAbsolutePath()).directory(new File(CURRENT_DIR)).redirectErrorStream(true).start();
+
+            ScheduledFuture<?> timeOut = SCHEDULER.schedule(() -> {}, runTimeout, TimeUnit.SECONDS);
+
+            outputStream.reset();
+            inputStream = run.getInputStream();
+            buffer = new byte[1024];
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, bytesRead);
+            }
+            if (!timeOut.isDone()) {
+                deleteFiles();
+                return outputStream.toString();
+            }
+            deleteFiles();
+            String output = outputStream.toString().trim();
+
+            if (output.isEmpty()) {
+                return "Run failed: Timelimit exceeded "+ runTimeout +" s";
+            } else {
+                return "Run failed:\n" + output;
             }
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
