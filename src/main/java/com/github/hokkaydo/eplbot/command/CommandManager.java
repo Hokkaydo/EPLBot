@@ -63,6 +63,18 @@ public class CommandManager extends ListenerAdapter {
         });
         this.commands.put(guild.getIdLong(), guildCommands);
     }
+    
+    public void removeCommands(Guild guild, List<Command> commands) {
+        Map<String, Command> guildCommands = this.commands.getOrDefault(guild.getIdLong(), new HashMap<>());
+        for (Command command : commands) {
+            guildCommands.remove(command.getName());
+        }
+        guild.retrieveCommands().queue(s -> {
+            if(s.size() == commands.size()) return;
+            guild.updateCommands().addCommands(guildCommands.values().stream().map(this::mapToCommandData).toList()).queue();
+        });
+        this.commands.put(guild.getIdLong(), guildCommands);
+    }
 
 
     @Override

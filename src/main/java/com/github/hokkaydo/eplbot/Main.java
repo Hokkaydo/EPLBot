@@ -4,6 +4,7 @@ import com.github.hokkaydo.eplbot.command.Command;
 import com.github.hokkaydo.eplbot.command.CommandManager;
 import com.github.hokkaydo.eplbot.module.Module;
 import com.github.hokkaydo.eplbot.module.ModuleManager;
+import com.github.hokkaydo.eplbot.module.addcommand.CustomCommandModule;
 import com.github.hokkaydo.eplbot.module.autopin.AutoPinModule;
 import com.github.hokkaydo.eplbot.module.eplcommand.EPLCommandModule;
 import com.github.hokkaydo.eplbot.module.confession.ConfessionModule;
@@ -147,7 +148,8 @@ public class Main {
                 EPLCommandModule.class,
                 ConfessionModule.class,
                 ExamsRetrieveModule.class,
-                RatioModule.class
+                RatioModule.class,
+                CustomCommandModule.class
         );
         Map<Long, List<Command>> guildCommands = new HashMap<>();
         for(Long guildId : List.of(EPL_DISCORD_ID, testDiscordId)) {
@@ -175,7 +177,7 @@ public class Main {
                                            .map(clazz -> instantiate(clazz, guildId))
                                            .map(o -> (Module)o)
                                            .toList();
-
+            LOGGER.log(Level.INFO, modules.toString());
             modules.forEach(m -> guildCommands.get(guildId).addAll(m.getCommands()));
             moduleManager.addModules(modules);
         }

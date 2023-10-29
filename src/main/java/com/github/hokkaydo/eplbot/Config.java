@@ -138,7 +138,8 @@ public class Config {
                 "basiccommands", MODULE_DISABLED.get(),
                 "quote", MODULE_DISABLED.get(),
                 "examsretrieve", MODULE_DISABLED.get(),
-                "ratio", MODULE_DISABLED.get()
+                "ratio", MODULE_DISABLED.get(),
+                "customcommands", MODULE_DISABLED.get()
         ));
     }
     private static final Map<Long, Map<String, Object>> GUILD_CONFIGURATION = new HashMap<>();
