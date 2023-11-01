@@ -3,9 +3,7 @@ package com.github.hokkaydo.eplbot.module.eplcommand;
 import com.github.hokkaydo.eplbot.Config;
 import com.github.hokkaydo.eplbot.command.Command;
 import com.github.hokkaydo.eplbot.command.CommandContext;
-import com.github.hokkaydo.eplbot.module.confession.ConfessionProcessor;
 import com.github.hokkaydo.eplbot.module.graderetrieve.ExamsRetrieveListener;
-import com.github.hokkaydo.eplbot.module.mirror.MirrorManager;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 
@@ -26,7 +24,7 @@ public class DebugCommand implements Command {
             context.replyCallbackAction().setContent("You're not allowed to execute this commande (only my boss can use it)").queue();
             return;
         }
-        List<String> filesNames = List.of(MirrorManager.MIRROR_STORAGE_PATH.toString(), Config.CONFIG_PATH, ExamsRetrieveListener.MESSAGE_IDS_STORAGE_PATH.toString());
+        List<String> filesNames = List.of(Config.CONFIG_PATH, ExamsRetrieveListener.MESSAGE_IDS_STORAGE_PATH.toString());
         context.author().getUser().openPrivateChannel().queue(channel -> {
             for (String filesName : filesNames) {
                 StringBuilder stringBuilder = new StringBuilder();
