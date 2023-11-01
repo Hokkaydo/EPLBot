@@ -28,7 +28,6 @@ import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -192,7 +191,6 @@ public class Main {
             commandManager.addGlobalCommands(m.getGlobalCommands());
             commandManager.enableGlobalCommands((m.getGlobalCommands().stream().map(Command::getClass).collect(Collectors.toList())));
         });
-        getModuleManager().getModule(MirrorModule.class).forEach(MirrorModule::loadMirrors);
     }
 
     private static void redirectError() {

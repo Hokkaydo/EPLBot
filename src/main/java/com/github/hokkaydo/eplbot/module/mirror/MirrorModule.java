@@ -66,10 +66,6 @@ public class MirrorModule extends Module {
         return Collections.singletonList(mirrorManager);
     }
 
-    public void loadMirrors() {
-       mirrorManager.loadLinks();
-    }
-
     static Map.Entry<GuildMessageChannel, GuildMessageChannel> validateChannels(CommandContext context) {
         Optional<OptionMapping> channelAOption = context.options().stream().filter(o -> o.getName().equals("channel_a")).findFirst();
         Optional<OptionMapping> channelBOption = context.options().stream().filter(o -> o.getName().equals("channel_b")).findFirst();
