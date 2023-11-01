@@ -88,6 +88,12 @@ public class Config {
                     Object::toString,
                     Long::parseLong,
                     INTEGER_FORMAT
+            ),
+            "EXAM_ZIP_MESSAGE_ID", new ConfigurationParser(
+                    () -> 0L,
+                    Object::toString,
+                    Long::parseLong,
+                    INTEGER_FORMAT
             )
     );
     static {

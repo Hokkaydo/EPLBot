@@ -4,6 +4,9 @@ import com.github.hokkaydo.eplbot.Config;
 import com.github.hokkaydo.eplbot.Main;
 import com.github.hokkaydo.eplbot.MessageUtil;
 import com.github.hokkaydo.eplbot.Strings;
+import com.github.hokkaydo.eplbot.module.graderetrieve.model.ExamsRetrieveThread;
+import com.github.hokkaydo.eplbot.module.graderetrieve.repository.ExamRetrieveThreadRepository;
+import com.github.hokkaydo.eplbot.module.graderetrieve.repository.ExamRetrieveThreadRepositorySQLite;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
@@ -16,10 +19,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
-import java.io.BufferedReader;
 import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -38,21 +38,21 @@ import java.util.zip.ZipOutputStream;
 
 public class ExamsRetrieveListener extends ListenerAdapter {
 
-    public static final Path MESSAGE_IDS_STORAGE_PATH = Path.of(Main.PERSISTENCE_DIR_PATH + "/message_ids");
     private static final Path ZIP_PATH = Path.of(Main.PERSISTENCE_DIR_PATH + "/exams.zip");
     private static final String THREAD_MESSAGE_FORMAT = "%s - %s (BAC%d - %s)";
     private static final String EXAMEN_STORING_PATH_FORMAT = "%s/Q%d/%s";
     private final Long guildId;
     private Long examsRetrieveChannelId;
     private int selectedQuarterToRetrieve = 1;
-    private final Map<Long, String> threadIdToPath = new HashMap<>();
     private final Map<String, Group> groups = new HashMap<>();
     private Long zipMessageId = 0L;
+    private final ExamRetrieveThreadRepository repository;
 
-    ExamsRetrieveListener(Long guildId) throws IOException {
+    ExamsRetrieveListener(Long guildId) {
         this.guildId = guildId;
-        loadMessageIdsPath();
         loadCourses();
+        this.repository = new ExamRetrieveThreadRepositorySQLite(Main.getDataSource());
+        this.zipMessageId = Config.getGuildState(guildId, "EXAM_ZIP_MESSAGE_ID");
     }
 
     void setGradeRetrieveChannelId(Long examsRetrieveChannelId, int quarter) {
@@ -65,15 +65,14 @@ public class ExamsRetrieveListener extends ListenerAdapter {
     public void onMessageReceived(@NotNull MessageReceivedEvent event) {
         if(!event.getChannel().getType().isThread()) return;
         if(!event.isFromGuild() || event.getGuild().getIdLong() != guildId) return;
-        if(!threadIdToPath.containsKey(event.getChannel().asThreadChannel().getIdLong())) return;
         if(event.getMessage().getAttachments().isEmpty()) return;
-        String path = threadIdToPath.get(event.getChannel().asThreadChannel().getIdLong());
-        if(path == null) return;
-        try {
-            addFiles(path, event.getMessage().getAttachments());
-        } catch (IOException ignored) {
-            throw new IllegalStateException("Could not update exams zip file");
-        }
+        repository.readByMessageId(event.getChannel().asThreadChannel().getIdLong()).ifPresent(model -> {
+            try {
+                addFiles(model.path(), event.getMessage().getAttachments());
+            } catch (IOException ignored) {
+                throw new IllegalStateException("Could not update exams zip file");
+            }
+        });
     }
 
     private void addFiles(String path, List<Message.Attachment> attachments) throws IOException {
@@ -155,7 +154,7 @@ public class ExamsRetrieveListener extends ListenerAdapter {
         if(zipMessageId == 0) {
             channel.sendMessage("Archive d'examens de cette session").addFiles(FileUpload.fromData(ZIP_PATH)).queue(m -> {
                 zipMessageId = m.getIdLong();
-                storeMessageIds();
+                Config.updateValue(guildId, "EXAM_ZIP_MESSAGE_ID", zipMessageId);
                 m.pin().queue();
             });
             return;
@@ -170,44 +169,24 @@ public class ExamsRetrieveListener extends ListenerAdapter {
             List<List<String[]>> courses = group.courses;
             for (int quarter = 0; quarter < courses.size(); quarter++) {
                 if ((quarter + 1) % 2 != Math.abs(this.selectedQuarterToRetrieve - 2)) continue; // Check if the looped quarter is the selected one
-                List<String[]> quartercourses = courses.get(quarter);
-                for (int quarterCourseIndex = 0; quarterCourseIndex < quartercourses.size(); quarterCourseIndex++) {
+                List<String[]> quadrimestreCourses = courses.get(quarter);
+                for (String[] coursesInformation : quadrimestreCourses) {
 
-                    String[] coursesInformation = quartercourses.get(quarterCourseIndex);
                     String coursesCode = coursesInformation[0];
                     String coursesName = coursesInformation[1];
 
                     int finalQuarter = quarter;
-                    int finalQuarterCourseIndex = quarterCourseIndex;
 
                     channel.sendMessage(
                                     THREAD_MESSAGE_FORMAT.formatted(coursesCode, coursesName, (int) Math.ceil((quarter + 1) / 2.0), group.groupName.toUpperCase())
                             )
                             .queue(m -> {
                                 m.createThreadChannel(coursesCode).queue();
-                                threadIdToPath.put(m.getIdLong(), EXAMEN_STORING_PATH_FORMAT.formatted(englishGroupName, finalQuarter + 1, coursesCode));
-                                if (finalQuarter == courses.size() - 1 && finalQuarterCourseIndex == quartercourses.size() - 1) {
-                                    storeMessageIds();
-                                }
+                                repository.create(new ExamsRetrieveThread(m.getIdLong(), EXAMEN_STORING_PATH_FORMAT.formatted(englishGroupName, finalQuarter + 1, coursesCode)));
                             });
                 }
             }
         });
-    }
-
-    private void storeMessageIds() {
-        try(FileWriter stream = new FileWriter(MESSAGE_IDS_STORAGE_PATH.toFile())) {
-            threadIdToPath.forEach((k, v) -> {
-                try {
-                    stream.append(k.toString()).append(";").append(v).append("\n");
-                } catch (IOException e) {
-                    throw new IllegalStateException(e);
-                }
-            });
-            stream.append("ZIP:").append(zipMessageId.toString()).append("\n");
-        } catch (IOException e) {
-            Main.LOGGER.log(Level.WARNING, "Could not store examen message ids");
-        }
     }
 
     private void loadCourses() throws JSONException {
@@ -221,25 +200,6 @@ public class ExamsRetrieveListener extends ListenerAdapter {
         }
     }
 
-    private void loadMessageIdsPath() throws IOException {
-        if(!Files.exists(MESSAGE_IDS_STORAGE_PATH)) {
-            Files.createFile(MESSAGE_IDS_STORAGE_PATH);
-            return;
-        }
-        try(BufferedReader stream = new BufferedReader(new FileReader(MESSAGE_IDS_STORAGE_PATH.toFile()))) {
-            String line;
-            while((line = stream.readLine()) != null) {
-                if(line.startsWith("ZIP:")) {
-                    zipMessageId = Long.parseLong(line.replaceFirst("ZIP:", ""));
-                    continue;
-                }
-                String[] s = line.split(";");
-                threadIdToPath.put(Long.parseLong(s[0]), s[1]);
-            }
-        } catch (IOException e) {
-            Main.LOGGER.log(Level.WARNING, "Could not load examen message ids");
-        }
-    }
 
     /**
      * Record representing a group of courses
