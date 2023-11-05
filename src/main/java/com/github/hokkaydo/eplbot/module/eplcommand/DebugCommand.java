@@ -23,7 +23,7 @@ public class DebugCommand implements Command {
             context.replyCallbackAction().setContent("You're not allowed to execute this commande (only my boss can use it)").queue();
             return;
         }
-        List<String> filesNames = List.of(Config.CONFIG_PATH);
+        List<String> filesNames = List.of(); //TODO refactor command
         context.author().getUser().openPrivateChannel().queue(channel -> {
             for (String filesName : filesNames) {
                 StringBuilder stringBuilder = new StringBuilder();
