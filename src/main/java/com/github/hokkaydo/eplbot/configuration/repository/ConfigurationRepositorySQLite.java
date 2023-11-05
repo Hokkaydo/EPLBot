@@ -14,7 +14,7 @@ public class ConfigurationRepositorySQLite implements ConfigurationRepository{
     private static final RowMapper<ConfigurationModel> mapper = (rs, rowNum) -> new ConfigurationModel(
             rs.getString("key"),
             rs.getString("value"),
-            rs.getLong("guildId")
+            rs.getLong("guild_id")
     );
 
     public ConfigurationRepositorySQLite(DataSource dataSource) {
@@ -23,12 +23,12 @@ public class ConfigurationRepositorySQLite implements ConfigurationRepository{
 
     @Override
     public void updateGuildVariable(Long guildId, String key, String value) {
-        jdbcTemplate.update("INSERT INTO configuration VALUES (?,?,?,0)", guildId, key, value);
+        jdbcTemplate.update("INSERT INTO configuration (guild_id, key, value, state) VALUES (?,?,?,0)", guildId, key, value);
     }
 
     @Override
     public void updateGuildState(Long guildId, String key, String value) {
-        jdbcTemplate.update("INSERT INTO configuration VALUES (?,?,?,1)", guildId, key, value);
+        jdbcTemplate.update("INSERT INTO configuration (guild_id, key, value, state) VALUES (?,?,?,1)", guildId, key, value);
     }
 
     @Override

@@ -207,15 +207,13 @@ public class Config {
 
     private static void saveValue(Long guildId, String key, Object value) {
         if(DEFAULT_CONFIGURATION.containsKey(key)) {
-            if(!DEFAULT_STATE.containsKey(key)) return;
-            if(!GUILD_CONFIGURATION.containsKey(guildId))
-                GUILD_CONFIGURATION.put(guildId, DEFAULT_CONFIGURATION_VALUES.get());
+            GUILD_CONFIGURATION.computeIfAbsent(guildId, id -> DEFAULT_CONFIGURATION_VALUES.get());
             String val = DEFAULT_CONFIGURATION.get(key).toConfig.apply(value);
             repository.updateGuildVariable(guildId, key, val);
             GUILD_CONFIGURATION.get(guildId).put(key, value);
         } else {
-            if(!GUILD_STATE.containsKey(guildId))
-                GUILD_STATE.put(guildId, DEFAULT_STATE_VALUES.get());
+            if(!DEFAULT_STATE.containsKey(key)) return;
+            GUILD_STATE.computeIfAbsent(guildId, id -> DEFAULT_STATE_VALUES.get());
             String val = DEFAULT_STATE.get(key).toConfig.apply(value);
             repository.updateGuildState(guildId, key, val);
             GUILD_STATE.get(guildId).put(key, value);

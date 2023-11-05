@@ -21,6 +21,7 @@ import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import javax.sql.DataSource;
 import java.io.ByteArrayOutputStream;
@@ -96,6 +97,7 @@ public class Main {
         moduleManager = new ModuleManager();
         commandManager = new CommandManager();
         dataSource = SQLiteDatasourceFactory.create(PERSISTENCE_DIR_PATH + "/database.sqlite");
+        initializeDatabase();
         final GuildStateListener guildStateListener = new GuildStateListener();
         Path path = Path.of(Main.PERSISTENCE_DIR_PATH);
         if (!Files.exists(path))
@@ -118,11 +120,11 @@ public class Main {
                                     guild.getIdLong(),
                                     moduleManager.getModuleNames()
                             )
-                            .entrySet()
-                            .stream()
-                            .filter(Map.Entry::getValue)
-                            .map(Map.Entry::getKey)
-                            .toList();
+                                                   .entrySet()
+                                                   .stream()
+                                                   .filter(Map.Entry::getValue)
+                                                   .map(Map.Entry::getKey)
+                                                   .toList();
                     moduleManager.enableModules(guild.getIdLong(), modules);
                     StringBuilder log = new StringBuilder("Registering modules for %s :%n".formatted(guild.getName()));
                     for (String module : modules) {
@@ -160,9 +162,9 @@ public class Main {
             eplModuleRegisteredGuilds.add(guildId);
             guildCommands.put(guildId, new ArrayList<>());
             List<Module> modules = eplModules.stream()
-                    .map(clazz -> instantiate(clazz, guildId))
-                    .map(o -> (Module) o)
-                    .toList();
+                                           .map(clazz -> instantiate(clazz, guildId))
+                                           .map(o -> (Module) o)
+                                           .toList();
 
             modules.forEach(m -> guildCommands.get(guildId).addAll(m.getCommands()));
             moduleManager.addModules(modules);
@@ -176,9 +178,9 @@ public class Main {
             }
             globalModuleRegisteredGuilds.add(guildId);
             List<Module> modules = globalModules.stream()
-                    .map(clazz -> instantiate(clazz, guildId))
-                    .map(o -> (Module) o)
-                    .toList();
+                                           .map(clazz -> instantiate(clazz, guildId))
+                                           .map(o -> (Module) o)
+                                           .toList();
 
             modules.forEach(m -> guildCommands.get(guildId).addAll(m.getCommands()));
             moduleManager.addModules(modules);
@@ -222,6 +224,68 @@ public class Main {
     private static void launchPeriodicStatusUpdate() {
         ScheduledExecutorService service = Executors.newScheduledThreadPool(1);
         service.scheduleAtFixedRate(() -> jda.getPresence().setActivity(status.get(RANDOM.nextInt(status.size()))), 10L, 26 * 6L, TimeUnit.SECONDS); // 2min30
+    }
+
+    private static final List<String> TABLE_TEMPLATES = List.of(
+            """
+                    CREATE TABLE IF NOT EXISTS configuration
+                    (
+                        id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                        key         TEXT,
+                        value       TEXT,
+                        guild_id    INTEGER,
+                        state       INTEGER   /*  0 = config, 1 = state */
+                    )
+                    """,
+            """
+                    CREATE TABLE IF NOT EXISTS course_groups
+                    (
+                        id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                        group_code  TEXT,
+                        french_name TEXT
+                    )
+                    """,
+            """
+                    CREATE TABLE IF NOT EXISTS courses
+                    (
+                        id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                        course_code TEXT,
+                        course_name TEXT,
+                        quarter     INTEGER,
+                        group_id    INTEGER,
+                        FOREIGN KEY(group_id) REFERENCES course_groups(id)
+                    )                   
+                    """,
+            """
+                    CREATE TABLE IF NOT EXISTS warned_confessions
+                    (
+                        id              INTEGER PRIMARY KEY AUTOINCREMENT,
+                        moderator_id    INTEGER,
+                        author_id       INTEGER,
+                        message_content TEXT,
+                        timestamp       INTEGER
+                    )
+                    """,
+            """
+                    CREATE TABLE IF NOT EXISTS exams_thread
+                    (
+                        id        INTEGER PRIMARY KEY AUTOINCREMENT,
+                        thread_id INTEGER,
+                        path      TEXT
+                    )
+                    """,
+            """
+                    CREATE TABLE IF NOT EXISTS mirrors
+                    (
+                        id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                        channelAId INTEGER,
+                        channelBId INTEGER
+                    )
+                    """
+            );
+    private static void initializeDatabase() {
+        JdbcTemplate template = new JdbcTemplate(Main.getDataSource());
+        TABLE_TEMPLATES.forEach(template::execute);
     }
 
     public static JDA getJDA() {
