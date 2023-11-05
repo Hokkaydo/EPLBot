@@ -2,6 +2,7 @@ package com.github.hokkaydo.eplbot;
 
 import com.github.hokkaydo.eplbot.command.Command;
 import com.github.hokkaydo.eplbot.command.CommandManager;
+import com.github.hokkaydo.eplbot.configuration.Config;
 import com.github.hokkaydo.eplbot.module.Module;
 import com.github.hokkaydo.eplbot.module.ModuleManager;
 import com.github.hokkaydo.eplbot.module.autopin.AutoPinModule;
@@ -113,7 +114,7 @@ public class Main {
         //redirectError(); //TODO not working properly
         registerModules();
         jda.getGuilds().forEach(guild -> {
-                    List<String> modules = Config.getModulesStatus(
+                    List<String> modules = Config.getModulesStatuses(
                                     guild.getIdLong(),
                                     moduleManager.getModuleNames()
                             )

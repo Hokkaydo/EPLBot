@@ -1,5 +1,6 @@
 package com.github.hokkaydo.eplbot;
 
+import com.github.hokkaydo.eplbot.configuration.Config;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;

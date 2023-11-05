@@ -1,6 +1,6 @@
 package com.github.hokkaydo.eplbot.module;
 
-import com.github.hokkaydo.eplbot.Config;
+import com.github.hokkaydo.eplbot.configuration.Config;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;

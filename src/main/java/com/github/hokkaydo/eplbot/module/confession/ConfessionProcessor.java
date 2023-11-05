@@ -1,6 +1,6 @@
 package com.github.hokkaydo.eplbot.module.confession;
 
-import com.github.hokkaydo.eplbot.Config;
+import com.github.hokkaydo.eplbot.configuration.Config;
 import com.github.hokkaydo.eplbot.Main;
 import com.github.hokkaydo.eplbot.MessageUtil;
 import com.github.hokkaydo.eplbot.Strings;
@@ -24,12 +24,6 @@ import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 
 import java.awt.*;
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -40,7 +34,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.logging.Level;
 
 public class ConfessionProcessor extends ListenerAdapter {
 
@@ -217,19 +210,6 @@ public class ConfessionProcessor extends ListenerAdapter {
 
     public void clearWarnings(long authorId) {
         warnedConfessionRepository.deleteByAuthor(authorId);
-    }
-
-    private record WarnedConfessionRecord(String content, Long moderatorId, Long authorId, Timestamp timestamp) {
-        private static WarnedConfessionRecord of(String line) {
-            String[] split = line.split(";;;");
-            return new WarnedConfessionRecord(split[0], Long.valueOf(split[1]), Long.valueOf(split[2]), Timestamp.valueOf(split[3]));
-        }
-
-        @Override
-        public String toString() {
-            return "%s;;;%s;;;%s;;;%s".formatted(content.replace(";;;", ";"), moderatorId.toString(), authorId.toString(), timestamp.toString());
-        }
-
     }
 
 }

@@ -1,6 +1,6 @@
 package com.github.hokkaydo.eplbot.module.autopin;
 
-import com.github.hokkaydo.eplbot.Config;
+import com.github.hokkaydo.eplbot.configuration.Config;
 import net.dv8tion.jda.api.entities.MessageReaction;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;

@@ -1,11 +1,11 @@
-package com.github.hokkaydo.eplbot;
+package com.github.hokkaydo.eplbot.configuration;
+
+import com.github.hokkaydo.eplbot.Main;
+import com.github.hokkaydo.eplbot.configuration.model.ConfigurationModel;
+import com.github.hokkaydo.eplbot.configuration.repository.ConfigurationRepository;
+import com.github.hokkaydo.eplbot.configuration.repository.ConfigurationRepositorySQLite;
 
 import java.awt.*;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -15,18 +15,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Properties;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class Config {
 
-    public static final String CONFIG_PATH = Main.PERSISTENCE_DIR_PATH + "/config";
-
     private static final String IDENTIFIER_UNDER_STRING_FORM = "Identifiant sous forme de chaîne de caractères";
     private static final Supplier<ConfigurationParser> MODULE_DISABLED = () -> new ConfigurationParser(() -> false, Object::toString, Boolean::valueOf, "Booléen");
     private static final String INTEGER_FORMAT = "Nombre entier";
+    private static ConfigurationRepository repository;
     private static final Map<String, ConfigurationParser> DEFAULT_CONFIGURATION = new HashMap<>(Map.of(
             "PIN_REACTION_NAME", new ConfigurationParser(
                     () -> "\uD83D\uDCCC",
@@ -149,7 +147,10 @@ public class Config {
     }
     private static final Map<Long, Map<String, Object>> GUILD_CONFIGURATION = new HashMap<>();
     private static final Map<Long, Map<String, Object>> GUILD_STATE = new HashMap<>();
-    private static final Properties CONFIGURATION_PROPERTIES = new Properties();
+
+    private static final Supplier<Map<String, Object>> DEFAULT_CONFIGURATION_VALUES = () -> new HashMap<>(DEFAULT_CONFIGURATION.entrySet().stream().map(e -> Map.entry(e.getKey(),e.getValue().defaultValue.get())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+    private static final Supplier<Map<String, Object>> DEFAULT_STATE_VALUES = () -> new HashMap<>(DEFAULT_STATE.entrySet().stream().map(e -> Map.entry(e.getKey(),e.getValue().defaultValue.get())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+
 
     public static <T> T getGuildVariable(Long guildId, String key) {
         return getGuildValue(guildId, key, GUILD_CONFIGURATION, DEFAULT_CONFIGURATION);
@@ -176,7 +177,7 @@ public class Config {
 
     public static void updateValue(Long guildId, String key, Object value) {
         if(!DEFAULT_CONFIGURATION.containsKey(key)) {
-            if(!DEFAULT_STATE.containsKey(key)) throw new IllegalStateException("Configuration key not allowed");
+            if(!DEFAULT_STATE.containsKey(key)) throw new IllegalStateException("Configuration key isn't allowed");
             GUILD_STATE.computeIfAbsent(guildId, id -> new HashMap<>());
             GUILD_STATE.get(guildId).put(key, value);
             saveValue(guildId, key, value);
@@ -198,55 +199,48 @@ public class Config {
         return (boolean)GUILD_CONFIGURATION.getOrDefault(guildId, new HashMap<>()).getOrDefault(moduleName, Optional.ofNullable(DEFAULT_CONFIGURATION.get(moduleName)).map(ConfigurationParser::defaultValue).map(Supplier::get).orElse(false));
     }
 
-    public static Map<String, Boolean> getModulesStatus(Long guildId, List<String> moduleNames) {
+    public static Map<String, Boolean> getModulesStatuses(Long guildId, List<String> moduleNames) {
         return moduleNames.stream()
                        .map(name -> Map.entry(name, getModuleStatus(guildId, name)))
                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     private static void saveValue(Long guildId, String key, Object value) {
-        String k = (guildId == 0 ? "%" : "" ) + guildId + ";" + key;
-        if(!DEFAULT_CONFIGURATION.containsKey(key)) {
+        if(DEFAULT_CONFIGURATION.containsKey(key)) {
             if(!DEFAULT_STATE.containsKey(key)) return;
-            CONFIGURATION_PROPERTIES.setProperty(k, DEFAULT_STATE.get(key).toConfig.apply(value));
+            if(!GUILD_CONFIGURATION.containsKey(guildId))
+                GUILD_CONFIGURATION.put(guildId, DEFAULT_CONFIGURATION_VALUES.get());
+            String val = DEFAULT_CONFIGURATION.get(key).toConfig.apply(value);
+            repository.updateGuildVariable(guildId, key, val);
+            GUILD_CONFIGURATION.get(guildId).put(key, value);
         } else {
-            CONFIGURATION_PROPERTIES.setProperty(k, DEFAULT_CONFIGURATION.get(key).toConfig.apply(value));
-        }
-        try(FileOutputStream output = new FileOutputStream(CONFIG_PATH)){
-            CONFIGURATION_PROPERTIES.store(output, "");
-        } catch(IOException e) {
-            throw new IllegalStateException("Could not save config file");
+            if(!GUILD_STATE.containsKey(guildId))
+                GUILD_STATE.put(guildId, DEFAULT_STATE_VALUES.get());
+            String val = DEFAULT_STATE.get(key).toConfig.apply(value);
+            repository.updateGuildState(guildId, key, val);
+            GUILD_STATE.get(guildId).put(key, value);
         }
     }
 
-    protected static void load() throws IOException {
-        Path path = Path.of(CONFIG_PATH);
-        if(!Files.exists(path)) {
-            Files.createFile(path);
-            return;
-        }
-        try(FileInputStream stream = new FileInputStream(CONFIG_PATH)) {
-            CONFIGURATION_PROPERTIES.load(stream);
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
-        }
-        CONFIGURATION_PROPERTIES.forEach((a, b) -> {
-            String v = b.toString();
-            String[] keySplit = a.toString().split(";");
-            String key = keySplit[1];
-            Long guildId = Long.parseLong(keySplit[0]);
-            if(!DEFAULT_CONFIGURATION.containsKey(key)) {
-                if(!DEFAULT_STATE.containsKey(key)) return;
-                if(!GUILD_STATE.containsKey(guildId))
-                    GUILD_STATE.put(guildId, new HashMap<>(DEFAULT_STATE.entrySet().stream().map(e -> Map.entry(e.getKey(),e.getValue().defaultValue.get())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))));
-                GUILD_STATE.get(guildId).put(key, DEFAULT_STATE.get(key).fromConfig.apply(v));
-                return;
-            }
-            if(!GUILD_CONFIGURATION.containsKey(guildId)) {
-                GUILD_CONFIGURATION.put(guildId, new HashMap<>(DEFAULT_CONFIGURATION.entrySet().stream().map(e -> Map.entry(e.getKey(),e.getValue().defaultValue.get())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))));
-            }
-            GUILD_CONFIGURATION.get(guildId).put(key, DEFAULT_CONFIGURATION.get(key).fromConfig.apply(v));
-        });
+    public static void load() {
+        repository = new ConfigurationRepositorySQLite(Main.getDataSource());
+
+        repository.getGuildStates()
+                .stream()
+                .filter(m -> DEFAULT_STATE.containsKey(m.key()))
+                .forEach(m -> load(DEFAULT_STATE, GUILD_STATE, m));
+
+        repository.getGuildVariables()
+                .stream()
+                .filter(m -> DEFAULT_CONFIGURATION.containsKey(m.key()))
+                .forEach(m -> load(DEFAULT_CONFIGURATION, GUILD_CONFIGURATION, m));
+    }
+
+    private static void load(Map<String, Config.ConfigurationParser> defaultValues, Map<Long, Map<String, Object>> current, ConfigurationModel m) {
+        if(!current.containsKey(m.guildId()))
+            current.put(m.guildId(), new HashMap<>(defaultValues.entrySet().stream().map(e -> Map.entry(e.getKey(),e.getValue().defaultValue.get())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))));
+        current.get(m.guildId()).put(m.key(), defaultValues.get(m.key()).fromConfig.apply(m.value()));
+
     }
 
     public static Map<String, ConfigurationParser> getDefaultState() {
@@ -261,8 +255,8 @@ public class Config {
 
 
     public record ConfigurationParser(Supplier<Object> defaultValue,
-                                       Function<Object, String> toConfig,
-                                       Function<String, Object> fromConfig,
-                                       String format) {}
+                                      Function<Object, String> toConfig,
+                                      Function<String, Object> fromConfig,
+                                      String format) {}
 
 }
