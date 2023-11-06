@@ -25,12 +25,20 @@ public class ConfigurationRepositorySQLite implements ConfigurationRepository{
 
     @Override
     public void updateGuildVariable(Long guildId, String key, String value) {
-        jdbcTemplate.update("INSERT INTO configuration (guild_id, key, value, state) VALUES (?,?,?,0)", guildId, key, value);
+        jdbcTemplate.update("""
+                                     INSERT OR REPLACE INTO configuration (id, guild_id, key, value, state)
+                                     VALUES ((SELECT id FROM configuration WHERE guild_id=? AND key=? AND state=0), ?,?,?,0)
+                                     """,
+                guildId, key, guildId, key, value);
     }
 
     @Override
     public void updateGuildState(Long guildId, String key, String value) {
-        jdbcTemplate.update("INSERT INTO configuration (guild_id, key, value, state) VALUES (?,?,?,1)", guildId, key, value);
+        jdbcTemplate.update("""
+                                     INSERT OR REPLACE INTO configuration (id, guild_id, key, value, state)
+                                     VALUES ((SELECT id FROM configuration WHERE guild_id=? AND key=? AND state=1), ?,?,?,1)
+                                     """,
+                guildId, key, guildId, key, value);
     }
 
     @Override

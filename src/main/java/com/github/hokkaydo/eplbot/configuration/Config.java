@@ -1,9 +1,9 @@
 package com.github.hokkaydo.eplbot.configuration;
 
-import com.github.hokkaydo.eplbot.Main;
 import com.github.hokkaydo.eplbot.configuration.model.ConfigurationModel;
 import com.github.hokkaydo.eplbot.configuration.repository.ConfigurationRepository;
 import com.github.hokkaydo.eplbot.configuration.repository.ConfigurationRepositorySQLite;
+import com.github.hokkaydo.eplbot.database.DatabaseManager;
 
 import java.awt.*;
 import java.sql.Timestamp;
@@ -221,7 +221,7 @@ public class Config {
     }
 
     public static void load() {
-        repository = new ConfigurationRepositorySQLite(Main.getDataSource());
+        repository = new ConfigurationRepositorySQLite(DatabaseManager.getDataSource());
 
         repository.getGuildStates()
                 .stream()

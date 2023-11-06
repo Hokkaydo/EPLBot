@@ -1,9 +1,8 @@
 package com.github.hokkaydo.eplbot.module.confession;
 
-import com.github.hokkaydo.eplbot.Main;
 import com.github.hokkaydo.eplbot.command.Command;
+import com.github.hokkaydo.eplbot.database.DatabaseManager;
 import com.github.hokkaydo.eplbot.module.Module;
-import com.github.hokkaydo.eplbot.module.confession.repository.WarnedConfessionRepository;
 import com.github.hokkaydo.eplbot.module.confession.repository.WarnedConfessionRepositorySQLite;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +22,7 @@ public class ConfessionModule extends Module {
     public ConfessionModule(@NotNull Long guildId) {
         super(guildId);
         final Map<Long, Long> lastConfession = new HashMap<>();
-        DataSource dataSource = Main.getDataSource();
+        DataSource dataSource = DatabaseManager.getDataSource();
         this.processor = new ConfessionProcessor(guildId, lastConfession, new WarnedConfessionRepositorySQLite(dataSource));
         confessionCommand = new ConfessionCommand(processor);
         confessionFollowCommand = new ConfessionFollowCommand(lastConfession, processor);

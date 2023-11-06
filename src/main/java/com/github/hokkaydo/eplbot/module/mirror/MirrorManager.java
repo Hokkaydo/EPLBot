@@ -3,6 +3,7 @@ package com.github.hokkaydo.eplbot.module.mirror;
 import com.github.hokkaydo.eplbot.Main;
 import com.github.hokkaydo.eplbot.MessageUtil;
 import com.github.hokkaydo.eplbot.Strings;
+import com.github.hokkaydo.eplbot.database.DatabaseManager;
 import com.github.hokkaydo.eplbot.module.mirror.model.MirrorLink;
 import com.github.hokkaydo.eplbot.module.mirror.repository.MirrorLinkRepository;
 import com.github.hokkaydo.eplbot.module.mirror.repository.MirrorLinkRepositorySQLite;
@@ -19,14 +20,12 @@ import net.dv8tion.jda.api.events.message.react.MessageReactionRemoveEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.jetbrains.annotations.NotNull;
 
-import java.nio.file.Path;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
@@ -37,7 +36,7 @@ public class MirrorManager extends ListenerAdapter {
 
     public MirrorManager() {
         runPeriodicCleaner();
-        this.mirrorLinkRepository = new MirrorLinkRepositorySQLite(Main.getDataSource());
+        this.mirrorLinkRepository = new MirrorLinkRepositorySQLite(DatabaseManager.getDataSource());
     }
 
     void createLink(GuildMessageChannel first, GuildMessageChannel second) {

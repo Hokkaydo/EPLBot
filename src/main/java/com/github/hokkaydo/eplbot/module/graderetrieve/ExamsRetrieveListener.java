@@ -1,9 +1,10 @@
 package com.github.hokkaydo.eplbot.module.graderetrieve;
 
-import com.github.hokkaydo.eplbot.configuration.Config;
 import com.github.hokkaydo.eplbot.Main;
 import com.github.hokkaydo.eplbot.MessageUtil;
 import com.github.hokkaydo.eplbot.Strings;
+import com.github.hokkaydo.eplbot.configuration.Config;
+import com.github.hokkaydo.eplbot.database.DatabaseManager;
 import com.github.hokkaydo.eplbot.module.graderetrieve.model.Course;
 import com.github.hokkaydo.eplbot.module.graderetrieve.model.ExamsRetrieveThread;
 import com.github.hokkaydo.eplbot.module.graderetrieve.repository.CourseGroupRepository;
@@ -49,10 +50,10 @@ public class ExamsRetrieveListener extends ListenerAdapter {
 
     ExamsRetrieveListener(Long guildId) {
         this.guildId = guildId;
-        this.repository = new ExamRetrieveThreadRepositorySQLite(Main.getDataSource());
+        this.repository = new ExamRetrieveThreadRepositorySQLite(DatabaseManager.getDataSource());
         this.zipMessageId = Config.getGuildState(guildId, "EXAM_ZIP_MESSAGE_ID");
-        CourseRepository courseRepository = new CourseRepositorySQLite(Main.getDataSource());
-        this.groupRepository = new CourseGroupRepositorySQLite(Main.getDataSource(), courseRepository);
+        CourseRepository courseRepository = new CourseRepositorySQLite(DatabaseManager.getDataSource());
+        this.groupRepository = new CourseGroupRepositorySQLite(DatabaseManager.getDataSource(), courseRepository);
     }
 
     void setGradeRetrieveChannelId(Long examsRetrieveChannelId, int quarter) {
