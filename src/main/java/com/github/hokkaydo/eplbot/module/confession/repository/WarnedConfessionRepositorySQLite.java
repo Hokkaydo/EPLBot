@@ -36,6 +36,11 @@ public class WarnedConfessionRepositorySQLite implements WarnedConfessionReposit
     }
 
     @Override
+    public List<WarnedConfession> readAll() {
+        return jdbcTemplate.query("SELECT * FROM warned_confessions", mapper);
+    }
+
+    @Override
     public List<WarnedConfession> readByAuthor(long authorId) {
         return jdbcTemplate.queryForStream(
                 "SELECT * FROM warned_confessions WHERE author_id = ?",

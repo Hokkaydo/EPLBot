@@ -5,6 +5,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 
 import javax.sql.DataSource;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ConfigurationRepositorySQLite implements ConfigurationRepository{
@@ -14,7 +15,8 @@ public class ConfigurationRepositorySQLite implements ConfigurationRepository{
     private static final RowMapper<ConfigurationModel> mapper = (rs, rowNum) -> new ConfigurationModel(
             rs.getString("key"),
             rs.getString("value"),
-            rs.getLong("guild_id")
+            rs.getLong("guild_id"),
+            rs.getInt("state")
     );
 
     public ConfigurationRepositorySQLite(DataSource dataSource) {
@@ -39,6 +41,19 @@ public class ConfigurationRepositorySQLite implements ConfigurationRepository{
     @Override
     public List<ConfigurationModel> getGuildVariables() {
         return jdbcTemplate.query("SELECT * FROM configuration WHERE state=0", mapper);
+    }
+
+    @Override
+    public void create(ConfigurationModel model) {
+        jdbcTemplate.update("INSERT INTO configuration (guild_id, key, value, state) VALUES (?,?,?,?)", model.guildId(), model.key(), model.value(), model.state());
+    }
+
+    @Override
+    public List<ConfigurationModel> readAll() {
+        List<ConfigurationModel> ret = new ArrayList<>();
+        ret.addAll(getGuildStates());
+        ret.addAll(getGuildVariables());
+        return ret;
     }
 
 }

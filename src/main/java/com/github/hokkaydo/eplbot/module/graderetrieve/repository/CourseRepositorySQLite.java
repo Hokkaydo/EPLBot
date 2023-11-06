@@ -8,14 +8,15 @@ import javax.sql.DataSource;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 public class CourseRepositorySQLite implements CourseRepository {
 
     private final JdbcTemplate jdbcTemplate;
-    private static final RowMapper<Map.Entry<Integer, Course>> mapper = (rs, rowNum) -> Map.entry(
-            rs.getInt("group_id"),
-            new Course(rs.getString("course_code"), rs.getString("course_name"))
+    private static final RowMapper<Course> mapper = (rs, rowNum) -> new Course(
+            rs.getString("course_code"),
+            rs.getString("course_name"),
+            rs.getInt("quarter"),
+            rs.getInt("group_id")
     );
 
     public CourseRepositorySQLite(DataSource dataSource) {
@@ -25,21 +26,46 @@ public class CourseRepositorySQLite implements CourseRepository {
     @Override
     public List<List<Course>> getByGroupIdAndQuarters(int id, int... quarters) {
         String ors = Arrays.stream(quarters).skip(1).mapToObj(i -> " OR quarter = ?").reduce((s1, s2) -> s1 + s2).orElse("");
-        List<Map.Entry<Integer, Course>> list = jdbcTemplate.query(
-                "SELECT (course_code, course_name, group_id) FROM courses WHERE group_id = ? AND (quarter = ? " + ors + ")",
+        List<Course> list = jdbcTemplate.query(
+                "SELECT (course_code, course_name, quarter, group_id) FROM courses WHERE group_id = ? AND (quarter = ? " + ors + ")",
                 mapper,
-                id, quarters
+                id, quarters[0]
         );
         List<List<Course>> ret = new ArrayList<>();
+
         for (int quarter : quarters) {
             List<Course> courses = new ArrayList<>();
-            for (Map.Entry<Integer, Course> e : list) {
-                if(e.getKey() == quarter)
-                    courses.add(e.getValue());
+            for (Course c : list) {
+                if(c.quarter() == quarter)
+                    courses.add(c);
             }
             ret.add(courses);
         }
         return ret;
+    }
+
+    @Override
+    public List<List<Course>> getByGroupId(int id) {
+        List<Course> list = jdbcTemplate.query(
+                "SELECT (course_code, course_name, quarter, group_id) FROM courses WHERE group_id = ?",
+                mapper,
+                id
+        );
+        List<List<Course>> ret = List.of(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+        for (Course course : list) {
+            ret.get(course.quarter()).add(course);
+        }
+        return ret;
+    }
+
+    @Override
+    public void create(Course model) {
+        jdbcTemplate.update("INSERT INTO courses (course_code, course_name, quarter, group_id) VALUES(?,?,?,?)", model.code(), model.name(), model.quarter(), model.courseGroupId());
+    }
+
+    @Override
+    public List<Course> readAll() {
+        return jdbcTemplate.query("SELECT * FROM courses", mapper);
     }
 
 }

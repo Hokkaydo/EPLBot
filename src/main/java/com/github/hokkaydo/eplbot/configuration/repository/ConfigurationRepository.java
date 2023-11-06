@@ -1,10 +1,11 @@
 package com.github.hokkaydo.eplbot.configuration.repository;
 
+import com.github.hokkaydo.eplbot.CRUDRepository;
 import com.github.hokkaydo.eplbot.configuration.model.ConfigurationModel;
 
 import java.util.List;
 
-public interface ConfigurationRepository {
+public interface ConfigurationRepository extends CRUDRepository<ConfigurationModel> {
 
     void updateGuildVariable(Long guildId, String key, String value);
     void updateGuildState(Long guildId, String key, String value);
