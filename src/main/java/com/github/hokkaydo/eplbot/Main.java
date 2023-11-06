@@ -23,7 +23,6 @@ import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
 
-import javax.sql.DataSource;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -47,7 +46,6 @@ import java.util.stream.Collectors;
 public class Main {
 
     private static JDA jda;
-    private static DataSource dataSource;
     private static ModuleManager moduleManager;
     private static CommandManager commandManager;
     public static final Long EPL_DISCORD_ID = 517720163223601153L;
