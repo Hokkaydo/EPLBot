@@ -135,7 +135,6 @@ public class CodeCommand extends ListenerAdapter implements Command{
             .addChoice("python", "python")
             .addChoice("rust", "rust")
             .addChoice("java", "java")
-
         );
     }
     @Override

@@ -18,9 +18,12 @@ public class JavaRunner implements Runner{
     @Override
     public String run(String input, Integer runTimeout) {
         if (!input.equals(safeImports(input))){return "Invalid imports";};
+        if (requiresWrapper(input)){
+            input = addWrapper(input);
+        }
         String className = regexClassName(input);
         writeFile(input,Path.of(OUTPUT_PATH+"\\"+className+".java"));
-        String filePath = OUTPUT_PATH + File.pathSeparator + className + ".java";
+        String filePath = OUTPUT_PATH + "\\" + className + ".java";
         try {
             ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
             if (ToolProvider.getSystemJavaCompiler().run(null, null, new PrintStream(errorStream), filePath) == 0) {
@@ -58,7 +61,7 @@ public class JavaRunner implements Runner{
                     return "Run failed:\n" + e.toString();
                 }
             } else {
-                deleteFiles( className);
+                //deleteFiles( className);
                 return "Compilation failed:\n" + errorStream;
             }
     
@@ -79,6 +82,30 @@ public class JavaRunner implements Runner{
                 }                            
             }
         }
+    }
+    public static boolean requiresWrapper(String javaCode) {
+        boolean hasClass = Pattern.compile("\\bpublic\\s+class\\s+[A-Z][a-zA-Z0-9]*").matcher(javaCode).find();
+        boolean hasMainMethod = Pattern.compile("\\bpublic\\s+static\\s+void\\s+main\\s*\\(\\s*String\\[\\]\\s+[a-zA-Z0-9]*\\s*\\)").matcher(javaCode).find();
+        boolean hasImports = Pattern.compile("\\bimport\\s+[a-zA-Z0-9.]+").matcher(javaCode).find();
+        if (hasClass && hasMainMethod) {
+            return false;
+        } else if (hasImports) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+    public static String addWrapper(String input){
+        return """
+                import java.util.*;
+                import java.lang.Math;
+
+                public class Wrapper {
+                    public static void main(String[] args){""" + 
+                        input +
+                    """ 
+                    }
+                }""";
     }
     public static void writeFile(String input, Path path) {
         try {
