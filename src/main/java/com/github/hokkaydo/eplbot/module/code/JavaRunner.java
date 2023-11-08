@@ -25,6 +25,7 @@ public class JavaRunner implements Runner{
     public String run(String input, Integer runTimeout) {
         if (!input.equals(safeImports(input))){
             return "Invalid imports";
+        }
         if (requiresWrapper(input)){
             input = addWrapper(input);
         }
@@ -66,8 +67,9 @@ public class JavaRunner implements Runner{
         } catch (Exception e) {
             e.printStackTrace();
             return e.toString();
-        }
+            }
     }
+    
     public static void deleteFiles(String className) {
         Optional.ofNullable(new File(OUTPUT_PATH).listFiles())
                 .stream()
