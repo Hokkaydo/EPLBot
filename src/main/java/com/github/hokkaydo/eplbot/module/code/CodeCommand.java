@@ -58,17 +58,12 @@ public class CodeCommand extends ListenerAdapter implements Command{
                 .get(0)
                 .getAsAttachment()
                 .getProxy()
-                .downloadToFile(new File("%s\\input.txt".formatted(TEMP_DIR)))
+                .downloadToFile(new File("%s"+File.pathSeparator+"input.txt".formatted(TEMP_DIR)))
                 .thenAcceptAsync(file -> {
-                    String content;
-                    try {
-                        content = readFromFile(file);
-                    } catch (IOException e) {
-                        content = "";
-                        e.printStackTrace();
-                    }
+                    String content = readFromFile(file).orElse("");
                     Runner runner = RUNNER_MAP.get(context.options().get(1).getAsString());
-                    messageLengthCheck(context.channel(), content, runner.run(content, Config.getGuildVariable(guild.getIdLong(), "COMMAND_CODE_TIMELIMIT")),context.options().get(1).getAsString());
+                    String result = runner.run(content, Config.getGuildVariable(guild.getIdLong(), "COMMAND_CODE_TIMELIMIT"));
+                    messageLengthCheck(context.channel(), content, result , context.options().get(1).getAsString());
                     file.delete();
                 })
                 .exceptionally(t -> {
@@ -98,10 +93,10 @@ public class CodeCommand extends ListenerAdapter implements Command{
             textChannel.sendMessage("```"+codeName.toLowerCase()+"\n"+bodyStr+"\n```").queue();
         } catch (IllegalArgumentException error1){
             try {
-                FileWriter myWriter = new FileWriter("%s\\responseCode.txt".formatted(TEMP_DIR));
+                FileWriter myWriter = new FileWriter("%s"+File.pathSeparator+"responseCode.txt".formatted(TEMP_DIR));
                 myWriter.write(bodyStr);
                 myWriter.close();
-                File serverFile = new File("%s\\responseCode.txt".formatted(TEMP_DIR));
+                File serverFile = new File("%s"+File.pathSeparator+"responseCode.txt".formatted(TEMP_DIR));
                 FileUpload file = FileUpload.fromData(serverFile,"responseCode.txt");
                 textChannel.sendFiles(file).queue(s -> serverFile.delete());
             } catch (IOException error3) {
@@ -114,10 +109,10 @@ public class CodeCommand extends ListenerAdapter implements Command{
             textChannel.sendMessage("`"+result+"`").queue();
         } catch (IllegalArgumentException error2){
             try {
-                FileWriter myWriter = new FileWriter("%s\\result.txt".formatted(TEMP_DIR));
+                FileWriter myWriter = new FileWriter("%s"+File.pathSeparator+"result.txt".formatted(TEMP_DIR));
                 myWriter.write(result);
                 myWriter.close();
-                File serverFile = new File("%s\\result.txt".formatted(TEMP_DIR));
+                File serverFile = new File("%s"+File.pathSeparator+"result.txt".formatted(TEMP_DIR));
                 FileUpload file = FileUpload.fromData(serverFile,"result.txt");
                 textChannel.sendFiles(file).queue(s -> serverFile.delete());
 
@@ -129,9 +124,12 @@ public class CodeCommand extends ListenerAdapter implements Command{
             }
         }
     }
-    private String readFromFile(File file) throws IOException {
+    private Optional<String> readFromFile(File file) {
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-            return reader.lines().collect(Collectors.joining(System.lineSeparator()));
+            return Optional.of(reader.lines().collect(Collectors.joining(System.lineSeparator())));
+        } catch (IOException e) {
+            e.printStackTrace();
+            return Optional.empty();
         }
     }
     @Override
@@ -140,7 +138,7 @@ public class CodeCommand extends ListenerAdapter implements Command{
     }
     @Override
     public Supplier<String> getDescription() {
-        return () -> Strings.getString("COMMAND_CODE_DESC");
+        return () -> Strings.getString("COMMAND_CODE_DESCRIPTION");
     }
     @Override
     public List<OptionData> getOptions() {

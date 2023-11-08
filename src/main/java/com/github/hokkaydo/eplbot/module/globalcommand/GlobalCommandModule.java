@@ -64,9 +64,6 @@ public class GlobalCommandModule extends Module {
 
     @Override
     public List<ListenerAdapter> getListeners() {
-        List<ListenerAdapter> listeners = new ArrayList<>();
-        listeners.add(issueCommand);
-        listeners.add(codeCommand);
-        return Collections.unmodifiableList(listeners);
+        return Collections.unmodifiableList(Arrays.asList(issueCommand, codeCommand));
     }
 }
