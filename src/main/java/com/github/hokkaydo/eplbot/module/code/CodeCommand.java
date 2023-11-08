@@ -144,13 +144,11 @@ public class CodeCommand extends ListenerAdapter implements Command{
     @Override
     public List<OptionData> getOptions() {
         return List.of(
-
                 new OptionData(OptionType.ATTACHMENT, "file", Strings.getString("COMMAND_CODE_FILE_OPTION_DESCRIPTION"), false),
                 new OptionData(OptionType.STRING, "language", Strings.getString("COMMAND_CODE_LANG_OPTION_DESCRIPTION"), false)
                         .addChoice("python", "python")
                         .addChoice("rust", "rust")
                         .addChoice("java", "java")
-
         );
     }
     @Override
