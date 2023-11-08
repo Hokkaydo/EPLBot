@@ -30,51 +30,52 @@ import java.util.List;
 import java.util.Objects;
 import java.time.Instant;
 import java.util.Map;
-import java.util.HashMap;
 
 
 public class CodeCommand extends ListenerAdapter implements Command{
-    private static final Map<String, Runner> RUNNER_MAP = new HashMap<>();
     private static final String TEMP_DIR = System.getProperty("user.dir")+"\\src\\temp";
-
+    private final Map<String, Runner> RUNNER_MAP;
+    public CodeCommand() {
+        RUNNER_MAP = Map.of(
+            "python", new PythonRunner(),
+            "rust", new RustCompiler(),
+            "java", new JavaRunner()
+        );
+    }
     @Override
     public void executeCommand(CommandContext context) {
-        RUNNER_MAP.put("python", new PythonRunner());
-        RUNNER_MAP.put("rust", new RustCompiler());
-        RUNNER_MAP.put("java", new JavaRunner());
-
         Guild guild = context.interaction().getGuild();
         if(guild == null) return;
-
         if (context.options().size() <= 1) {
             context.interaction().replyModal(Modal.create(context.author().getId() + "submitCode","Execute du code")
                                                      .addActionRow(TextInput.create("language", "Language", TextInputStyle.PARAGRAPH).setPlaceholder("python|rust|java").setRequired(true).build())
                                                      .addActionRow(TextInput.create("body", "Code", TextInputStyle.PARAGRAPH).setPlaceholder("Code").setRequired(true).build())
                                                      .build()).queue();
-        } else {
-            context.replyCallbackAction().setContent("Processing since: <t:" + Instant.now().getEpochSecond() + ":R>").setEphemeral(false).queue();
-            context.options()
-                    .get(0)
-                    .getAsAttachment()
-                    .getProxy()
-                    .downloadToFile(new File("%s\\input.txt".formatted(TEMP_DIR)))
-                    .thenAcceptAsync(file -> {
-                        String content;
-                        try {
-                            content = readFromFile(file);
-                        } catch (IOException e) {
-                            content = "";
-                            e.printStackTrace();
-                        }
-                        Runner runner = RUNNER_MAP.get(context.options().get(1).getAsString());
-                        messageLengthCheck(context.channel(), content, runner.run(content, Config.getGuildVariable(guild.getIdLong(), "COMMAND_CODE_TIMELIMIT")),context.options().get(1).getAsString());
-                        file.delete();
-                    })
-                    .exceptionally(t -> {
-                        t.printStackTrace();
-                        return null;
-                    });
-        }
+            return;
+        } 
+        context.replyCallbackAction().setContent("Processing since: <t:" + Instant.now().getEpochSecond() + ":R>").setEphemeral(false).queue();
+        context.options()
+                .get(0)
+                .getAsAttachment()
+                .getProxy()
+                .downloadToFile(new File("%s\\input.txt".formatted(TEMP_DIR)))
+                .thenAcceptAsync(file -> {
+                    String content;
+                    try {
+                        content = readFromFile(file);
+                    } catch (IOException e) {
+                        content = "";
+                        e.printStackTrace();
+                    }
+                    Runner runner = RUNNER_MAP.get(context.options().get(1).getAsString());
+                    messageLengthCheck(context.channel(), content, runner.run(content, Config.getGuildVariable(guild.getIdLong(), "COMMAND_CODE_TIMELIMIT")),context.options().get(1).getAsString());
+                    file.delete();
+                })
+                .exceptionally(t -> {
+                    t.printStackTrace();
+                    return null;
+                });
+        
     }
     @Override
     public void onModalInteraction(@NotNull ModalInteractionEvent event) {
