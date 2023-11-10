@@ -8,7 +8,6 @@ import com.github.hokkaydo.eplbot.module.code.CodeCommand;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.ArrayList;
 import java.util.Collections;
 
 public class GlobalCommandModule extends Module {

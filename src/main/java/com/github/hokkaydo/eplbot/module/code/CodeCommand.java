@@ -33,7 +33,7 @@ import java.util.Map;
 
 
 public class CodeCommand extends ListenerAdapter implements Command{
-    private static final String TEMP_DIR = System.getProperty("user.dir")+"\\src\\temp";
+    private static final String TEMP_DIR = System.getProperty("user.dir")+File.separator+"src"+File.separator+"temp";
     private final Map<String, Runner> RUNNER_MAP;
     public CodeCommand() {
         RUNNER_MAP = Map.of(
@@ -63,7 +63,8 @@ public class CodeCommand extends ListenerAdapter implements Command{
                     String content = readFromFile(file).orElse("");
                     Runner runner = RUNNER_MAP.get(context.options().get(1).getAsString());
                     String result = runner.run(content, Config.getGuildVariable(guild.getIdLong(), "COMMAND_CODE_TIMELIMIT"));
-                    messageLengthCheck(context.channel(), content, result , context.options().get(1).getAsString());
+                    performSubmit(context.channel(),content, context.options().get(1).getAsString());
+                    performResponse(context.channel(),result);
                     file.delete();
                 })
                 .exceptionally(t -> {
@@ -86,44 +87,92 @@ public class CodeCommand extends ListenerAdapter implements Command{
         String languageOption = Objects.requireNonNull(lang.get().getAsString());
         String bodyStr = Objects.requireNonNull(body.get().getAsString());
         Runner runner = RUNNER_MAP.get(languageOption);
-        messageLengthCheck(event.getMessageChannel(),bodyStr, runner.run(bodyStr, runTimeout),languageOption);
+        performSubmit(event.getMessageChannel(),bodyStr, languageOption);
+        performResponse(event.getMessageChannel(),runner.run(bodyStr, runTimeout));
     }
-    private void messageLengthCheck(MessageChannel textChannel, String bodyStr, String result,String codeName){
-        try {
-            textChannel.sendMessage("```"+codeName.toLowerCase()+"\n"+bodyStr+"\n```").queue();
-        } catch (IllegalArgumentException error1){
-            try {
-                FileWriter myWriter = new FileWriter("%s"+File.pathSeparator+"responseCode.txt".formatted(TEMP_DIR));
-                myWriter.write(bodyStr);
-                myWriter.close();
-                File serverFile = new File("%s"+File.pathSeparator+"responseCode.txt".formatted(TEMP_DIR));
-                FileUpload file = FileUpload.fromData(serverFile,"responseCode.txt");
-                textChannel.sendFiles(file).queue(s -> serverFile.delete());
-            } catch (IOException error3) {
-                error1.printStackTrace();
-            } catch (Exception e) {
-                textChannel.sendMessage(Strings.getString("COMMAND_CODE_EXCEEDEDFILESIZE")).queue();
-            }
+    private void performSubmit(MessageChannel textChannel, String bodyStr,String codeName){
+        if (!messageLengthCheck(bodyStr)){
+            sendSubmittedAsText(textChannel,bodyStr,codeName);
+            return;
         }
-        try {
-            textChannel.sendMessage("`"+result+"`").queue();
-        } catch (IllegalArgumentException error2){
-            try {
-                FileWriter myWriter = new FileWriter("%s"+File.pathSeparator+"result.txt".formatted(TEMP_DIR));
-                myWriter.write(result);
-                myWriter.close();
-                File serverFile = new File("%s"+File.pathSeparator+"result.txt".formatted(TEMP_DIR));
-                FileUpload file = FileUpload.fromData(serverFile,"result.txt");
-                textChannel.sendFiles(file).queue(s -> serverFile.delete());
-
-
-            } catch (IOException error3) {
-                error3.printStackTrace();
-            } catch (Exception e) {
-                textChannel.sendMessage(Strings.getString("COMMAND_CODE_EXCEEDEDFILESIZE")).queue();
+        File submitted = createSubmittedAsFile(bodyStr);
+        if (!exceed8mbOfData(submitted)){
+            if (submitted != null){
+                sendSubmittedAsFile(textChannel,submitted);
+                return;
             }
+            sendErrorMessage(textChannel,Strings.getString("COMMAND_CODE_COULDNT_WRITE_THE_FILE"));
+            return;
+        }            
+        sendErrorMessage(textChannel,Strings.getString("COMMAND_CODE_EXCEEDEDFILESIZE"));
+    }
+    private void performResponse(MessageChannel textChannel, String result){
+        if (!messageLengthCheck(result)){
+            sendResponseAsText(textChannel,result);
+            return;
+        }
+        File submitted = createResponseAsFile(result);
+        if (!exceed8mbOfData(submitted)){
+            
+            if (submitted != null){
+                sendResponseAsFile(textChannel,submitted);
+                return;
+            }
+            sendErrorMessage(textChannel,Strings.getString("COMMAND_CODE_COULDNT_WRITE_THE_FILE"));
+            return;
+        }            
+        sendErrorMessage(textChannel,Strings.getString("COMMAND_CODE_EXCEEDEDFILESIZE"));
+    }
+    private void sendErrorMessage(MessageChannel textChannel, String content){
+        textChannel.sendMessage(content).queue();
+    }
+    private void sendSubmittedAsText(MessageChannel textChannel, String bodyStr, String codeName){
+        textChannel.sendMessage("```"+codeName.toLowerCase()+"\n"+bodyStr+"\n```").queue();
+    }
+    private void sendResponseAsText(MessageChannel textChannel, String result){
+        textChannel.sendMessage("`"+result+"`").queue();
+    }
+    private boolean messageLengthCheck(String content){
+        return content.length() >= 2000;
+    }
+    private File createSubmittedAsFile(String bodyStr){
+        try {
+            FileWriter myWriter = new FileWriter("%s"+File.pathSeparator+"responseCode.txt".formatted(TEMP_DIR));
+            myWriter.write(bodyStr);
+            myWriter.close();
+            File serverFile = new File("%s"+File.pathSeparator+"responseCode.txt".formatted(TEMP_DIR));
+            return serverFile;
+        } catch (IOException e){
+            e.printStackTrace();
+            return null;
+        } 
+    }
+    private void sendSubmittedAsFile(MessageChannel textChannel,File serverFile){
+        FileUpload file = FileUpload.fromData(serverFile,"responseCode.txt");
+        textChannel.sendFiles(file).queue(s -> serverFile.delete());
+    }
+    private File createResponseAsFile(String result){
+        try {
+            FileWriter myWriter = new FileWriter("%s"+File.pathSeparator+"result.txt".formatted(TEMP_DIR));
+            myWriter.write(result);
+            myWriter.close();
+            File serverFile = new File("%s"+File.pathSeparator+"result.txt".formatted(TEMP_DIR));
+            return serverFile;
+        } catch (IOException e){
+            e.printStackTrace();
+            return null;
         }
     }
+    private void sendResponseAsFile(MessageChannel textChannel, File serverFile){
+        FileUpload file = FileUpload.fromData(serverFile,"result.txt");
+        textChannel.sendFiles(file).queue(s -> serverFile.delete());
+    }
+    private boolean exceed8mbOfData(File file){
+        long fileSizeInBytes = file.length();
+        long eightMBInBytes = 8L * 1024 * 1024; 
+        return fileSizeInBytes > eightMBInBytes;
+    }
+    
     private Optional<String> readFromFile(File file) {
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             return Optional.of(reader.lines().collect(Collectors.joining(System.lineSeparator())));
