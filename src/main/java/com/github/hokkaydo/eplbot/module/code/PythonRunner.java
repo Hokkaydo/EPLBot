@@ -13,7 +13,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public class PythonRunner implements Runner {
-    private static final String CURRENT_DIR = System.getProperty("user.dir") + "\\src\\temp\\";
+    private static final String CURRENT_DIR = System.getProperty("user.dir") + File.separator+"src"+File.separator+"temp"+File.separator;
     private static final ScheduledExecutorService SCHEDULER = new ScheduledThreadPoolExecutor(1);
 
     @Override
@@ -21,37 +21,36 @@ public class PythonRunner implements Runner {
         if (containsUnsafeKeywords(input)){
             return "Compilation failed:\nCheck if 'exec' or 'eval' are used";
         }
+
+        File sourceFile = new File(CURRENT_DIR,"temp.py");
+        sourceFile.deleteOnExit();
+
+        ScheduledFuture<?> timeOut = SCHEDULER.schedule(() -> {}, runTimeout, TimeUnit.SECONDS);
+        StringBuilder output = new StringBuilder();
+        String line;
         try {
-            File sourceFile = new File(CURRENT_DIR,"temp.py");
-            sourceFile.deleteOnExit();
             FileWriter writer = new FileWriter(sourceFile);
             writer.write(input);
             writer.close();
             Process process = new ProcessBuilder("python",  sourceFile.getAbsolutePath()).redirectErrorStream(true).start();
-            ScheduledFuture<?> timeOut = SCHEDULER.schedule(() -> {}, runTimeout, TimeUnit.SECONDS);
-
-            StringBuilder output = new StringBuilder();
-            String line;
             while ((line = new BufferedReader(new InputStreamReader(process.getInputStream())).readLine()) != null) {
                 output.append(line).append("\n");
             }
-            if (timeOut.isDone()) {
-                deleteFiles();
-                String outProcess = output.toString();
-                if (outProcess.isEmpty()) {
-                    return "Run failed: Timelimit exceeded " + runTimeout + " s";
-                } else {
-                    return "Run failed:\n" + outProcess;
-                }
-            } else {
-                deleteFiles();
-                return output.toString();
-            }
         } catch (IOException e) {
             e.printStackTrace();
-            return "An error occurred: " + e.getMessage();
+            return "Server side error code P01 " + e.getMessage();
         }
-
+        if (timeOut.isDone()) {
+            deleteFiles();
+            String outProcess = output.toString();
+            if (outProcess.isEmpty()) {
+                return "Run failed: Timelimit exceeded " + runTimeout + " s";
+            } else {
+                return "Run failed:\n" + outProcess;
+            }
+        }
+        deleteFiles();
+        return output.toString();
     }
     private static boolean containsUnsafeKeywords(String code) {
         String[] unsafeKeywords = {"exec", "eval", "subprocess", "os.system", "open", "__import__", "pickle"};

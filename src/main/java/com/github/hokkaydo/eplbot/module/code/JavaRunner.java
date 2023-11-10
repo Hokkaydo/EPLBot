@@ -3,6 +3,8 @@ package com.github.hokkaydo.eplbot.module.code;
 import javax.tools.ToolProvider;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.Files;
@@ -17,8 +19,9 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 public class JavaRunner implements Runner{
-    private static final String OUTPUT_PATH = System.getProperty("user.dir")+"\\src\\temp\\";
+    private static final String OUTPUT_PATH = System.getProperty("user.dir")+File.separator+"src"+File.separator+"temp"+File.separator;
     private static final ScheduledExecutorService SCHEDULER = new ScheduledThreadPoolExecutor(1);
 
     @Override
@@ -30,44 +33,46 @@ public class JavaRunner implements Runner{
             input = addWrapper(input);
         }
         String className = regexClassName(input);
-        writeFile(input,Path.of(OUTPUT_PATH+"\\"+className+".java"));
-        String filePath = OUTPUT_PATH + "\\" + className + ".java";
+        writeFile(input,Path.of(OUTPUT_PATH+File.separator+className+".java"));
+        String filePath = OUTPUT_PATH + File.separator + className + ".java";
+
+        ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
+        if (ToolProvider.getSystemJavaCompiler().run(null, null, new PrintStream(errorStream), filePath) != 0) {
+            deleteFiles( className);
+            return "Compilation failed:\n" + errorStream;
+        }
+
+        ScheduledFuture<?> timeOut = SCHEDULER.schedule(() -> {}, runTimeout, TimeUnit.SECONDS);
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         try {
-            ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
-            if (ToolProvider.getSystemJavaCompiler().run(null, null, new PrintStream(errorStream), filePath) != 0) {
-                deleteFiles( className);
-                return "Compilation failed:\n" + errorStream;
+            Process process = new ProcessBuilder(System.getProperty("java.home") + File.separator + "bin" + File.separator + "java", "-cp", System.getProperty("java.class.path") + File.pathSeparator + OUTPUT_PATH, regexClassName(input)).redirectErrorStream(true).start();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                outputStream.write((line + "\n").getBytes());
             }
-
-            Process process = new ProcessBuilder(System.getProperty("java.home") + File.separator + "bin" + File.separator + "java", "-cp", System.getProperty("java.class.path") + File.pathSeparator + OUTPUT_PATH,regexClassName(input) ).redirectErrorStream(true).start();
-
-            ScheduledFuture<?> timeOut = SCHEDULER.schedule(() -> {}, runTimeout, TimeUnit.SECONDS);
-
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            byte[] buffer = new byte[1024];
-            int bytesRead;
-            while ((bytesRead = process.getInputStream().read(buffer)) != -1) {
-                outputStream.write(buffer, 0, bytesRead);
-            }
-            if (timeOut.isDone()) {
-                deleteFiles( className);
-                String output = outputStream.toString().trim();
-                if (output.isEmpty()) {
-                    return "Run failed: Timelimit exceeded "+ runTimeout +" s";
-                } else {
-                    return "Run failed:\n" + output;
-                }
-            } else {
-                timeOut.cancel(true);
-                deleteFiles( className);
-                return outputStream.toString();
-            }
-
 
         } catch (Exception e) {
             e.printStackTrace();
-            return e.toString();
+            return "Server side error code J01" + e.getMessage();
+        }
+        if (timeOut.isDone()) {
+            deleteFiles( className);
+            String output = outputStream.toString().trim();
+            if (output.isEmpty()) {
+                return "Run failed: Timelimit exceeded "+ runTimeout +" s";
+            } else {
+                return "Run failed:\n" + output;
             }
+        }
+        timeOut.cancel(true);
+        deleteFiles( className);
+        return outputStream.toString();
+            
+
+
+
     }
     
     public static void deleteFiles(String className) {
@@ -113,9 +118,10 @@ public class JavaRunner implements Runner{
         Matcher matcher = Pattern.compile("class\\s+(\\w+)\\s*\\{").matcher(input);
         if (matcher.find()) {
             return matcher.group(1).replaceAll("\\s+", "");
-        } else {
-            throw new RuntimeException("No class definition found.");}
+        } 
+        throw new RuntimeException("No class definition found.");
     }
+    
     public static String safeImports(String input){
         List<String> dangerousImports = Arrays.asList(
                 "java.lang.reflect",
