@@ -52,8 +52,10 @@ public class ConfigurationRepositorySQLite implements ConfigurationRepository{
     }
 
     @Override
-    public void create(ConfigurationModel model) {
-        jdbcTemplate.update("INSERT INTO configuration (guild_id, key, value, state) VALUES (?,?,?,?)", model.guildId(), model.key(), model.value(), model.state());
+    public void create(ConfigurationModel... models) {
+        for (ConfigurationModel model : models) {
+            jdbcTemplate.update("INSERT INTO configuration (guild_id, key, value, state) VALUES (?,?,?,?)", model.guildId(), model.key(), model.value(), model.state());
+        }
     }
 
     @Override

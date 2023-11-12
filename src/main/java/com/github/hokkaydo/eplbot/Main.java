@@ -101,7 +101,6 @@ public class Main {
         if (!Files.exists(path))
             Files.createDirectory(path);
 
-        //TODO command to recreate tables, command to fill courses tables 
         Config.load();
         Strings.load();
         jda = JDABuilder.createDefault(token)

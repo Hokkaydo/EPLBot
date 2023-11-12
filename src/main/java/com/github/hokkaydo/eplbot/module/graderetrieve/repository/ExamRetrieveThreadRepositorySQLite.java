@@ -1,10 +1,8 @@
 package com.github.hokkaydo.eplbot.module.graderetrieve.repository;
 
-import com.github.hokkaydo.eplbot.module.confession.model.WarnedConfession;
 import com.github.hokkaydo.eplbot.module.graderetrieve.model.ExamsRetrieveThread;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
-import org.sqlite.JDBC;
 
 import javax.sql.DataSource;
 import java.sql.ResultSet;
@@ -24,14 +22,21 @@ public class ExamRetrieveThreadRepositorySQLite implements ExamRetrieveThreadRep
 
     @Override
     public Optional<ExamsRetrieveThread> readByMessageId(Long id) {
-        List<ExamsRetrieveThread> l = jdbcTemplate.query("SELECT 1 FROM exams_thread WHERE messageId = ?", mapper, id);
-        if(l.size() == 0) return Optional.empty();
+        List<ExamsRetrieveThread> l = jdbcTemplate.query("SELECT * FROM exams_thread WHERE message_id = ?", mapper, id);
+        if(l.isEmpty()) return Optional.empty();
         return Optional.of(l.get(0));
     }
 
     @Override
-    public void create(ExamsRetrieveThread model) {
-        jdbcTemplate.update("INSERT INTO exams_thread VALUES (?, ?)", model.messageId(), model.path());
+    public void create(ExamsRetrieveThread... models) {
+        for (ExamsRetrieveThread model : models) {
+            jdbcTemplate.update("INSERT INTO exams_thread (message_id, path) VALUES (?, ?)", model.messageId(), model.path());
+        }
+    }
+
+    @Override
+    public List<ExamsRetrieveThread> readAll() {
+        return jdbcTemplate.query("SELECT * FROM exams_thread", mapper);
     }
 
 }

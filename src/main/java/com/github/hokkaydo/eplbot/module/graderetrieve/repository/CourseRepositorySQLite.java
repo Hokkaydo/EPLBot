@@ -25,9 +25,10 @@ public class CourseRepositorySQLite implements CourseRepository {
 
     @Override
     public List<List<Course>> getByGroupIdAndQuarters(int id, int... quarters) {
-        String ors = Arrays.stream(quarters).skip(1).mapToObj(i -> " OR quarter = ?").reduce((s1, s2) -> s1 + s2).orElse("");
+        String ors = Arrays.stream(quarters).skip(1).mapToObj(" OR quarter = %s"::formatted).reduce((s1, s2) -> s1 + s2).orElse("");
+
         List<Course> list = jdbcTemplate.query(
-                "SELECT (course_code, course_name, quarter, group_id) FROM courses WHERE group_id = ? AND (quarter = ? " + ors + ")",
+                "SELECT * FROM courses WHERE group_id = ? AND (quarter = ? " + ors + ")",
                 mapper,
                 id, quarters[0]
         );
@@ -47,20 +48,22 @@ public class CourseRepositorySQLite implements CourseRepository {
     @Override
     public List<List<Course>> getByGroupId(int id) {
         List<Course> list = jdbcTemplate.query(
-                "SELECT (course_code, course_name, quarter, group_id) FROM courses WHERE group_id = ?",
+                "SELECT * FROM courses WHERE group_id = ?",
                 mapper,
                 id
         );
         List<List<Course>> ret = List.of(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
         for (Course course : list) {
-            ret.get(course.quarter()).add(course);
+            ret.get(course.quarter() - 1).add(course);
         }
         return ret;
     }
 
     @Override
-    public void create(Course model) {
-        jdbcTemplate.update("INSERT INTO courses (course_code, course_name, quarter, group_id) VALUES(?,?,?,?)", model.code(), model.name(), model.quarter(), model.courseGroupId());
+    public void create(Course... models) {
+        for (Course model : models) {
+            jdbcTemplate.update("INSERT INTO courses (course_code, course_name, quarter, group_id) VALUES(?,?,?,?)", model.code(), model.name(), model.quarter(), model.courseGroupId());
+        }
     }
 
     @Override

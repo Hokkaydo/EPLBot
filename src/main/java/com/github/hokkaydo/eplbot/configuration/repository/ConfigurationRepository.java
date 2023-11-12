@@ -1,7 +1,7 @@
 package com.github.hokkaydo.eplbot.configuration.repository;
 
-import com.github.hokkaydo.eplbot.CRUDRepository;
 import com.github.hokkaydo.eplbot.configuration.model.ConfigurationModel;
+import com.github.hokkaydo.eplbot.database.CRUDRepository;
 
 import java.util.List;
 

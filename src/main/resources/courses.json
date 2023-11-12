@@ -73,11 +73,11 @@
 				["LINMA1702", "Modèles et méthodes d'optimisation I"]
 			],
 			[
-				["LINMA1170", "Analyse numérique"],
+				["LINMA1510", "Linear Control"],
 				["LINMA1691", "Mathématiques discrètes I : Théorie et algorithmique des graphes"]
 			],
 			[
-				["LINMA1510", "Linear Control"],
+				["LINMA1170", "Analyse numérique"],
 				["LINMA1731", "Stochastic processes : Estimation and prediction"]
 			]
 		]

@@ -1,6 +1,6 @@
 package com.github.hokkaydo.eplbot.module.graderetrieve.repository;
 
-import com.github.hokkaydo.eplbot.CRUDRepository;
+import com.github.hokkaydo.eplbot.database.CRUDRepository;
 import com.github.hokkaydo.eplbot.module.graderetrieve.model.Course;
 
 import java.util.List;

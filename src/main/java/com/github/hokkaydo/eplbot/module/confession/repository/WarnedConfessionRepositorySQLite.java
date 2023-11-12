@@ -23,8 +23,9 @@ public class WarnedConfessionRepositorySQLite implements WarnedConfessionReposit
     }
 
     @Override
-    public void create(WarnedConfession warnedConfession) {
-        jdbcTemplate.update("""
+    public void create(WarnedConfession... warnedConfessions) {
+        for (WarnedConfession warnedConfession : warnedConfessions) {
+            jdbcTemplate.update("""
                 INSERT INTO warned_confessions (
                     moderator_id,
                     author_id,
@@ -33,6 +34,7 @@ public class WarnedConfessionRepositorySQLite implements WarnedConfessionReposit
                     )
                 VALUES (?,?,?,?)
                 """, warnedConfession.moderatorId(), warnedConfession.authorId(), warnedConfession.messageContent(), warnedConfession.timestamp());
+        }
     }
 
     @Override

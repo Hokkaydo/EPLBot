@@ -18,14 +18,21 @@ public class MirrorLinkRepositorySQLite implements MirrorLinkRepository {
     }
 
     @Override
-    public void create(MirrorLink mirrorLink) {
-        jdbcTemplate.update("""
+    public void create(MirrorLink... mirrorLinks) {
+        for (MirrorLink mirrorLink : mirrorLinks) {
+            jdbcTemplate.update("""
                 INSERT INTO mirrors (
                     channelIdA,
                     channelIdB
                     )
                 VALUES (?,?)
                 """, mirrorLink.first().getIdLong(), mirrorLink.second().getIdLong());
+        }
+    }
+
+    @Override
+    public List<MirrorLink> readAll() {
+        return jdbcTemplate.query("SELECT * FROM mirrors", mapper);
     }
 
     @Override

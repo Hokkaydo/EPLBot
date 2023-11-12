@@ -169,25 +169,23 @@ public class ExamsRetrieveListener extends ListenerAdapter {
 
         groupRepository.getByQuarters(selectedQuarterToRetrieve, selectedQuarterToRetrieve + 2, selectedQuarterToRetrieve + 4).forEach(group -> {
             List<List<Course>> courses = group.courses();
-            for (int quarter = 0; quarter < courses.size(); quarter++) {
-                List<Course> quadrimestreCourses = courses.get(quarter);
-                for (Course coursesInformation : quadrimestreCourses) {
-
-                    String coursesCode = coursesInformation.code();
-                    String coursesName = coursesInformation.name();
-
-                    int finalQuarter = quarter;
+            for (List<Course> quadrimestreCourses : courses) {
+                for (Course course : quadrimestreCourses) {
 
                     channel.sendMessage(
-                                    THREAD_MESSAGE_FORMAT.formatted(coursesCode, coursesName, (int) Math.ceil((quarter + 1) / 2.0), group.frenchName().toUpperCase())
+                                    THREAD_MESSAGE_FORMAT.formatted(course.code(), course.name(), quarterToYear(course.quarter()), group.englishName().toUpperCase())
                             )
                             .queue(m -> {
-                                m.createThreadChannel(coursesCode).queue();
-                                repository.create(new ExamsRetrieveThread(m.getIdLong(), EXAMEN_STORING_PATH_FORMAT.formatted(group.englishName(), finalQuarter + 1, coursesCode)));
+                                m.createThreadChannel(course.code()).queue();
+                                repository.create(new ExamsRetrieveThread(m.getIdLong(), EXAMEN_STORING_PATH_FORMAT.formatted(group.englishName(), course.quarter(), course.code())));
                             });
                 }
             }
         });
+    }
+
+    private int quarterToYear(int quarter) {
+        return quarter % 2 == 0 ? quarter / 2 : (quarter + 1)/2;
     }
 
     private record Tuple<A, B>(A a, B b){}
