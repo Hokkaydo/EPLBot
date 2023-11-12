@@ -1,10 +1,10 @@
 package com.github.hokkaydo.eplbot.module.confession;
 
-import com.github.hokkaydo.eplbot.configuration.Config;
 import com.github.hokkaydo.eplbot.Main;
 import com.github.hokkaydo.eplbot.MessageUtil;
 import com.github.hokkaydo.eplbot.Strings;
 import com.github.hokkaydo.eplbot.command.CommandContext;
+import com.github.hokkaydo.eplbot.configuration.Config;
 import com.github.hokkaydo.eplbot.module.confession.model.WarnedConfession;
 import com.github.hokkaydo.eplbot.module.confession.repository.WarnedConfessionRepository;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -192,11 +192,11 @@ public class ConfessionProcessor extends ListenerAdapter {
             for (WarnedConfession confession : authorWarnedConfessions) {
                 Member mod = guild.getMemberById(confession.moderatorId());
                 EmbedBuilder warned = new EmbedBuilder()
-                                              .setFooter(Strings.getString("CONFESSION_WARNED_BY").formatted(mod == null ? confession.moderatorId() : mod.getUser().getAsTag()))
+                                              .setFooter(Strings.getString("CONFESSION_WARNED_BY").formatted(mod == null ? confession.moderatorId() : mod.getUser().getName()))
                                               .setDescription(confession.messageContent())
                                               .setColor(Color.BLACK)
                                               .setTimestamp(confession.timestamp().toInstant())
-                                              .setAuthor(user == null ? String.valueOf(confessionAuthorId) : user.getUser().getAsTag());
+                                              .setAuthor(user == null ? String.valueOf(confessionAuthorId) : user.getUser().getName());
                 m.replyEmbeds(warned.build()).queue();
             }
         });

@@ -47,7 +47,7 @@ public class ContributeCommand implements Command {
                     }
                     contributors.append("Hokkaydo");
                     embedBuilder.addField("Contributeur%s :heart:".formatted(!array.isEmpty() ? "s" : ""), contributors.toString(),false);
-                    embedBuilder.setAuthor(Main.getJDA().getSelfUser().getAsTag(), "https://github.com/Hokkaydo/EPLBot", Main.getJDA().getSelfUser().getAvatarUrl());
+                    embedBuilder.setAuthor(Main.getJDA().getSelfUser().getName(), "https://github.com/Hokkaydo/EPLBot", Main.getJDA().getSelfUser().getAvatarUrl());
                     context.replyCallbackAction().setEmbeds(embedBuilder.build()).queue();
                 });
     }

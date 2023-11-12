@@ -17,7 +17,7 @@ public class MessageUtil {
 
     public static EmbedBuilder toEmbed(Message message) {
         return new EmbedBuilder()
-                       .setAuthor(message.getAuthor().getAsTag(), message.getJumpUrl(), message.getAuthor().getAvatarUrl())
+                       .setAuthor(message.getAuthor().getName(), message.getJumpUrl(), message.getAuthor().getAvatarUrl())
                        .appendDescription(message.getContentRaw())
                        .setTimestamp(message.getTimeCreated())
                        .setFooter(message.getGuild().getName() + " - #" + message.getChannel().getName(), message.getGuild().getIconUrl());
@@ -43,7 +43,7 @@ public class MessageUtil {
 
     public static EmbedBuilder toEmbed(String content) {
         return new EmbedBuilder()
-                       .setAuthor(Main.getJDA().getSelfUser().getAsTag(), "https://github.com/Hokkaydo/EPLBot", Main.getJDA().getSelfUser().getAvatarUrl())
+                       .setAuthor(Main.getJDA().getSelfUser().getName(), "https://github.com/Hokkaydo/EPLBot", Main.getJDA().getSelfUser().getAvatarUrl())
                        .appendDescription(content)
                        .setTimestamp(Instant.now());
     }
