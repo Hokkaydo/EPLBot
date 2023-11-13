@@ -3,6 +3,10 @@ package com.github.hokkaydo.eplbot.module.mirror;
 import com.github.hokkaydo.eplbot.Main;
 import com.github.hokkaydo.eplbot.MessageUtil;
 import com.github.hokkaydo.eplbot.Strings;
+import com.github.hokkaydo.eplbot.database.DatabaseManager;
+import com.github.hokkaydo.eplbot.module.mirror.model.MirrorLink;
+import com.github.hokkaydo.eplbot.module.mirror.repository.MirrorLinkRepository;
+import com.github.hokkaydo.eplbot.module.mirror.repository.MirrorLinkRepositorySQLite;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageType;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
@@ -16,58 +20,45 @@ import net.dv8tion.jda.api.events.message.react.MessageReactionRemoveEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
 
 public class MirrorManager extends ListenerAdapter {
 
-    public static final Path MIRROR_STORAGE_PATH = Path.of(Main.PERSISTENCE_DIR_PATH + "/mirrors");
-    private final List<Mirror> mirrors = new ArrayList<>();
     private final List<MirroredMessages> mirroredMessages = new ArrayList<>();
+    private final MirrorLinkRepository mirrorLinkRepository;
+
+    public MirrorManager() {
+        runPeriodicCleaner();
+        this.mirrorLinkRepository = new MirrorLinkRepositorySQLite(DatabaseManager.getDataSource());
+    }
 
     void createLink(GuildMessageChannel first, GuildMessageChannel second) {
         if(existsLink(first, second)) return;
-        mirrors.add(new Mirror(first, second));
-        storeMirrors();
-        runPeriodicCleaner();
+        mirrorLinkRepository.create(new MirrorLink(first.getIdLong(), second.getIdLong()));
     }
 
     private void runPeriodicCleaner() {
         Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> mirroredMessages.removeIf(MirroredMessages::isOutdated), 0, 1, TimeUnit.HOURS);
     }
 
-    List<Mirror> getLinks(GuildMessageChannel idLong) {
-        return mirrors.stream().filter(m -> m.has(idLong)).toList();
+    List<MirrorLink> getLinks(GuildMessageChannel channel) {
+        return mirrorLinkRepository.readyById(channel.getIdLong());
     }
 
-    private Optional<Mirror> getLink(GuildMessageChannel first, GuildMessageChannel second) {
-        return mirrors.stream()
-                       .filter(mirror -> (mirror.first.equals(first) && mirror.second.equals(second)) ||
-                                                 (mirror.second.equals(first) && mirror.first.equals(second)))
-                       .findFirst();
-    }
 
     boolean existsLink(GuildMessageChannel first, GuildMessageChannel second) {
-        return getLink(first, second).isPresent();
+        return mirrorLinkRepository.exists(first.getIdLong(), second.getIdLong());
     }
 
     void destroyLink(GuildMessageChannel first, GuildMessageChannel second) {
-        getLink(first, second).ifPresent(mirrors::remove);
-        storeMirrors();
+        mirrorLinkRepository.deleteByIds(first.getIdLong(), second.getIdLong());
     }
 
     @Override
@@ -78,7 +69,7 @@ public class MirrorManager extends ListenerAdapter {
         if(mirroredMessages.stream().flatMap(m -> m.getMessages().entrySet().stream()).anyMatch(m -> m.getKey() == 0 || m.getKey() == event.getMessageIdLong())) return;
         if(event.getMessage().getType().equals(MessageType.THREAD_STARTER_MESSAGE) || event.getMessage().getType().equals(MessageType.THREAD_CREATED)) {
             ThreadChannel threadChannel = event.getMessage().getChannel().asThreadChannel();
-            threadChannel.retrieveParentMessage().queue(parent -> mirrors.stream().filter(m -> m.has(event.getChannel().asThreadChannel().getParentMessageChannel())).forEach(mirror -> {
+            threadChannel.retrieveParentMessage().queue(parent -> mirrorLinkRepository.all().stream().filter(m -> m.has(event.getChannel().asThreadChannel().getParentMessageChannel())).forEach(mirror -> {
                 GuildMessageChannel other = mirror.other(parent.getChannel().asGuildMessageChannel());
                 mirroredMessages.stream()
                         .filter(m -> m.getMessages().values().stream().anyMatch(msg -> (msg.getMessageId() == parent.getIdLong()) && msg.getChannelId() == other.getIdLong()))
@@ -96,7 +87,7 @@ public class MirrorManager extends ListenerAdapter {
         boolean reply = event.getMessage().getType().equals(MessageType.INLINE_REPLY) && event.getMessage().getReferencedMessage() != null;
         MirroredMessage initial = new MirroredMessage(event.getMessage(), originalChannel);
         MirroredMessages messages = new MirroredMessages(initial, new HashMap<>());
-        mirrors.stream().filter(m -> m.has(originalChannel)).forEach(mirror -> {
+        mirrorLinkRepository.all().stream().filter(m -> m.has(originalChannel)).forEach(mirror -> {
             GuildMessageChannel other = mirror.other(originalChannel);
             if(reply) {
                 mirroredMessages.stream()
@@ -171,47 +162,6 @@ public class MirrorManager extends ListenerAdapter {
                 .ifPresent(mirrorE -> mirrorE.getMessages().forEach((id, m) -> m.removeReaction(event.getReaction())));
     }
 
-    private boolean noMirrors = false;
-    void loadLinks() {
-        if(noMirrors) return;
-        if(!Files.exists(MIRROR_STORAGE_PATH)) {
-            try {
-                Files.createFile(MIRROR_STORAGE_PATH);
-            } catch (IOException e) {
-                throw new IllegalStateException(e);
-            }
-            noMirrors = true;
-            return;
-        }
-        try(BufferedReader stream = new BufferedReader(new FileReader(MIRROR_STORAGE_PATH.toFile()))) {
-            String line;
-            while((line = stream.readLine()) != null) {
-                String[] s = line.split(";");
-                TextChannel a = Main.getJDA().getTextChannelById(s[0]);
-                TextChannel b = Main.getJDA().getTextChannelById(s[1]);
-                if(a == null || b == null) return;
-                if(existsLink(a, b)) return;
-                mirrors.add(new Mirror(a, b));
-            }
-        } catch (IOException e) {
-            Main.LOGGER.log(Level.WARNING, "Could not load mirrors");
-        }
-    }
-
-    private void storeMirrors() {
-        try(FileWriter stream = new FileWriter(MIRROR_STORAGE_PATH.toFile())) {
-            mirrors.forEach(m -> {
-                try {
-                    stream.append(m.first.getId()).append(";").append(String.valueOf(m.second.getIdLong())).append("\n");
-                } catch (IOException e) {
-                    throw new IllegalStateException(e);
-                }
-            });
-        } catch (IOException e) {
-            Main.LOGGER.log(Level.WARNING, "Could not store mirrors");
-        }
-    }
-
     private static class MirroredMessages {
 
         private final MirroredMessage initial;
@@ -247,18 +197,6 @@ public class MirrorManager extends ListenerAdapter {
 
         boolean isOutdated() {
             return Instant.now().isAfter(outdatedTime);
-        }
-
-    }
-
-    record Mirror(@NotNull GuildMessageChannel first, @NotNull GuildMessageChannel second) {
-
-        GuildMessageChannel other(GuildMessageChannel channel) {
-            return first.getIdLong()  == channel.getIdLong() ? second : first;
-        }
-
-        boolean has(GuildMessageChannel channel) {
-            return first.getIdLong() == channel.getIdLong() || second.getIdLong() == channel.getIdLong();
         }
 
     }

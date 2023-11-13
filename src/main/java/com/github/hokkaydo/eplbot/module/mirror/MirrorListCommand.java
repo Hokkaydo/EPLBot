@@ -4,6 +4,7 @@ import com.github.hokkaydo.eplbot.Main;
 import com.github.hokkaydo.eplbot.Strings;
 import com.github.hokkaydo.eplbot.command.Command;
 import com.github.hokkaydo.eplbot.command.CommandContext;
+import com.github.hokkaydo.eplbot.module.mirror.model.MirrorLink;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
@@ -45,13 +46,13 @@ public class MirrorListCommand implements Command {
                 return;
             }
         }
-        List<MirrorManager.Mirror> mirrors = mirrorManager.getLinks(channelA);
+        List<MirrorLink> mirrors = mirrorManager.getLinks(channelA);
         if(mirrors.isEmpty()) {
             context.replyCallbackAction().setContent(Strings.getString("COMMAND_MIRRORLIST_NO_MIRROR").formatted(channelA.getAsMention())).queue();
             return;
         }
         StringBuilder stringBuilder = new StringBuilder("__Liste des liens existants__ :\n");
-        for (MirrorManager.Mirror link : mirrors) {
+        for (MirrorLink link : mirrors) {
             MessageChannel first = link.first();
             MessageChannel second = link.second();
             stringBuilder.append("\t");

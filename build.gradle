@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id("com.github.johnrengelman.shadow") version "8.1.1"
+    id "org.flywaydb.flyway" version "9.21.1"
 }
 
 group = 'be.hokkaydo'
@@ -19,10 +20,11 @@ dependencies {
     implementation group: 'org.json', name: 'json', version: '20230227'
     implementation 'io.github.cdimascio:dotenv-java:3.0.0'
     implementation 'com.auth0:java-jwt:4.4.0'
+    implementation 'org.springframework:spring-jdbc:6.0.11'
+    implementation 'org.xerial:sqlite-jdbc:3.42.0.0'
+    implementation 'org.flywaydb:flyway-core:9.21.1'
     // https://mvnrepository.com/artifact/org.kohsuke/github-api
     implementation group: 'org.kohsuke', name: 'github-api', version: '1.315'
-
-
 }
 
 tasks.register('run', JavaExec) {
@@ -39,4 +41,8 @@ jar {
                 'Main-Class': 'com.github.hokkaydo.eplbot.Main'
         )
     }
+}
+
+flyway {
+    url = "jdbc:sqlite:" + project.projectDir.toString() + "/persistence/database.sqlite"
 }
