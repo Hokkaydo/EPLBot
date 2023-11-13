@@ -29,7 +29,6 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-import java.util.logging.Level;
 import java.util.stream.Stream;
 
 public class MirrorManager extends ListenerAdapter {
@@ -76,12 +75,12 @@ public class MirrorManager extends ListenerAdapter {
             threadChannel.retrieveParentMessage().queue(parent -> mirrorLinkRepository.all().stream().filter(m -> m.has(event.getChannel().asThreadChannel().getParentMessageChannel())).forEach(mirror -> {
                 GuildMessageChannel other = mirror.other(parent.getChannel().asGuildMessageChannel());
                 mirroredMessages.stream()
-                        .filter(m -> m.getMessages().values().stream().anyMatch(msg -> (msg.getMessageId() == parent.getIdLong()) && msg.getChannelId() == other.getIdLong()))
+                        .filter(m -> m.getMessages().values().stream().anyMatch(msg -> (msg.getOriginalMessageId() == parent.getIdLong()) && msg.getChannelId() == other.getIdLong()))
                         .flatMap(m -> m.getMessages().values().stream().filter(msg -> msg.getChannelId() == other.getIdLong()))
                         .filter(m -> !m.isThreadOwner())
                         .findFirst()
                         .ifPresentOrElse(message -> {
-                            createThread(message.getMessageId(), other.getIdLong(), threadChannel);
+                            createThread(message.getOriginalMessageId(), other.getIdLong(), threadChannel);
                             message.setThreadOwner();
                         }, () -> createThread(other.getLatestMessageIdLong(), other.getIdLong(), threadChannel));
             }));
