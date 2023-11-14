@@ -7,11 +7,12 @@ import org.springframework.jdbc.core.RowMapper;
 import javax.sql.DataSource;
 import java.sql.ResultSet;
 import java.util.List;
+import java.util.Optional;
 
 public class MirrorLinkRepositorySQLite implements MirrorLinkRepository {
 
     private final JdbcTemplate jdbcTemplate;
-    private static final RowMapper<MirrorLink> mapper = (ResultSet rs, int numRow) -> new MirrorLink(rs.getLong("channelIdA"), rs.getLong("channelIdB"));
+    private static final RowMapper<MirrorLink> mapper = (ResultSet rs, int numRow) -> new MirrorLink(rs.getLong("first_id"), rs.getLong("second_id"));
 
     public MirrorLinkRepositorySQLite(DataSource dataSource) {
         this.jdbcTemplate = new JdbcTemplate(dataSource);
@@ -22,8 +23,8 @@ public class MirrorLinkRepositorySQLite implements MirrorLinkRepository {
         for (MirrorLink mirrorLink : mirrorLinks) {
             jdbcTemplate.update("""
                 INSERT INTO mirrors (
-                    channelIdA,
-                    channelIdB
+                    first_id,
+                    second_id
                     )
                 VALUES (?,?)
                 """, mirrorLink.first().getIdLong(), mirrorLink.second().getIdLong());
@@ -38,7 +39,7 @@ public class MirrorLinkRepositorySQLite implements MirrorLinkRepository {
     @Override
     public List<MirrorLink> readyById(Long channelId) {
         return jdbcTemplate.queryForStream(
-                "SELECT * FROM mirrors WHERE channelIdA = ? OR channelIdB = ?",
+                "SELECT * FROM mirrors WHERE first_id = ? OR second_id = ?",
                 mapper,
                 channelId, channelId
         ).toList();
@@ -47,25 +48,16 @@ public class MirrorLinkRepositorySQLite implements MirrorLinkRepository {
 
     @Override
     public void deleteByIds(Long idA, Long idB) {
-        jdbcTemplate.update("DELETE FROM mirrors WHERE channelIdA = ? AND channelIdB = ?", idA, idB);
-        jdbcTemplate.update("DELETE FROM mirrors WHERE channelIdA = ? AND channelIdB = ?", idB, idA);
+        jdbcTemplate.update("DELETE FROM mirrors WHERE first_id = ? AND second_id = ?", idA, idB);
+        jdbcTemplate.update("DELETE FROM mirrors WHERE first_id = ? AND second_id = ?", idB, idA);
     }
 
     @Override
     public boolean exists(Long idA, Long idB) {
-        return Boolean.TRUE.equals(jdbcTemplate.query(
-                "SELECT COUNT(1) FROM mirrors WHERE (channelIdA = ? AND channelIdB = ?) OR (channelIdA = ? AND channelIdB = ?)",
-                ResultSet::first,
+        return Optional.ofNullable(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM mirrors WHERE (first_id = ? AND second_id = ?) OR (first_id = ? AND second_id = ?);",
+                Integer.class,
                 idA, idB, idB, idA
-        ));
+        )).orElse(0) > 0;
     }
-
-    @Override
-    public List<MirrorLink> all() {
-        return jdbcTemplate.query(
-                "SELECT * FROM mirrors",
-                mapper
-        );
-    }
-
 }

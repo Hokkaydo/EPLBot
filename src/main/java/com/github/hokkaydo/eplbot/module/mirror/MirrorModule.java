@@ -14,10 +14,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 public class MirrorModule extends Module {
 
 
+    private static final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
     private static final MirrorManager mirrorManager = new MirrorManager();
     private static int instanceCount = 0;
     private final MirrorLinkCommand mirrorLinkCommand;
@@ -81,6 +84,10 @@ public class MirrorModule extends Module {
             return null;
         }
         return Map.entry(channelA, channelB);
+    }
+
+    static ScheduledExecutorService getExecutorService() {
+        return executor;
     }
 
 }

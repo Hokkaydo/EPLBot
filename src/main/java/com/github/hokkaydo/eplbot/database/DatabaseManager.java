@@ -28,7 +28,7 @@ public class DatabaseManager {
             new TableModel("courses", Map.of("course_code", TEXT, "course_name", TEXT, "quarter", INTEGER, "group_id", INTEGER)),
             new TableModel("warned_confessions", Map.of("moderator_id", INTEGER, "author_id", INTEGER, "message_content", TEXT, "timestamp", INTEGER)),
             new TableModel("exams_thread", Map.of("message_id", INTEGER, "path", TEXT)),
-            new TableModel("mirrors", Map.of("channelAId", INTEGER, "channelBId", INTEGER))
+            new TableModel("mirrors", Map.of("first_id", INTEGER, "second_id", INTEGER))
     );
 
 

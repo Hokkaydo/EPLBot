@@ -28,4 +28,12 @@ public class MirrorLink {
         return second;
     }
 
+    @Override
+    public String toString() {
+        return "MirrorLink{" +
+                       "first=" + first +
+                       ", second=" + second +
+                       '}';
+    }
+
 }

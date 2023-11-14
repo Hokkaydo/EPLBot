@@ -7,8 +7,6 @@ import java.util.List;
 
 public interface MirrorLinkRepository extends CRUDRepository<MirrorLink> {
 
-    List<MirrorLink> all();
-
     List<MirrorLink> readyById(Long id);
 
     void deleteByIds(Long idA, Long idB);
