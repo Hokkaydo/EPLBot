@@ -68,11 +68,12 @@ public class MirrorManager extends ListenerAdapter {
         if(event.getMessage().isEphemeral()) return;
         if(event.getMessage().getType().isSystem()) return;
         if(event.getMessage().isWebhookMessage()) return;
+        if(!event.getChannel().getType().isGuild()) return;
         // do not mirror already mirrored messages
         if(mirroredMessages.stream().flatMap(m -> m.getMessages().entrySet().stream()).anyMatch(m -> m.getKey() == 0 || m.getKey() == event.getMessageIdLong())) return;
         if(event.getMessage().getType().equals(MessageType.THREAD_STARTER_MESSAGE) || event.getMessage().getType().equals(MessageType.THREAD_CREATED)) {
             ThreadChannel threadChannel = event.getMessage().getChannel().asThreadChannel();
-            threadChannel.retrieveParentMessage().queue(parent -> mirrorLinkRepository.all().stream().filter(m -> m.has(event.getChannel().asThreadChannel().getParentMessageChannel())).forEach(mirror -> {
+            threadChannel.retrieveParentMessage().queue(parent -> mirrorLinkRepository.readAll().stream().filter(m -> m.has(event.getChannel().asThreadChannel().getParentMessageChannel())).forEach(mirror -> {
                 GuildMessageChannel other = mirror.other(parent.getChannel().asGuildMessageChannel());
                 mirroredMessages.stream()
                         .filter(m -> m.getMessages().values().stream().anyMatch(msg -> (msg.getOriginalMessageId() == parent.getIdLong()) && msg.getChannelId() == other.getIdLong()))
@@ -100,7 +101,7 @@ public class MirrorManager extends ListenerAdapter {
         boolean reply = event.getMessage().getType().equals(MessageType.INLINE_REPLY) && event.getMessage().getReferencedMessage() != null;
         MirroredMessage initial = new MirroredMessage(event.getMessage(), originalChannel);
         MirroredMessages messages = new MirroredMessages(initial, new HashMap<>());
-        mirrorLinkRepository.all().stream().filter(m -> m.has(originalChannel)).forEach(mirror -> {
+        mirrorLinkRepository.readAll().stream().filter(m -> m.has(originalChannel)).forEach(mirror -> {
             GuildMessageChannel other = mirror.other(originalChannel);
             MirroredMessage mirroredMessage = new MirroredMessage(event.getMessage(), other);
             Consumer<Message> sentMessage = m -> messages.mirrored.put(m.getIdLong(), mirroredMessage);
