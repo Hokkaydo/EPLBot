@@ -12,6 +12,7 @@ import com.github.hokkaydo.eplbot.module.eplcommand.EPLCommandModule;
 import com.github.hokkaydo.eplbot.module.globalcommand.GlobalCommandModule;
 import com.github.hokkaydo.eplbot.module.graderetrieve.ExamsRetrieveModule;
 import com.github.hokkaydo.eplbot.module.mirror.MirrorModule;
+import com.github.hokkaydo.eplbot.module.notice.NoticeModule;
 import com.github.hokkaydo.eplbot.module.quote.QuoteModule;
 import com.github.hokkaydo.eplbot.module.ratio.RatioModule;
 import com.github.hokkaydo.eplbot.module.rss.RssModule;
@@ -145,7 +146,8 @@ public class Main {
                 QuoteModule.class,
                 RssModule.class,
                 AutoPinModule.class,
-                RssModule.class
+                RssModule.class,
+                NoticeModule.class
         );
         List<Class<? extends Module>> eplModules = Arrays.asList(
                 EPLCommandModule.class,

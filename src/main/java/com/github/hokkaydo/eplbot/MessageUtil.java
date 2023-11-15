@@ -9,15 +9,28 @@ import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
 import net.dv8tion.jda.api.utils.FileUpload;
+import org.json.JSONObject;
 
 import java.awt.*;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.logging.Level;
 
 public class MessageUtil {
+
+    private static final String HASTEBIN_API_POST_URL = "https://hastebin.com/documents/";
+    private static final String HASTEBIN_SHARE_BASE_URL = "https://hastebin.com/share/%s";
+    private static final int HASTEBIN_MAX_CONTENT_LENGTH = 350_000;
+
+    private static HttpRequest.Builder hastebinPostRequest = null;
+
 
     public static EmbedBuilder toEmbed(Message message) {
         return new EmbedBuilder()
@@ -73,6 +86,30 @@ public class MessageUtil {
         return (hasNickname  ? authorMember.get().getNickname() + " (" : "") + user.getName() + (hasNickname ? ")" : "");
     }
 
+    /**
+     * Post content on Hastebin and return shareable link
+     * @param client an {@link HttpClient} initialized by the caller to make multiple calls on the same client
+     * @param data the content to post
+     * @return a {@link CompletableFuture} returning the shareable link or an empty string if an error arise
+     * */
+    public static CompletableFuture<String> hastebinPost(HttpClient client, String data) {
+        if(data.length() > HASTEBIN_MAX_CONTENT_LENGTH) throw new IllegalArgumentException("'data' should be shorted than %d".formatted(HASTEBIN_MAX_CONTENT_LENGTH));
+        if (hastebinPostRequest == null)
+            hastebinPostRequest = HttpRequest.newBuilder()
+                                          .header("Content-Type", "text/plain")
+                                          .header("Authorization", "Bearer " + System.getenv("HASTEBIN_API_TOKEN"))
+                                          .uri(URI.create(HASTEBIN_API_POST_URL));
+
+        return client.sendAsync(hastebinPostRequest.POST(HttpRequest.BodyPublishers.ofString(data)).build(), HttpResponse.BodyHandlers.ofString())
+                       .thenApply(HttpResponse::body)
+                       .thenApply(JSONObject::new)
+                       .thenApply(response -> {
+                           if (!response.has("key")) {
+                               return "";
+                           }
+                           return HASTEBIN_SHARE_BASE_URL.formatted(response.get("key"));
+                       });
+    }
     private record Tuple3<A, B, C>(A a, B b, C c) {}
 
 

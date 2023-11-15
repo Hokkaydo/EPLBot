@@ -1,5 +1,6 @@
 package com.github.hokkaydo.eplbot.module.eplcommand;
 
+import com.github.hokkaydo.eplbot.MessageUtil;
 import com.github.hokkaydo.eplbot.command.Command;
 import com.github.hokkaydo.eplbot.command.CommandContext;
 import com.github.hokkaydo.eplbot.configuration.repository.ConfigurationRepositorySQLite;
@@ -10,16 +11,13 @@ import com.github.hokkaydo.eplbot.module.graderetrieve.repository.CourseGroupRep
 import com.github.hokkaydo.eplbot.module.graderetrieve.repository.CourseRepositorySQLite;
 import com.github.hokkaydo.eplbot.module.graderetrieve.repository.ExamRetrieveThreadRepositorySQLite;
 import com.github.hokkaydo.eplbot.module.mirror.repository.MirrorLinkRepositorySQLite;
+import com.github.hokkaydo.eplbot.module.notice.repository.NoticeRepositorySQLite;
 import net.dv8tion.jda.api.entities.channel.concrete.PrivateChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
-import org.json.JSONObject;
 
-import java.net.URI;
 import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -31,8 +29,6 @@ import java.util.function.Supplier;
 public class DebugCommand implements Command {
 
     private static final Consumer<PrivateChannel> DEFAULT = c -> c.sendMessage("Unknown subcommand").queue();
-    private static final String HASTEBIN_API_POST_URL = "https://hastebin.com/documents/";
-    private static final String HASTEBIN_SHARE_BASE_URL = "https://hastebin.com/share/%s";
     private static final int HASTEBIN_MAX_CONTENT_LENGTH = 350_000;
     private static final Map<String, Consumer<PrivateChannel>> SUB_COMMANDS = Map.of(
             "dump_db", DebugCommand::dumpDB,
@@ -42,21 +38,19 @@ public class DebugCommand implements Command {
     );
 
     private static final CourseRepositorySQLite courseRepo = new CourseRepositorySQLite(DatabaseManager.getDataSource());
+    private static final CourseGroupRepositorySQLite groupRepo = new CourseGroupRepositorySQLite(DatabaseManager.getDataSource(), courseRepo);
 
     private static final List<CRUDRepository<?>> repositories = List.of(
             courseRepo,
-            new CourseGroupRepositorySQLite(DatabaseManager.getDataSource(), courseRepo),
+            groupRepo,
             new WarnedConfessionRepositorySQLite(DatabaseManager.getDataSource()),
             new ConfigurationRepositorySQLite(DatabaseManager.getDataSource()),
             new MirrorLinkRepositorySQLite(DatabaseManager.getDataSource()),
-            new ExamRetrieveThreadRepositorySQLite(DatabaseManager.getDataSource())
+            new ExamRetrieveThreadRepositorySQLite(DatabaseManager.getDataSource()),
+            new NoticeRepositorySQLite(courseRepo, groupRepo)
     );
 
     private static void dumpDB(PrivateChannel channel) {
-        HttpRequest.Builder request = HttpRequest.newBuilder()
-                                              .header("Content-Type", "text/plain")
-                                              .header("Authorization", "Bearer " + System.getenv("HASTEBIN_API_TOKEN"))
-                                              .uri(URI.create(HASTEBIN_API_POST_URL));
         HttpClient client = HttpClient.newHttpClient();
         Map<String, List<String>> output = new HashMap<>();
 
@@ -72,27 +66,15 @@ public class DebugCommand implements Command {
             if(s.toString().isBlank()) continue;
             String content = s.toString();
             while(content.length() > HASTEBIN_MAX_CONTENT_LENGTH) {
-                requests.add(hastebinPost(client, request, content.substring(0, HASTEBIN_MAX_CONTENT_LENGTH))
+                requests.add(MessageUtil.hastebinPost(client, content.substring(0, HASTEBIN_MAX_CONTENT_LENGTH))
                                      .thenAccept(link -> output.get(repository.getClass().getSimpleName()).add(link)));
                 content = content.substring(HASTEBIN_MAX_CONTENT_LENGTH);
             }
-            requests.add(hastebinPost(client, request, content).thenAccept(link -> output.get(repository.getClass().getSimpleName()).add(link)));
+            requests.add(MessageUtil.hastebinPost(client, content).thenAccept(link -> output.get(repository.getClass().getSimpleName()).add(link)));
 
         }
         requests.forEach(CompletableFuture::join);
         sendDBDumpMessage(channel, output);
-    }
-
-    private static CompletableFuture<String> hastebinPost(HttpClient client, HttpRequest.Builder request, String data) {
-        return client.sendAsync(request.POST(HttpRequest.BodyPublishers.ofString(data)).build(), HttpResponse.BodyHandlers.ofString())
-                       .thenApply(HttpResponse::body)
-                       .thenApply(JSONObject::new)
-                       .thenApply(response -> {
-                           if(!response.has("key")) {
-                               return "Hastebin error";
-                           }
-                           return HASTEBIN_SHARE_BASE_URL.formatted(response.get("key"));
-                       });
     }
 
     private static void sendDBDumpMessage(PrivateChannel channel, Map<String, List<String>> output) {
@@ -130,7 +112,7 @@ public class DebugCommand implements Command {
     }
 
     private static void dumpErrors(PrivateChannel channel) {
-        // TODO when implementing better logging
+        // TODO when implementing better slogging
     }
 
     private static void dump(PrivateChannel channel) {

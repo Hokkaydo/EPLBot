@@ -92,5 +92,16 @@
   "COMMAND_ISSUE_DESCRIPTION": "Permet d'envoyer une suggestion/bug sur le dépôt public.",
   "COMMAND_ISSUE_LABEL_OPTION_DESCRIPTION": "Label de l'issue",
   "COMMAND_ISSUE_FILE_OPTION_DESCRIPTION": "Fichier optionnel à ajouter à l'issue",
-  "COMMAND_CONFIG_HELP": "Permet la configuration et consultation des paramètres du bot spécifiques au serveur via `/config <name> <value>`.\n- Si la valeur est omise, la commande renverra la valeur actuelle du paramètre `<name>`. \n- Si les 2 paramètres sont omis, la configuration totale du serveur sera affichée.\n- Si le nom est omis mais pas la valeur, la commande renverra une erreur."
+  "COMMAND_CONFIG_HELP": "Permet la configuration et consultation des paramètres du bot spécifiques au serveur via `/config <name> <value>`.\n- Si la valeur est omise, la commande renverra la valeur actuelle du paramètre `<name>`. \n- Si les 2 paramètres sont omis, la configuration totale du serveur sera affichée.\n- Si le nom est omis, mais pas la valeur, la commande renverra une erreur.",
+  "COMMAND_NOTICE_SELECT_MESSAGE": "Veuillez sélectionner le cours pour lequel vous souhaitez donner/consulter un avis",
+  "COMMAND_NOTICE_DESCRIPTION": "Permet d'ajouter ou éditer un avis sur un cours / groupe",
+  "COMMAND_NOTICE_HELP": "Permet d'ajouter / éditer ou lire un avis sur :\n- un cours : identifié par son code cours (par exemple : AAAAA0000)\n- un groupe : permet de donner un avis général sur le tronc commun d'un quadrimestre ou une filière\nLe mode d'utilisation se spécifie via le paramètre `action`. Si le mode `read`, on peut spécifier le paramètre optionnel `date` pour préciser qu'on ne veut lire les avis ajoutés ou modifiés qu'après cette date. \n:warning: Ce paramètre doit nécessairement être sous la forme `yyyy-mm-dd` ou `yyyy-mm-dd HH:mm:ss`",
+  "COMMAND_NOTICE_OPTION_GROUP_DESCRIPTION": "Groupe du cours",
+  "COMMAND_NOTICE_OPTION_QUARTER_DESCRIPTION": "Quadrimestre du cours",
+  "COMMAND_NOTICE_OPTION_ACTION_DESCRIPTION": "Mode d'utilisation",
+  "COMMAND_NOTICE_OPTION_DATE_DESCRIPTION": "Plus ancienne date de modification",
+  "COMMAND_NOTICE_DATE_PARSING_ERROR": "La date spécifiée (%s) n'est pas au bon format. Veuillez respecter l'un des deux formats suivants : `yyyy-MM-dd` ou `yyyy-MM-dd HH:mm:ss`",
+  "COMMAND_NOTICE_UNKNOWN_SUBJECT_ID": "Le groupe ou cours spécifié n'existe pas. Les valeurs admises sont les codes de cours (e.g.: LEPL0000) et les identifiants de filière (MAP, INFO, GC, FYKI, MECA, ELEC, GBIO et common pour le tronc commun)",
+  "COMMAND_NOTICE_SUCCESSFUL": "Avis enregistré !",
+  "COMMAND_NOTICE_NO_NOTICE_FOUND": "Aucune notion enregistrée pour cette sélection"
 }
