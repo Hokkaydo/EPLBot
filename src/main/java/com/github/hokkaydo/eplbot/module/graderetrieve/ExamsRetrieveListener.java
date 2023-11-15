@@ -167,17 +167,17 @@ public class ExamsRetrieveListener extends ListenerAdapter {
         TextChannel channel = Main.getJDA().getChannelById(TextChannel.class, examsRetrieveChannelId);
         if(channel == null) return;
 
-        groupRepository.getByQuarters(selectedQuarterToRetrieve, selectedQuarterToRetrieve + 2, selectedQuarterToRetrieve + 4).forEach(group -> {
+        groupRepository.readByQuarters(selectedQuarterToRetrieve, selectedQuarterToRetrieve + 2, selectedQuarterToRetrieve + 4).forEach(group -> {
             List<List<Course>> courses = group.courses();
             for (List<Course> quadrimestreCourses : courses) {
                 for (Course course : quadrimestreCourses) {
 
                     channel.sendMessage(
-                                    THREAD_MESSAGE_FORMAT.formatted(course.code(), course.name(), quarterToYear(course.quarter()), group.englishName().toUpperCase())
+                                    THREAD_MESSAGE_FORMAT.formatted(course.code(), course.name(), quarterToYear(course.quarter()), group.groupCode().toUpperCase())
                             )
                             .queue(m -> {
                                 m.createThreadChannel(course.code()).queue();
-                                repository.create(new ExamsRetrieveThread(m.getIdLong(), EXAMEN_STORING_PATH_FORMAT.formatted(group.englishName(), course.quarter(), course.code())));
+                                repository.create(new ExamsRetrieveThread(m.getIdLong(), EXAMEN_STORING_PATH_FORMAT.formatted(group.groupCode(), course.quarter(), course.code())));
                             });
                 }
             }

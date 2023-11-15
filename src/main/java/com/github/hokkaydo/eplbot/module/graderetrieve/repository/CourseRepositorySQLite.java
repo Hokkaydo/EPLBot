@@ -2,17 +2,25 @@ package com.github.hokkaydo.eplbot.module.graderetrieve.repository;
 
 import com.github.hokkaydo.eplbot.module.graderetrieve.model.Course;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 
 import javax.sql.DataSource;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 public class CourseRepositorySQLite implements CourseRepository {
 
     private final JdbcTemplate jdbcTemplate;
     private static final RowMapper<Course> mapper = (rs, rowNum) -> new Course(
+            rs.getString("course_code"),
+            rs.getString("course_name"),
+            rs.getInt("quarter"),
+            rs.getInt("group_id")
+    );
+    private final ResultSetExtractor<Course> extractor = rs -> new Course(
             rs.getString("course_code"),
             rs.getString("course_name"),
             rs.getInt("quarter"),
@@ -46,7 +54,7 @@ public class CourseRepositorySQLite implements CourseRepository {
     }
 
     @Override
-    public List<List<Course>> getByGroupId(int id) {
+    public List<List<Course>> readByGroupId(int id) {
         List<Course> list = jdbcTemplate.query(
                 "SELECT * FROM courses WHERE group_id = ?",
                 mapper,
@@ -57,6 +65,11 @@ public class CourseRepositorySQLite implements CourseRepository {
             ret.get(course.quarter() - 1).add(course);
         }
         return ret;
+    }
+
+    @Override
+    public Optional<Course> getByCourseCode(String courseCode) {
+        return Optional.ofNullable(jdbcTemplate.query("SELECT * FROM courses WHERE course_code = ?", extractor,courseCode));
     }
 
     @Override

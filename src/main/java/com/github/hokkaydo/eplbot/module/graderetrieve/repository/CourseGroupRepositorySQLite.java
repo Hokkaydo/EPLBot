@@ -9,6 +9,7 @@ import javax.sql.DataSource;
 import java.sql.ResultSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public class CourseGroupRepositorySQLite implements CourseGroupRepository{
 
@@ -24,7 +25,7 @@ public class CourseGroupRepositorySQLite implements CourseGroupRepository{
     }
 
     @Override
-    public List<CourseGroup> getByQuarters(int... quarters) {
+    public List<CourseGroup> readByQuarters(int... quarters) {
         return jdbcTemplate.query(
                 "SELECT * FROM course_groups",
                 (ResultSet rs, int numRow) ->
@@ -38,11 +39,16 @@ public class CourseGroupRepositorySQLite implements CourseGroupRepository{
     }
 
     @Override
+    public Optional<CourseGroup> readByGroupCode(String groupCode) {
+        return readAll().stream().filter(g -> g.groupCode().equalsIgnoreCase(groupCode)).findFirst();
+    }
+
+    @Override
     public void create(CourseGroup... models) {
         for (CourseGroup model : models) {
             Number id = insert.executeAndReturnKey(
                     Map.of(
-                            "group_code", model.englishName(),
+                            "group_code", model.groupCode(),
                             "french_name", model.frenchName()
                     )
             );
@@ -61,7 +67,7 @@ public class CourseGroupRepositorySQLite implements CourseGroupRepository{
                                                                                  rs.getInt("id"),
                                                                                  rs.getString("group_code"),
                                                                                  rs.getString("french_name"),
-                                                                                 courseRepository.getByGroupId(numRow + 1)
+                                                                                 courseRepository.readByGroupId(numRow + 1)
                                                                          )
         );
     }
