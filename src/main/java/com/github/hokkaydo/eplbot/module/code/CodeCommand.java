@@ -1,5 +1,5 @@
 package com.github.hokkaydo.eplbot.module.code;
-import com.github.hokkaydo.eplbot.Config;
+import com.github.hokkaydo.eplbot.configuration.Config;
 import com.github.hokkaydo.eplbot.Strings;
 import com.github.hokkaydo.eplbot.command.Command;
 import com.github.hokkaydo.eplbot.command.CommandContext;
@@ -131,7 +131,7 @@ public class CodeCommand extends ListenerAdapter implements Command{
             FileWriter myWriter = new FileWriter(("%s"+File.separator+"responseCode.txt").formatted(TEMP_DIR));
             myWriter.write(bodyStr);
             myWriter.close();
-            return new File(("%s"+File.separator+"responseCode.txt").formatted(TEMP_DIR));;
+            return new File(("%s"+File.separator+"responseCode.txt").formatted(TEMP_DIR));
         } catch (IOException e){
             e.printStackTrace();
             return null;
