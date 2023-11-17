@@ -14,10 +14,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 public class MirrorModule extends Module {
 
 
+    private static final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
     private static final MirrorManager mirrorManager = new MirrorManager();
     private static int instanceCount = 0;
     private final MirrorLinkCommand mirrorLinkCommand;
@@ -66,10 +69,6 @@ public class MirrorModule extends Module {
         return Collections.singletonList(mirrorManager);
     }
 
-    public void loadMirrors() {
-       mirrorManager.loadLinks();
-    }
-
     static Map.Entry<GuildMessageChannel, GuildMessageChannel> validateChannels(CommandContext context) {
         Optional<OptionMapping> channelAOption = context.options().stream().filter(o -> o.getName().equals("channel_a")).findFirst();
         Optional<OptionMapping> channelBOption = context.options().stream().filter(o -> o.getName().equals("channel_b")).findFirst();
@@ -85,6 +84,10 @@ public class MirrorModule extends Module {
             return null;
         }
         return Map.entry(channelA, channelB);
+    }
+
+    static ScheduledExecutorService getExecutorService() {
+        return executor;
     }
 
 }

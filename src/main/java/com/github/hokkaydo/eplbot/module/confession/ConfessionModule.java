@@ -1,10 +1,13 @@
 package com.github.hokkaydo.eplbot.module.confession;
 
 import com.github.hokkaydo.eplbot.command.Command;
+import com.github.hokkaydo.eplbot.database.DatabaseManager;
 import com.github.hokkaydo.eplbot.module.Module;
+import com.github.hokkaydo.eplbot.module.confession.repository.WarnedConfessionRepositorySQLite;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.jetbrains.annotations.NotNull;
 
+import javax.sql.DataSource;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -19,7 +22,8 @@ public class ConfessionModule extends Module {
     public ConfessionModule(@NotNull Long guildId) {
         super(guildId);
         final Map<Long, Long> lastConfession = new HashMap<>();
-        this.processor = new ConfessionProcessor(guildId, lastConfession);
+        DataSource dataSource = DatabaseManager.getDataSource();
+        this.processor = new ConfessionProcessor(guildId, lastConfession, new WarnedConfessionRepositorySQLite(dataSource));
         confessionCommand = new ConfessionCommand(processor);
         confessionFollowCommand = new ConfessionFollowCommand(lastConfession, processor);
         clearConfessWarningsCommand = new ClearConfessWarningsCommand(processor);
