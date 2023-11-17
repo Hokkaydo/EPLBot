@@ -23,7 +23,15 @@ import java.util.regex.Pattern;
 public class JavaRunner implements Runner{
     private static final String OUTPUT_PATH = System.getProperty("user.dir")+File.separator+"src"+File.separator+"temp"+File.separator;
     private static final ScheduledExecutorService SCHEDULER = new ScheduledThreadPoolExecutor(1);
+    private static final String WRAPPER_TEMPLATE = """
+        import java.util.*;
+        import java.lang.Math;
 
+        public class Wrapper {
+            public static void main(String[] args){
+                %s
+            }
+        }""";
     @Override
     public String run(String input, Integer runTimeout) {
         if (!input.equals(safeImports(input))){
@@ -84,16 +92,7 @@ public class JavaRunner implements Runner{
         return !hasMainMethod && !hasClass;
     }
     public static String addWrapper(String input){
-        return """
-                import java.util.*;
-                import java.lang.Math;
-
-                public class Wrapper {
-                    public static void main(String[] args){""" + 
-                        input +
-                    """ 
-                    }
-                }""";
+        return WRAPPER_TEMPLATE.formatted(input);
     }
     public static void writeFile(String input, Path path) {
         try {

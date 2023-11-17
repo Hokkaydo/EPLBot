@@ -89,7 +89,7 @@ public class CodeCommand extends ListenerAdapter implements Command{
         performResponse(event.getMessageChannel(),runner.run(bodyStr, runTimeout));
     }
     private void performSubmit(MessageChannel textChannel, String bodyStr,String codeName){
-        if (!validateMessageLength(bodyStr)){
+        if (validateMessageLength(bodyStr)){
             sendWrappedCodeAsText(textChannel,bodyStr,codeName);
             return;
         }
@@ -98,14 +98,14 @@ public class CodeCommand extends ListenerAdapter implements Command{
             textChannel.sendMessage(Strings.getString("COMMAND_CODE_COULDNT_WRITE_THE_FILE")).queue();
             return;
         }
-        if (!validateFileSize(submitted)){
+        if (validateFileSize(submitted)){
             sendSubmittedAsFile(textChannel,submitted);
             return;
         }
         textChannel.sendMessage(Strings.getString("COMMAND_CODE_EXCEEDED_FILE_SIZE")).queue();
     }
     private void performResponse(MessageChannel textChannel, String result){
-        if (!validateMessageLength(result)){
+        if (validateMessageLength(result)){
             textChannel.sendMessage("`"+result+"`").queue();
             return;
         }
@@ -114,7 +114,7 @@ public class CodeCommand extends ListenerAdapter implements Command{
             textChannel.sendMessage(Strings.getString("COMMAND_CODE_COULDNT_WRITE_THE_FILE")).queue();
             return;
         }
-        if (!validateFileSize(submitted)){
+        if (validateFileSize(submitted)){
             sendResponseAsFile(textChannel,submitted);
             return;
         }
@@ -124,7 +124,7 @@ public class CodeCommand extends ListenerAdapter implements Command{
         textChannel.sendMessage("```"+codeName.toLowerCase()+"\n"+bodyStr+"\n```").queue();
     }
     private boolean validateMessageLength(String content){
-        return content.length() >= 2000;
+        return content.length() < 2000;
     }
     private File createWrappedCodeAsFile(String bodyStr){
         try {
@@ -158,7 +158,7 @@ public class CodeCommand extends ListenerAdapter implements Command{
     }
     private boolean validateFileSize(File file){
         long fileSizeInBytes = file.length();
-        return fileSizeInBytes > MAX_SENT_FILE_SIZE;
+        return fileSizeInBytes <= MAX_SENT_FILE_SIZE;
     }
     
     private Optional<String> readFromFile(File file) {
