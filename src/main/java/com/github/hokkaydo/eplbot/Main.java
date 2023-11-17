@@ -72,7 +72,7 @@ public class Main {
             Activity.playing("faire la pédicure des Rois"),
             Activity.playing("chercher un modèle DB adapté pour stocker votre égo"),
             Activity.playing("relire toutes les confessions"),
-            Activity.playing("Please wait, your data are sent to Google ..."),
+            Activity.playing("Please wait, your messages are being sent to UCLouvain ..."),
             Activity.playing("chercher du sens sous la place des Sciences"),
             Activity.of(Activity.ActivityType.LISTENING, "Apocalypse894", "https://open.spotify.com/track/0A6FdQB9XVIbjP6Kr4vsa1?si=8cbfc79518df45d1"),
             Activity.competing("Affond 13h"),
