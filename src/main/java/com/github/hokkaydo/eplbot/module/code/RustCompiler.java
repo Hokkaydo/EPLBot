@@ -36,14 +36,14 @@ public class RustCompiler implements Runner{
 
         } catch (IOException e) {
             e.printStackTrace();
-            return "Server error code R01" + e.toString();
+            return "Server error code R01" + e;
         }
         int compileExitCode;
         try{
             compileExitCode = compile.waitFor();
         }catch (InterruptedException e){
             e.printStackTrace();
-            return "Server error code R02" + e.toString();
+            return "Server error code R02" + e;
         }
         BufferedReader reader = new BufferedReader(new InputStreamReader(compile.getInputStream()));
         String line;
@@ -53,7 +53,7 @@ public class RustCompiler implements Runner{
             }
         } catch (IOException e){
             e.printStackTrace();
-            return "Server error code R03" + e.toString();
+            return "Server error code R03" + e;
         }
 
         if (compileExitCode != 0) {
@@ -71,7 +71,7 @@ public class RustCompiler implements Runner{
             run = new ProcessBuilder(new File(CURRENT_DIR, executableFileName).getAbsolutePath()).directory(new File(CURRENT_DIR)).redirectErrorStream(true).start();
         } catch (IOException e){
             e.printStackTrace();
-            return "Server error code R04" + e.toString();
+            return "Server error code R04" + e;
         }
 
         BufferedReader reader2 = new BufferedReader(new InputStreamReader(run.getInputStream()));
@@ -84,9 +84,11 @@ public class RustCompiler implements Runner{
         } catch (IOException e){
             e.printStackTrace();
             Thread.currentThread().interrupt();
-            return "Server error code R05" + e.toString();
+            return "Server error code R05" + e;
         }
-
+        System.out.println(timeOut.isDone());
+        System.out.println(runTimeout);
+        System.out.println(timeOut.toString());
         if (!timeOut.isDone()) {
             deleteFiles();
             Thread.currentThread().interrupt();
@@ -95,6 +97,7 @@ public class RustCompiler implements Runner{
         deleteFiles();
         String output = outputStream.toString().trim();
         Thread.currentThread().interrupt();
+        System.out.println(output);
         if (output.isEmpty()) {
             return "Run failed: Timelimit exceeded "+ runTimeout +" s";
         } else {

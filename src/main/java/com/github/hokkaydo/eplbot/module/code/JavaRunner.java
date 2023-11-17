@@ -69,10 +69,6 @@ public class JavaRunner implements Runner{
         timeOut.cancel(true);
         deleteFiles( className);
         return outputStream.toString();
-            
-
-
-
     }
     
     public static void deleteFiles(String className) {
@@ -85,14 +81,7 @@ public class JavaRunner implements Runner{
     public static boolean requiresWrapper(String javaCode) {
         boolean hasClass = Pattern.compile("\\bpublic\\s+class\\s+[A-Z][a-zA-Z0-9]*").matcher(javaCode).find();
         boolean hasMainMethod = Pattern.compile("\\bpublic\\s+static\\s+void\\s+main\\s*\\(\\s*String\\[\\]\\s+[a-zA-Z0-9]*\\s*\\)").matcher(javaCode).find();
-        boolean hasImports = Pattern.compile("\\bimport\\s+[a-zA-Z0-9.]+").matcher(javaCode).find();
-        if (hasClass && hasMainMethod) {
-            return false;
-        } else if (hasImports) {
-            return false;
-        } else {
-            return true;
-        }
+        return !hasMainMethod && !hasClass;
     }
     public static String addWrapper(String input){
         return """

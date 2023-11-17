@@ -46,7 +46,7 @@ public class PythonRunner implements Runner {
             if (outProcess.isEmpty()) {
                 return "Run failed: Timelimit exceeded " + runTimeout + " s";
             } else {
-                return "Run failed:\n" + outProcess;
+                return "Run succeeded:\n" + outProcess;
             }
         }
         deleteFiles();

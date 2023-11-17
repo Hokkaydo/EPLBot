@@ -34,14 +34,12 @@ import java.util.Map;
 
 public class CodeCommand extends ListenerAdapter implements Command{
     private static final String TEMP_DIR = System.getProperty("user.dir")+File.separator+"src"+File.separator+"temp";
-    private final Map<String, Runner> RUNNER_MAP;
-    public CodeCommand() {
-        RUNNER_MAP = Map.of(
+    private static final Map<String, Runner> RUNNER_MAP = Map.of(
             "python", new PythonRunner(),
             "rust", new RustCompiler(),
             "java", new JavaRunner()
         );
-    }
+    private static final long MAX_SENT_FILE_SIZE = 8L * 1024 * 1024; 
     @Override
     public void executeCommand(CommandContext context) {
         Guild guild = context.interaction().getGuild();
@@ -58,7 +56,7 @@ public class CodeCommand extends ListenerAdapter implements Command{
                 .get(0)
                 .getAsAttachment()
                 .getProxy()
-                .downloadToFile(new File("%s"+File.pathSeparator+"input.txt".formatted(TEMP_DIR)))
+                .downloadToFile(new File(("%s"+File.pathSeparator+"input.txt").formatted(TEMP_DIR)))
                 .thenAcceptAsync(file -> {
                     String content = readFromFile(file).orElse("");
                     Runner runner = RUNNER_MAP.get(context.options().get(1).getAsString());
@@ -91,57 +89,49 @@ public class CodeCommand extends ListenerAdapter implements Command{
         performResponse(event.getMessageChannel(),runner.run(bodyStr, runTimeout));
     }
     private void performSubmit(MessageChannel textChannel, String bodyStr,String codeName){
-        if (!messageLengthCheck(bodyStr)){
-            sendSubmittedAsText(textChannel,bodyStr,codeName);
+        if (!validateMessageLength(bodyStr)){
+            sendWrappedCodeAsText(textChannel,bodyStr,codeName);
             return;
         }
-        File submitted = createSubmittedAsFile(bodyStr);
-        if (!exceed8mbOfData(submitted)){
-            if (submitted != null){
-                sendSubmittedAsFile(textChannel,submitted);
-                return;
-            }
-            sendErrorMessage(textChannel,Strings.getString("COMMAND_CODE_COULDNT_WRITE_THE_FILE"));
+        File submitted = createWrappedCodeAsFile(bodyStr);
+        if (submitted == null){
+            textChannel.sendMessage(Strings.getString("COMMAND_CODE_COULDNT_WRITE_THE_FILE")).queue();
             return;
-        }            
-        sendErrorMessage(textChannel,Strings.getString("COMMAND_CODE_EXCEEDEDFILESIZE"));
+        }
+        if (!validateFileSize(submitted)){
+            sendSubmittedAsFile(textChannel,submitted);
+            return;
+        }
+        textChannel.sendMessage(Strings.getString("COMMAND_CODE_EXCEEDED_FILE_SIZE")).queue();
     }
     private void performResponse(MessageChannel textChannel, String result){
-        if (!messageLengthCheck(result)){
-            sendResponseAsText(textChannel,result);
+        if (!validateMessageLength(result)){
+            textChannel.sendMessage("`"+result+"`").queue();
             return;
         }
         File submitted = createResponseAsFile(result);
-        if (!exceed8mbOfData(submitted)){
-            
-            if (submitted != null){
-                sendResponseAsFile(textChannel,submitted);
-                return;
-            }
-            sendErrorMessage(textChannel,Strings.getString("COMMAND_CODE_COULDNT_WRITE_THE_FILE"));
+        if (submitted == null){
+            textChannel.sendMessage(Strings.getString("COMMAND_CODE_COULDNT_WRITE_THE_FILE")).queue();
             return;
-        }            
-        sendErrorMessage(textChannel,Strings.getString("COMMAND_CODE_EXCEEDEDFILESIZE"));
+        }
+        if (!validateFileSize(submitted)){
+            sendResponseAsFile(textChannel,submitted);
+            return;
+        }
+        textChannel.sendMessage(Strings.getString("COMMAND_CODE_EXCEEDED_FILE_SIZE")).queue();
     }
-    private void sendErrorMessage(MessageChannel textChannel, String content){
-        textChannel.sendMessage(content).queue();
-    }
-    private void sendSubmittedAsText(MessageChannel textChannel, String bodyStr, String codeName){
+    private void sendWrappedCodeAsText(MessageChannel textChannel, String bodyStr, String codeName){
         textChannel.sendMessage("```"+codeName.toLowerCase()+"\n"+bodyStr+"\n```").queue();
     }
-    private void sendResponseAsText(MessageChannel textChannel, String result){
-        textChannel.sendMessage("`"+result+"`").queue();
-    }
-    private boolean messageLengthCheck(String content){
+    private boolean validateMessageLength(String content){
         return content.length() >= 2000;
     }
-    private File createSubmittedAsFile(String bodyStr){
+    private File createWrappedCodeAsFile(String bodyStr){
         try {
-            FileWriter myWriter = new FileWriter("%s"+File.pathSeparator+"responseCode.txt".formatted(TEMP_DIR));
+            FileWriter myWriter = new FileWriter(("%s"+File.separator+"responseCode.txt").formatted(TEMP_DIR));
             myWriter.write(bodyStr);
             myWriter.close();
-            File serverFile = new File("%s"+File.pathSeparator+"responseCode.txt".formatted(TEMP_DIR));
-            return serverFile;
+            return new File(("%s"+File.separator+"responseCode.txt").formatted(TEMP_DIR));;
         } catch (IOException e){
             e.printStackTrace();
             return null;
@@ -153,11 +143,10 @@ public class CodeCommand extends ListenerAdapter implements Command{
     }
     private File createResponseAsFile(String result){
         try {
-            FileWriter myWriter = new FileWriter("%s"+File.pathSeparator+"result.txt".formatted(TEMP_DIR));
+            FileWriter myWriter = new FileWriter(("%s"+File.separator+"result.txt").formatted(TEMP_DIR));
             myWriter.write(result);
             myWriter.close();
-            File serverFile = new File("%s"+File.pathSeparator+"result.txt".formatted(TEMP_DIR));
-            return serverFile;
+            return new File(("%s"+File.separator+"result.txt").formatted(TEMP_DIR));
         } catch (IOException e){
             e.printStackTrace();
             return null;
@@ -167,10 +156,9 @@ public class CodeCommand extends ListenerAdapter implements Command{
         FileUpload file = FileUpload.fromData(serverFile,"result.txt");
         textChannel.sendFiles(file).queue(s -> serverFile.delete());
     }
-    private boolean exceed8mbOfData(File file){
+    private boolean validateFileSize(File file){
         long fileSizeInBytes = file.length();
-        long eightMBInBytes = 8L * 1024 * 1024; 
-        return fileSizeInBytes > eightMBInBytes;
+        return fileSizeInBytes > MAX_SENT_FILE_SIZE;
     }
     
     private Optional<String> readFromFile(File file) {
