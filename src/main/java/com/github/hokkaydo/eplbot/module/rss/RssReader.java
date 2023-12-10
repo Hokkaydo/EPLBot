@@ -1,6 +1,6 @@
 package com.github.hokkaydo.eplbot.module.rss;
 
-import com.github.hokkaydo.eplbot.Config;
+import com.github.hokkaydo.eplbot.configuration.Config;
 import com.github.hokkaydo.eplbot.Main;
 import com.github.hokkaydo.eplbot.MessageUtil;
 import com.github.hokkaydo.eplbot.Strings;

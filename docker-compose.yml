@@ -1,10 +1,12 @@
 services:
     eplbot:
-        image: eplbot
+        image: hokkaydo/eplbot
+        restart: unless-stopped
         volumes:
-            - eplbot_persistence:/home/eplbot/persistence
-        env_file:
-            -   variables.env
-volumes:
-    eplbot_persistence:
-        external: true
+            - /home/docker/data/eplbot:/home/eplbot/persistence
+        environment:
+            - DISCORD_BOT_TOKEN=${EPLBOT_TOKEN}
+            - GITHUB_APPLICATION_ID=${EPLBOT_GITHUBID}
+            - GITHUB_APPLICATION_INSTALLATION_ID=${EPLBOT_INSTALLID}
+            - TEST_DISCORD_ID=${EPLBOT_DISCORDID}
+        

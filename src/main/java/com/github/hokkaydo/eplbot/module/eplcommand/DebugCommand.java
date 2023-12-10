@@ -1,54 +1,123 @@
 package com.github.hokkaydo.eplbot.module.eplcommand;
 
-import com.github.hokkaydo.eplbot.Config;
+import com.github.hokkaydo.eplbot.MessageUtil;
 import com.github.hokkaydo.eplbot.command.Command;
 import com.github.hokkaydo.eplbot.command.CommandContext;
-import com.github.hokkaydo.eplbot.module.confession.ConfessionProcessor;
-import com.github.hokkaydo.eplbot.module.graderetrieve.ExamsRetrieveListener;
-import com.github.hokkaydo.eplbot.module.mirror.MirrorManager;
+import com.github.hokkaydo.eplbot.configuration.repository.ConfigurationRepositorySQLite;
+import com.github.hokkaydo.eplbot.database.CRUDRepository;
+import com.github.hokkaydo.eplbot.database.DatabaseManager;
+import com.github.hokkaydo.eplbot.module.confession.repository.WarnedConfessionRepositorySQLite;
+import com.github.hokkaydo.eplbot.module.graderetrieve.repository.CourseGroupRepositorySQLite;
+import com.github.hokkaydo.eplbot.module.graderetrieve.repository.CourseRepositorySQLite;
+import com.github.hokkaydo.eplbot.module.graderetrieve.repository.ExamRetrieveThreadRepositorySQLite;
+import com.github.hokkaydo.eplbot.module.mirror.repository.MirrorLinkRepositorySQLite;
+import com.github.hokkaydo.eplbot.module.notice.repository.NoticeRepositorySQLite;
+import net.dv8tion.jda.api.entities.channel.concrete.PrivateChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
+import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import java.net.http.HttpClient;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class DebugCommand implements Command {
 
-    @Override
-    public void executeCommand(CommandContext context) {
-        long bossId = 347348560389603329L;
-        if(context.author().getIdLong() != bossId) {
-            context.replyCallbackAction().setContent("You're not allowed to execute this commande (only my boss can use it)").queue();
-            return;
-        }
-        List<String> filesNames = List.of(MirrorManager.MIRROR_STORAGE_PATH.toString(), ConfessionProcessor.WARNED_CONFESSION_STORAGE_PATH.toString(), Config.CONFIG_PATH, ExamsRetrieveListener.MESSAGE_IDS_STORAGE_PATH.toString());
-        context.author().getUser().openPrivateChannel().queue(channel -> {
-            for (String filesName : filesNames) {
-                StringBuilder stringBuilder = new StringBuilder();
-                try {
-                    readFile(filesName).forEach(s -> stringBuilder.append(s).append("\n"));
-                } catch (IOException e) {
-                    channel.sendMessage("Error while reading %s".formatted(filesName)).queue();
-                    continue;
-                }
-                channel.sendMessage("---------------- %s ----------------%n%s".formatted(filesName, stringBuilder.toString())).queue();
+    private static final Consumer<PrivateChannel> DEFAULT = c -> c.sendMessage("Unknown subcommand").queue();
+    private static final int HASTEBIN_MAX_CONTENT_LENGTH = 350_000;
+    private static final Map<String, Consumer<PrivateChannel>> SUB_COMMANDS = Map.of(
+            "dump_db", DebugCommand::dumpDB,
+            "dump_errors", DebugCommand::dumpErrors,
+            "dump", DebugCommand::dump,
+            "regenerate_db", DebugCommand::regenerateDB
+    );
+
+    private static final CourseRepositorySQLite courseRepo = new CourseRepositorySQLite(DatabaseManager.getDataSource());
+    private static final CourseGroupRepositorySQLite groupRepo = new CourseGroupRepositorySQLite(DatabaseManager.getDataSource(), courseRepo);
+
+    private static final List<CRUDRepository<?>> repositories = List.of(
+            courseRepo,
+            groupRepo,
+            new WarnedConfessionRepositorySQLite(DatabaseManager.getDataSource()),
+            new ConfigurationRepositorySQLite(DatabaseManager.getDataSource()),
+            new MirrorLinkRepositorySQLite(DatabaseManager.getDataSource()),
+            new ExamRetrieveThreadRepositorySQLite(DatabaseManager.getDataSource()),
+            new NoticeRepositorySQLite(courseRepo, groupRepo)
+    );
+
+    private static void dumpDB(PrivateChannel channel) {
+        HttpClient client = HttpClient.newHttpClient();
+        Map<String, List<String>> output = new HashMap<>();
+
+        List<CompletableFuture<Void>> requests = new ArrayList<>();
+
+        for (CRUDRepository<?> repository : repositories) {
+            output.computeIfAbsent(repository.getClass().getSimpleName(), s -> new ArrayList<>());
+            StringBuilder s = new StringBuilder();
+
+            for (Object o : repository.readAll()) {
+                s.append(o).append("\n");
             }
-        });
+            if(s.toString().isBlank()) continue;
+            String content = s.toString();
+            while(content.length() > HASTEBIN_MAX_CONTENT_LENGTH) {
+                requests.add(MessageUtil.hastebinPost(client, content.substring(0, HASTEBIN_MAX_CONTENT_LENGTH))
+                                     .thenAccept(link -> output.get(repository.getClass().getSimpleName()).add(link)));
+                content = content.substring(HASTEBIN_MAX_CONTENT_LENGTH);
+            }
+            requests.add(MessageUtil.hastebinPost(client, content).thenAccept(link -> output.get(repository.getClass().getSimpleName()).add(link)));
+
+        }
+        requests.forEach(CompletableFuture::join);
+        sendDBDumpMessage(channel, output);
     }
 
-    private List<String> readFile(String fileName) throws IOException {
-        BufferedReader reader = new BufferedReader(new FileReader(fileName));
-        List<String> lines = new ArrayList<>();
-        String s;
-        while((s=reader.readLine()) != null) {
-            lines.add(s);
+    private static void sendDBDumpMessage(PrivateChannel channel, Map<String, List<String>> output) {
+        StringBuilder message = new StringBuilder("--------------- DUMP DATABASE ---------------\n");
+        for (Map.Entry<String, List<String>> entry : output.entrySet()) {
+            String padding = " ".repeat(20);
+            message
+                    .append("- ")
+                    .append(entry.getKey())
+                    .append(padding)
+                    .append(listToString(entry.getValue()))
+                    .append("\n");
         }
-        return lines;
+        message.append("---------------------------------------------");
+        channel.sendMessage(message).queue();
+    }
+
+    private static String listToString(List<String> list) {
+        if(list.isEmpty()) return "Empty repository";
+        String first = list.get(0);
+        list.remove(0);
+        return first + list.stream().reduce("", (a,b) -> a + " - " + b);
+    }
+
+    @Override
+    public void executeCommand(CommandContext context) {
+        String sub = context.options().get(0).getAsString();
+        context.author().getUser().openPrivateChannel().queue(c -> SUB_COMMANDS.getOrDefault(sub, DEFAULT).accept(c));
+        context.replyCallbackAction().setContent("Done !").queue();
+    }
+
+
+    private static void regenerateDB(PrivateChannel channel) {
+        DatabaseManager.regenerateDatabase(true);
+    }
+
+    private static void dumpErrors(PrivateChannel channel) {
+        // TODO when implementing better slogging
+    }
+
+    private static void dump(PrivateChannel channel) {
+        dumpDB(channel);
+        dumpErrors(channel);
     }
 
     @Override
@@ -63,7 +132,12 @@ public class DebugCommand implements Command {
 
     @Override
     public List<OptionData> getOptions() {
-        return Collections.emptyList();
+        return List.of(new OptionData(OptionType.STRING, "subcommand", "Subcommand to execute", true)
+                               .addChoice("dump_db", "dump_db")
+                               .addChoice("dump_errors", "dump_errors")
+                               .addChoice("dump", "dump")
+                               .addChoice("regenerate_db", "regenerate_db")
+        );
     }
 
     @Override
