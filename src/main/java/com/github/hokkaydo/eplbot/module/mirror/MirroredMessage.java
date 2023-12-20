@@ -72,8 +72,8 @@ public class MirroredMessage {
                 textChannel,
                 members,
                 () -> createWebhook(textChannel, members, () -> checkBanTimeOut(originalMessage.getAuthor(), () -> createAndSendMessage(replyTo, members, sentMessage))),
-                () -> checkBanTimeOut(originalMessage.getAuthor(), () -> createAndSendMessage(replyTo, members, sentMessage)))
-        );
+                () -> checkBanTimeOut(originalMessage.getAuthor(), () -> createAndSendMessage(replyTo, members, sentMessage))
+        ));
     }
 
     private void createAndSendMessage(Message replyTo, List<Member> members, Consumer<Message> sentMessage) {
@@ -106,10 +106,28 @@ public class MirroredMessage {
                         () -> sendMessage(action.get(), originalMessage, sentMessage));
     }
 
+    private void cleanWebhooks(TextChannel channel, List<Member> members, Runnable noSimilarWebhookFound, Runnable similarWebhookFound) {
+        channel.retrieveWebhooks().queue(webhooks -> {
+            Optional<Webhook> webhookOpt = webhooks.stream().sorted(Comparator.comparing(ISnowflake::getTimeCreated).reversed()).filter(w -> w.getName().equals(MessageUtil.nameAndNickname(members, originalMessage.getAuthor()))).findFirst();
+            if (webhookOpt.isPresent() && webhookOpt.get().getToken() != null) {
+                this.webhook = new WebhookWithMessage((WebhookImpl) webhookOpt.get());
+                similarWebhookFound.run();
+                return;
+            }
+            if (webhooks.size() >= 10)
+                webhooks.stream().filter(w -> w.getOwner() != null && w.getOwner().getIdLong() == Main.getJDA().getSelfUser().getIdLong())
+                        .sorted(Comparator.comparing(ISnowflake::getTimeCreated))
+                        .limit(5)
+                        .map(Webhook::delete)
+                        .forEach(RestAction::queue);
+            noSimilarWebhookFound.run();
+        });
+    }
+
     private void createWebhook(TextChannel textChannel, List<Member> members, Runnable then) {
         ImageProxy avatarProxy = originalMessage.getAuthor().getAvatar();
         CompletableFuture<InputStream> avatarFuture = avatarProxy == null ? CompletableFuture.completedFuture(null) : avatarProxy.download();
-        textChannel.createWebhook(originalMessage.getAuthor().getName()).queue(w -> avatarFuture.thenAccept(is -> {
+        textChannel.createWebhook(MessageUtil.nameAndNickname(members, originalMessage.getAuthor())).queue(w -> avatarFuture.thenAccept(is -> {
             try {
                 WebhookManager manager = w.getManager().setName(MessageUtil.nameAndNickname(members, originalMessage.getAuthor())).setChannel((TextChannel) channel);
                 if (is != null)
@@ -125,24 +143,6 @@ public class MirroredMessage {
                 Main.LOGGER.log(Level.WARNING, "Could not send webhook files");
             }
         }));
-    }
-
-    private void cleanWebhooks(TextChannel channel, List<Member> members, Runnable noSimilarWebhookFound, Runnable similarWebhookFound) {
-        channel.retrieveWebhooks().queue(webhooks -> {
-            Optional<Webhook> webhookOpt = webhooks.stream().filter(w -> w.getName().equals(MessageUtil.nameAndNickname(members, originalMessage.getAuthor()))).findFirst();
-            if (webhookOpt.isPresent()) {
-                this.webhook = new WebhookWithMessage((WebhookImpl) webhookOpt.get());
-                similarWebhookFound.run();
-                return;
-            }
-            if (webhooks.size() >= 10)
-                webhooks.stream().filter(w -> w.getOwner() != null && w.getOwner().getIdLong() == Main.getJDA().getSelfUser().getIdLong())
-                        .sorted(Comparator.comparing(ISnowflake::getTimeCreated))
-                        .limit(5)
-                        .map(Webhook::delete)
-                        .forEach(RestAction::queue);
-            noSimilarWebhookFound.run();
-        });
     }
 
     private void sendMessage(WebhookMessageCreateAction<Message> messageToSend, Message initialMessage, Consumer<Message> sentMessage) {
