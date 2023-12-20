@@ -50,12 +50,11 @@ public class Main {
     private static ModuleManager moduleManager;
     private static CommandManager commandManager;
     public static final Long EPL_DISCORD_ID = 517720163223601153L;
-    private static Long testDiscordId;
-    private static final Long SINF_DISCORD_ID = 492762354111479828L;
     private static Long prodDiscordId = 0L;
     public static final String PERSISTENCE_DIR_PATH = "./persistence";
     private static final Random RANDOM = new Random();
     public static final Logger LOGGER = Logger.getLogger("EPLBot");
+    private static List<Long> specialDiscordIds;
 
     private static final List<Activity> status = List.of(
             Activity.playing("bâtir des ponts (solides) entre nous et le ciel"),
@@ -89,8 +88,10 @@ public class Main {
         LOGGER.log(Level.INFO, "--------- START ---------");
         String token = System.getenv("DISCORD_BOT_TOKEN");
         String testDiscordIdStr = System.getenv("TEST_DISCORD_ID");
-        testDiscordId = testDiscordIdStr == null ? 1108141461498777722L : Long.parseLong(testDiscordIdStr);
+        Long testDiscordId = testDiscordIdStr == null ? 1108141461498777722L : Long.parseLong(testDiscordIdStr);
         prodDiscordId = testDiscordIdStr == null ? EPL_DISCORD_ID : testDiscordId;
+        specialDiscordIds = List.of(prodDiscordId, testDiscordId);
+
         if (token == null && args.length > 0) token = args[0];
         if (token == null) throw new IllegalStateException("No token specified !");
         moduleManager = new ModuleManager();
@@ -156,9 +157,8 @@ public class Main {
                 RatioModule.class
         );
         Map<Long, List<Command>> guildCommands = new HashMap<>();
-        for (Long guildId : List.of(EPL_DISCORD_ID, testDiscordId)) {
-            Guild guild = jda.getGuildById(guildId);
-            if (eplModuleRegisteredGuilds.contains(guildId) || guild == null) continue;
+        for (Long guildId : specialDiscordIds) {
+            if (eplModuleRegisteredGuilds.contains(guildId)) continue;
             eplModuleRegisteredGuilds.add(guildId);
             guildCommands.put(guildId, new ArrayList<>());
             List<Module> modules = eplModules.stream()
@@ -170,9 +170,11 @@ public class Main {
             moduleManager.addModules(modules);
         }
 
-        for (Long guildId : List.of(EPL_DISCORD_ID, testDiscordId, SINF_DISCORD_ID)) {
-            Guild guild = jda.getGuildById(guildId);
-            if (globalModuleRegisteredGuilds.contains(guildId) || guild == null) continue;
+        List<Long> guildIds = new ArrayList<>(jda.getGuilds().stream().map(Guild::getIdLong).toList());
+        guildIds.addAll(specialDiscordIds);
+
+        for (Long guildId : guildIds) {
+            if (globalModuleRegisteredGuilds.contains(guildId)) continue;
             if (!guildCommands.containsKey(guildId)) {
                 guildCommands.put(guildId, new ArrayList<>());
             }
@@ -185,6 +187,7 @@ public class Main {
             modules.forEach(m -> guildCommands.get(guildId).addAll(m.getCommands()));
             moduleManager.addModules(modules);
         }
+
         for (Map.Entry<Long, List<Command>> guildListEntry : guildCommands.entrySet()) {
             Guild guild = jda.getGuildById(guildListEntry.getKey());
             if (guild == null) continue;

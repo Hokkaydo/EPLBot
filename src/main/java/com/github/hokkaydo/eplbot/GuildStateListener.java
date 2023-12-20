@@ -10,6 +10,7 @@ public class GuildStateListener extends ListenerAdapter {
     @Override
     public void onGuildJoin(@NotNull GuildJoinEvent event) {
         Main.registerModules();
+        Main.getCommandManager().refreshCommands(event.getGuild());
     }
 
     @Override
