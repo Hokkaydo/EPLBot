@@ -131,6 +131,38 @@ public class Config {
                         Object::toString,
                         Integer::valueOf,
                         INTEGER_FORMAT
+                ),
+                "EARLY_BIRD_ROLE_ID", new ConfigurationParser(
+                        () -> 0L,
+                        Object::toString,
+                        Long::parseLong,
+                        INTEGER_FORMAT
+                ),
+                "EARLY_BIRD_CHANNEL_ID", new ConfigurationParser(
+                        () -> 0L,
+                        Object::toString,
+                        Long::parseLong,
+                        INTEGER_FORMAT
+                ),
+                "EARLY_BIRD_RANGE_START_DAY_SECONDS", new ConfigurationParser(
+                        () -> 6*60*60L,
+                        Object::toString,
+                        Long::parseLong,
+                        INTEGER_FORMAT
+                ),
+                "EARLY_BIRD_RANGE_END_DAY_SECONDS", new ConfigurationParser(
+                        () -> 9*60*60L,
+                        Object::toString,
+                        Long::parseLong,
+                        INTEGER_FORMAT
+                )
+        ));
+        DEFAULT_CONFIGURATION.putAll(Map.of(
+                "EARLY_BIRD_MESSAGE_PROBABILITY", new ConfigurationParser(
+                        () -> 33,
+                        Object::toString,
+                        Integer::parseInt,
+                        INTEGER_FORMAT
                 )
         ));
         DEFAULT_CONFIGURATION.putAll(Map.of(
@@ -144,6 +176,9 @@ public class Config {
                 "examsretrieve", MODULE_DISABLED.get(),
                 "ratio", MODULE_DISABLED.get(),
                 "notice", MODULE_DISABLED.get()
+        ));
+        DEFAULT_CONFIGURATION.putAll(Map.of(
+                "earlybird", MODULE_DISABLED.get()
         ));
     }
     private static final Map<Long, Map<String, Object>> GUILD_CONFIGURATION = new HashMap<>();

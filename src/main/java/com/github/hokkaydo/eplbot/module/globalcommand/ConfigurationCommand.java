@@ -1,9 +1,9 @@
 package com.github.hokkaydo.eplbot.module.globalcommand;
 
-import com.github.hokkaydo.eplbot.configuration.Config;
 import com.github.hokkaydo.eplbot.Strings;
 import com.github.hokkaydo.eplbot.command.Command;
 import com.github.hokkaydo.eplbot.command.CommandContext;
+import com.github.hokkaydo.eplbot.configuration.Config;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
@@ -64,8 +64,7 @@ public class ConfigurationCommand implements Command {
     @Override
     public List<OptionData> getOptions() {
         return Arrays.asList(
-                new OptionData(OptionType.STRING, "key", Strings.getString("COMMAND_CONFIG_OPTION_KEY_DESCRIPTION"), false)
-                        .addChoices(Config.getDefaultConfiguration().keySet().stream().map(s -> new net.dv8tion.jda.api.interactions.commands.Command.Choice(s, s)).toList()),
+                new OptionData(OptionType.STRING, "key", Strings.getString("COMMAND_CONFIG_OPTION_KEY_DESCRIPTION"), false),
                 new OptionData(OptionType.STRING, "value", Strings.getString("COMMAND_CONFIG_OPTION_VALUE_DESCRIPTION"), false)
         );
     }
