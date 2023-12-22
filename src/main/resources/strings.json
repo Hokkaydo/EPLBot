@@ -103,5 +103,9 @@
   "COMMAND_NOTICE_DATE_PARSING_ERROR": "La date spécifiée (%s) n'est pas au bon format. Veuillez respecter l'un des deux formats suivants : `yyyy-MM-dd` ou `yyyy-MM-dd HH:mm:ss`",
   "COMMAND_NOTICE_UNKNOWN_SUBJECT_ID": "Le groupe ou cours spécifié n'existe pas. Les valeurs admises sont les codes de cours (e.g.: LEPL0000) et les identifiants de filière (MAP, INFO, GC, FYKI, MECA, ELEC, GBIO et common pour le tronc commun)",
   "COMMAND_NOTICE_SUCCESSFUL": "Avis enregistré !",
-  "COMMAND_NOTICE_NO_NOTICE_FOUND": "Aucune notion enregistrée pour cette sélection"
+  "COMMAND_NOTICE_NO_NOTICE_FOUND": "Aucune notion enregistrée pour cette sélection",
+  "EARLY_BIRD_NOT_EARLY_BIRD": "Vous n'êtes assurément pas un lève-tôt :rage:",
+  "EARLY_BIRD_NEXT_MESSAGE_REGISTERED": "Votre doux message sera le prochain à annoncer le réveil :innocent:",
+  "EARLY_BIRD_NEXT_MESSAGE_COMMAND_HELP": "Permet d'enregistrer le prochain message de réveil lorsqu'on est le lève-tôt.\n Cette commande ne peut être utilisée que par le détenteur du rôle `Lève-tôt`.\n Elle prend en paramètre le message à envoyer.",
+  "EARLY_BIRD_NEXT_MESSAGE_COMMAND_DESCRIPTION": "Permet d'enregistrer le prochain message de réveil lorsqu'on est le lève-tôt"
 }
