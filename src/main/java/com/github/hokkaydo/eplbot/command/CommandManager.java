@@ -80,12 +80,12 @@ public class CommandManager extends ListenerAdapter {
             }
         }else {
             if(event.getGuild() == null) return;
-            command = commands.get(event.getGuild().getIdLong()).get(event.getFullCommandName());
+            command = commands.getOrDefault(event.getGuild().getIdLong(), new HashMap<>()).getOrDefault(event.getFullCommandName(), null);
             if(command == null) {
                 event.reply(Strings.getString("COMMAND_NOT_FOUND")).setEphemeral(true).queue();
                 return;
             }
-            if(Boolean.FALSE.equals(commandStatus.get(event.getGuild().getIdLong()).getOrDefault(command.getClass(), false))) {
+            if(Boolean.FALSE.equals(commandStatus.getOrDefault(event.getGuild().getIdLong(), new HashMap<>()).getOrDefault(command.getClass(), false))) {
                 event.reply(Strings.getString("COMMAND_DISABLED")).setEphemeral(true).queue();
                 return;
             }
