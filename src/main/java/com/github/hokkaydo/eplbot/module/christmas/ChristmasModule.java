@@ -11,7 +11,7 @@ import java.util.List;
 public class ChristmasModule extends Module {
 
     private final ChristmasListener christmasListener;
-    protected ChristmasModule(@NotNull Long guildId) {
+    public ChristmasModule(@NotNull Long guildId) {
         super(guildId);
         this.christmasListener = new ChristmasListener(guildId);
     }
