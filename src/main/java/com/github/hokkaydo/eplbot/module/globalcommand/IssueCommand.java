@@ -4,6 +4,7 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTCreationException;
 import com.github.hokkaydo.eplbot.Main;
+import com.github.hokkaydo.eplbot.MessageUtil;
 import com.github.hokkaydo.eplbot.Strings;
 import com.github.hokkaydo.eplbot.command.Command;
 import com.github.hokkaydo.eplbot.command.CommandContext;
@@ -18,7 +19,6 @@ import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import net.dv8tion.jda.api.interactions.modals.Modal;
-import net.dv8tion.jda.api.requests.restaction.interactions.ReplyCallbackAction;
 import org.jetbrains.annotations.NotNull;
 import org.kohsuke.github.GHAppInstallation;
 import org.kohsuke.github.GHAppInstallationToken;
@@ -28,7 +28,6 @@ import org.kohsuke.github.GitHubBuilder;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
@@ -38,7 +37,6 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -75,14 +73,16 @@ public class IssueCommand extends ListenerAdapter implements Command {
     @Override
     public void onModalInteraction(@NotNull ModalInteractionEvent event) {
         if(event.getInteraction().getType() != InteractionType.MODAL_SUBMIT || !event.getModalId().contains("-issue-modal")) return;
-        ReplyCallbackAction callbackAction = event.deferReply(true);
+        if(!labelsFileModalTempStore.containsKey(event.getModalId())) return;
         String title = Objects.requireNonNull(event.getInteraction().getValue("title")).getAsString();
         String body = Objects.requireNonNull(event.getInteraction().getValue("body")).getAsString();
 
         if(nextJwtRefresh == null || nextJwtRefresh.isBefore(Instant.now())) {
             refreshJwt();
             if(github == null) {
-                callbackAction.setContent(Strings.getString(ERROR_OCCURRED)).queue();
+                if(event.getGuild() != null)
+                    MessageUtil.sendAdminMessage("IssueCommand: Failed to refresh GitHub JWT", event.getGuild().getIdLong());
+                event.reply(Strings.getString(ERROR_OCCURRED)).queue();
                 return;
             }
             nextJwtRefresh = Instant.now().plus(45, ChronoUnit.MINUTES);
@@ -95,19 +95,20 @@ public class IssueCommand extends ListenerAdapter implements Command {
         if(attachment != null) {
             image = "![%s](%s)".formatted(attachment.getFileName(), attachment.getUrl());
         }
+        labelsFileModalTempStore.remove(key);
 
         try {
             GHIssue issue = github.getRepository("Hokkaydo/EPLBot").createIssue(title).body(body + "\n" + image).label(label).create();
-            callbackAction.setContent(Strings.getString("COMMAND_ISSUE_SUCCESSFUL").formatted(issue.getNumber())).queue();
+            event.reply(Strings.getString("COMMAND_ISSUE_SUCCESSFUL").formatted(issue.getNumber())).queue();
         } catch (IOException e) {
-            callbackAction.setContent(Strings.getString(ERROR_OCCURRED)).queue();
+            event.reply(Strings.getString(ERROR_OCCURRED)).queue();
         }
     }
 
 
     private void refreshJwt() {
         try {
-            RSAPrivateKey privateKey = (RSAPrivateKey) getPrivateKey(new File(Main.PERSISTENCE_DIR_PATH + "/github.pem"));
+            RSAPrivateKey privateKey = getPrivateKey(new File(Main.PERSISTENCE_DIR_PATH + "/github.pem"));
             Algorithm algorithm = Algorithm.RSA256(privateKey);
             String token = JWT.create()
                                    .withIssuedAt(Instant.now().minusSeconds(60))
@@ -118,25 +119,19 @@ public class IssueCommand extends ListenerAdapter implements Command {
             GHAppInstallation appInstallation = gitHubApp.getApp().getInstallationById(Integer.parseInt(System.getenv("GITHUB_APPLICATION_INSTALLATION_ID")));
             GHAppInstallationToken appInstallationToken = appInstallation.createToken().create();
             github = new GitHubBuilder().withAppInstallationToken(appInstallationToken.getToken()).build();
-        } catch (JWTCreationException | IOException | NoSuchAlgorithmException | InvalidKeySpecException e) {
+        } catch (JWTCreationException | IOException | InvalidKeySpecException | NoSuchAlgorithmException e) {
             github = null;
         }
     }
 
 
-    private PrivateKey getPrivateKey(File file) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
-        String key = Files.readString(file.toPath(), Charset.defaultCharset());
-
-        String privateKeyPEM = key
-                                       .replace("-----BEGIN PRIVATE KEY-----", "")
-                                       .replaceAll(System.lineSeparator(), "")
-                                       .replace("-----END PRIVATE KEY-----", "");
-
-        byte[] encoded = Base64.getDecoder().decode(privateKeyPEM);
-
+    // PEM to PKCS8 conversion : openssl pkcs8 -topk8 -inform PEM -outform DER -in key.pem -out key2.pem -nocrypt
+    public RSAPrivateKey getPrivateKey(File file) throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
+        byte[] key = Files.readAllBytes(file.toPath());
         KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-        PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(encoded);
-        return keyFactory.generatePrivate(keySpec);
+        PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(key);
+        PrivateKey finalKey = keyFactory.generatePrivate(keySpec);
+        return (RSAPrivateKey) finalKey;
     }
 
     @Override
