@@ -22,7 +22,7 @@ public class AsciinemaListener extends ListenerAdapter {
     AsciinemaListener(Long guildId) {
         this.guildId = guildId;
     }
-    private static final Random random = new Random();
+    private static final Random RANDOM = new Random();
 
 
     @Override
