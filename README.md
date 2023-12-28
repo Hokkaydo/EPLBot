@@ -23,21 +23,26 @@ Avant de commencer, assurez-vous d'avoir les éléments suivants :
     ```shell
     cd eplbot
     ```
+3. Créez un répertoire pour la persistence:
 
-3. Compilez le projet en exécutant la commande :
+    ```shell
+    mkdir persistence
+    ```
+
+4. Compilez le projet en exécutant la commande :
 
     ```shell
     ./gradlew shadowJar
     ```
 
-4. Ajoutez les variables d'environnement :
+5. Ajoutez les variables d'environnement :
 
     ```shell
     DISCORD_BOT_TOKEN=votre-jeton
     TEST_DISCORD_ID=id-de-votre-discord-de-test
     ```
 
-5. Exécutez le bot Discord en utilisant la commande :
+6. Exécutez le bot Discord en utilisant la commande :
 
     ```shell
       ./gradlew run
