@@ -6,6 +6,7 @@ import com.github.hokkaydo.eplbot.configuration.Config;
 import com.github.hokkaydo.eplbot.database.DatabaseManager;
 import com.github.hokkaydo.eplbot.module.Module;
 import com.github.hokkaydo.eplbot.module.ModuleManager;
+import com.github.hokkaydo.eplbot.module.asciinema.AsciinemaModule;
 import com.github.hokkaydo.eplbot.module.autopin.AutoPinModule;
 import com.github.hokkaydo.eplbot.module.christmas.ChristmasModule;
 import com.github.hokkaydo.eplbot.module.confession.ConfessionModule;
@@ -150,7 +151,8 @@ public class Main {
                 RssModule.class,
                 AutoPinModule.class,
                 RssModule.class,
-                NoticeModule.class
+                NoticeModule.class,
+                AsciinemaModule.class
         );
         List<Class<? extends Module>> eplModules = Arrays.asList(
                 EPLCommandModule.class,
