@@ -50,7 +50,7 @@ Avant de commencer, assurez-vous d'avoir les éléments suivants :
 
 # Docker
 
-Pour executer le bot avec docker, voici la marche a suivre.
+Pour executer le bot avec docker, voici la marche à suivre.
 
 1. Build l'image docker
 
