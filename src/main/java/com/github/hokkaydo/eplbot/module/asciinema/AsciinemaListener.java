@@ -55,7 +55,7 @@ public class AsciinemaListener extends ListenerAdapter {
                 }
                 File gifFile = new File(gifFileName);
                 Member author = event.getMember();
-                assert author != null;
+                if (author == null) return;
                 MessageEmbed message = new EmbedBuilder()
                         .setAuthor(author.getEffectiveName(), null, author.getEffectiveAvatarUrl())
                         .appendDescription(event.getMessage().getContentDisplay())
