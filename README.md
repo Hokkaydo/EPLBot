@@ -52,7 +52,7 @@ Avant de commencer, assurez-vous d'avoir les éléments suivants :
 
 Pour executer le bot avec docker, voici la marche à suivre.
 
-1. Build l'image docker
+1. Build l'image Docker
 
     ```shell
     docker build . -t eplbot
