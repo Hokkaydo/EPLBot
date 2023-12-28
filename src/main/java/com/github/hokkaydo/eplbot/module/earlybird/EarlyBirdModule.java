@@ -1,7 +1,6 @@
 package com.github.hokkaydo.eplbot.module.earlybird;
 
 import com.github.hokkaydo.eplbot.command.Command;
-import com.github.hokkaydo.eplbot.configuration.Config;
 import com.github.hokkaydo.eplbot.module.Module;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.jetbrains.annotations.NotNull;
@@ -12,10 +11,12 @@ public class EarlyBirdModule extends Module {
 
     private final EarlyBirdListener earlyBirdListener;
     private final EarlyBirdNextMessageCommand earlyBirdNextMessageCommand;
+    private final RestartEarlyBirdCommand restartEarlyBirdCommand;
     public EarlyBirdModule(@NotNull Long guildId) {
         super(guildId);
         this.earlyBirdListener = new EarlyBirdListener(guildId);
-        this.earlyBirdNextMessageCommand = new EarlyBirdNextMessageCommand(guildId, earlyBirdListener);
+        this.earlyBirdNextMessageCommand = new EarlyBirdNextMessageCommand();
+        this.restartEarlyBirdCommand = new RestartEarlyBirdCommand(earlyBirdListener);
     }
 
     @Override
@@ -25,7 +26,7 @@ public class EarlyBirdModule extends Module {
 
     @Override
     public List<Command> getCommands() {
-        return List.of(earlyBirdNextMessageCommand);
+        return List.of(earlyBirdNextMessageCommand, restartEarlyBirdCommand);
     }
 
     @Override
@@ -36,11 +37,7 @@ public class EarlyBirdModule extends Module {
     @Override
     public void enable() {
         super.enable();
-        long rangeStartInSeconds = Config.getGuildVariable(getGuildId(), "EARLY_BIRD_RANGE_START_DAY_SECONDS");
-        long rangeEndInSeconds = Config.getGuildVariable(getGuildId(), "EARLY_BIRD_RANGE_END_DAY_SECONDS");
-        int messageProbability = Config.getGuildVariable(getGuildId(), "EARLY_BIRD_MESSAGE_PROBABILITY");
-        long channelId = Config.getGuildVariable(getGuildId(), "EARLY_BIRD_CHANNEL_ID");
-        earlyBirdListener.launchRandomSender(rangeStartInSeconds, rangeEndInSeconds, messageProbability, channelId);
+        earlyBirdListener.launchRandomSender();
     }
 
     @Override
