@@ -43,6 +43,21 @@ Avant de commencer, assurez-vous d'avoir les éléments suivants :
       ./gradlew run
     ```
 
+# Docker
+
+Pour executer le bot avec docker, voici la marche a suivre.
+
+1. Build l'image docker
+
+    ```shell
+    docker build . -t eplbot
+    ```
+2. Lancer le docker
+
+    ```shell
+        docker run --rm -e docker run --rm  -e DISCORD_BOT_TOKEN=token -e TEST_DISCORD_ID=id-de-votre-discord-de-test -t eplbot
+    ```
+
 ## Configuration du bot Discord
 
 Le bot propose un système modulaire permettant d'activer et désactiver les modules via les commandes Discord `/enable <module>` et `/disable <module>`.
