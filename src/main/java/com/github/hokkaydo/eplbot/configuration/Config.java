@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 
 public class Config {
 
-    private static final String IDENTIFIER_UNDER_STRING_FORM = "Identifiant sous forme de chaîne de caractères";
+    private static final String STRING_FORMAT = "Chaîne de caractères";
     private static final Supplier<ConfigurationParser> MODULE_DISABLED = () -> new ConfigurationParser(() -> false, Object::toString, Boolean::valueOf, "Booléen");
     private static final String INTEGER_FORMAT = "Nombre entier";
     private static final IntFunction<ConfigurationParser> INTEGER_CONFIGURATION_VALUE = init -> new ConfigurationParser(
@@ -42,7 +42,7 @@ public class Config {
             () -> "",
             Object::toString,
             s -> s,
-            IDENTIFIER_UNDER_STRING_FORM
+            STRING_FORMAT
     );
     private static ConfigurationRepository repository;
     private static final Map<String, ConfigurationParser> DEFAULT_CONFIGURATION = new HashMap<>(Map.of(
@@ -77,7 +77,8 @@ public class Config {
                     "Liste de paires Lien-Timestamp"
             ),
             "EXAM_RETRIEVE_CHANNEL", LONG_CONFIGURATION_VALUE.apply(15L),
-            "EXAM_ZIP_MESSAGE_ID", LONG_CONFIGURATION_VALUE.apply(15L)
+            "EXAM_ZIP_MESSAGE_ID", LONG_CONFIGURATION_VALUE.apply(15L),
+            "EARLY_BIRD_NEXT_MESSAGE", STRING_CONFIGURATION_VALUE.get()
     );
     static {
         DEFAULT_CONFIGURATION.putAll(Map.of(

@@ -107,5 +107,7 @@
   "EARLY_BIRD_NOT_EARLY_BIRD": "Vous n'êtes assurément pas un lève-tôt :rage:",
   "EARLY_BIRD_NEXT_MESSAGE_REGISTERED": "Votre doux message sera le prochain à annoncer le réveil :innocent:",
   "EARLY_BIRD_NEXT_MESSAGE_COMMAND_HELP": "Permet d'enregistrer le prochain message de réveil lorsqu'on est le lève-tôt.\n Cette commande ne peut être utilisée que par le détenteur du rôle `Lève-tôt`.\n Elle prend en paramètre le message à envoyer.",
-  "EARLY_BIRD_NEXT_MESSAGE_COMMAND_DESCRIPTION": "Permet d'enregistrer le prochain message de réveil lorsqu'on est le lève-tôt"
+  "EARLY_BIRD_NEXT_MESSAGE_COMMAND_DESCRIPTION": "Permet d'enregistrer le prochain message de réveil lorsqu'on est le lève-tôt",
+  "EARLY_BIRD_RESTART_COMMAND_HELP": "Permet de redémarrer le timer du module EarlyBird",
+  "EARLY_BIRD_RESTART_COMMAND_DESCRIPTION": "Permet de redémarrer le timer du module EarlyBird"
 }
