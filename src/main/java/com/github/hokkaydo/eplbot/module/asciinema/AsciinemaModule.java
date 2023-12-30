@@ -15,7 +15,7 @@ public class AsciinemaModule extends Module {
     private final AsciinemaListener asciinemaListener;
     public AsciinemaModule(@NotNull Long guildId) {
         super(guildId);
-        this.asciinemaListener = new AsciinemaListener(guildId);
+        this.asciinemaListener = new AsciinemaListener();
     }
 
     @Override
