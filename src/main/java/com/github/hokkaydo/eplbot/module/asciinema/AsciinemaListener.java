@@ -19,7 +19,8 @@ import java.util.function.Consumer;
 public class AsciinemaListener extends ListenerAdapter {
 
     private final Long guildId;
-    AsciinemaListener(Long guildId) {
+    AsciinemaListener(Long guil
+                      dId) {
         this.guildId = guildId;
     }
     private static final Random RANDOM = new Random();
@@ -32,7 +33,7 @@ public class AsciinemaListener extends ListenerAdapter {
         for (Message.Attachment att: attachments) {
             if (Objects.equals(att.getFileExtension(), "cast")) {
                 //we have an asciicast record !
-                int rnd = Math.abs(random.nextInt());
+                int rnd = Math.abs(RANDOM.nextInt());
                 String fileName = rnd+".cast";
                 String gifFileName = rnd+".gif";
                 try {
