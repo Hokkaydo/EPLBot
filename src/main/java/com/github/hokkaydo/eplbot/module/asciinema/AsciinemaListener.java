@@ -14,7 +14,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
-import java.util.function.Consumer;
 
 public class AsciinemaListener extends ListenerAdapter {
 
