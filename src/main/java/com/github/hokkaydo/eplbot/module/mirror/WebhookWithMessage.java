@@ -1,5 +1,6 @@
 package com.github.hokkaydo.eplbot.module.mirror;
 
+import net.dv8tion.jda.api.entities.Icon;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.requests.Route;
 import net.dv8tion.jda.api.requests.restaction.WebhookMessageCreateAction;
@@ -45,7 +46,8 @@ public class WebhookWithMessage {
         return action;
     }
 
-    public WebhookMessageCreateAction<Message> sendMessage(String content) {
+    public WebhookMessageCreateAction<Message> sendMessage(String name, Icon avatar, String content) {
+        webhook.getManager().setName(name).setAvatar(avatar).complete();
         return sendRequest().setContent(content);
     }
 

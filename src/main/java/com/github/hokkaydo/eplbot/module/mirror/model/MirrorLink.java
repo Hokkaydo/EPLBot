@@ -1,30 +1,30 @@
 package com.github.hokkaydo.eplbot.module.mirror.model;
 
 import com.github.hokkaydo.eplbot.Main;
-import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 
 public class MirrorLink {
 
-    private final GuildMessageChannel first;
-    private final GuildMessageChannel second;
+    private final TextChannel first;
+    private final TextChannel second;
 
     public MirrorLink(Long channelAId, Long channelBId ) {
-        this.first = (GuildMessageChannel) Main.getJDA().getGuildChannelById(channelAId);
-        this.second = (GuildMessageChannel) Main.getJDA().getGuildChannelById(channelBId);
+        this.first = Main.getJDA().getTextChannelById(channelAId);
+        this.second = Main.getJDA().getTextChannelById(channelBId);
     }
-    public GuildMessageChannel other(GuildMessageChannel channel) {
+    public TextChannel other(TextChannel channel) {
         return first.getIdLong()  == channel.getIdLong() ? second : first;
     }
 
-    public boolean has(GuildMessageChannel channel) {
+    public boolean has(TextChannel channel) {
         return first.getIdLong() == channel.getIdLong() || second.getIdLong() == channel.getIdLong();
     }
 
-    public GuildMessageChannel first() {
+    public TextChannel first() {
         return first;
     }
 
-    public GuildMessageChannel second() {
+    public TextChannel second() {
         return second;
     }
 
