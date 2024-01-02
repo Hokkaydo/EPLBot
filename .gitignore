@@ -42,4 +42,3 @@ bin/
 variables.env
 docker-compose-local.yml
 persistence/
-build.sh
