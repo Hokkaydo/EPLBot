@@ -53,7 +53,7 @@ public class Config {
                     "Nom de la réaction"
             ),
             "PIN_REACTION_THRESHOLD", INTEGER_CONFIGURATION_VALUE.apply(1),
-            "ADMIN_CHANNEL_ID", INTEGER_CONFIGURATION_VALUE.apply(0),
+            "ADMIN_CHANNEL_ID", STRING_CONFIGURATION_VALUE.get(),
             "CONFESSION_CHANNEL_ID", STRING_CONFIGURATION_VALUE.get(),
             "CONFESSION_VALIDATION_CHANNEL_ID", STRING_CONFIGURATION_VALUE.get(),
             "CONFESSION_EMBED_COLOR", new ConfigurationParser(
@@ -62,7 +62,7 @@ public class Config {
                     Color::decode,
                     "RGB sous forme hexadécimale : Ex #FFFFFF = Blanc"
             ),
-            "DRIVE_ADMIN_CHANNEL_ID", LONG_CONFIGURATION_VALUE.apply(0)
+            "DRIVE_ADMIN_CHANNEL_ID", STRING_CONFIGURATION_VALUE.get()
     ));
 
     public static Map<String, ConfigurationParser> getDefaultConfiguration() {
@@ -76,8 +76,8 @@ public class Config {
                     s -> Arrays.stream(s.split(",")).map(a -> a.split(";")).map(a -> Map.entry(a[0], Timestamp.valueOf(a[1]))).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)),
                     "Liste de paires Lien-Timestamp"
             ),
-            "EXAM_RETRIEVE_CHANNEL", LONG_CONFIGURATION_VALUE.apply(15L),
-            "EXAM_ZIP_MESSAGE_ID", LONG_CONFIGURATION_VALUE.apply(15L),
+            "EXAM_RETRIEVE_CHANNEL_ID", STRING_CONFIGURATION_VALUE.get(),
+            "EXAM_ZIP_MESSAGE_ID", STRING_CONFIGURATION_VALUE.get(),
             "EARLY_BIRD_NEXT_MESSAGE", STRING_CONFIGURATION_VALUE.get()
     );
     static {
@@ -98,8 +98,8 @@ public class Config {
                 "RSS_UPDATE_PERIOD", LONG_CONFIGURATION_VALUE.apply(15L),
                 "ADMIN_CHANNEL_ID", STRING_CONFIGURATION_VALUE.get(),
                 "CONFESSION_WARN_THRESHOLD", INTEGER_CONFIGURATION_VALUE.apply(3),
-                "EARLY_BIRD_ROLE_ID", LONG_CONFIGURATION_VALUE.apply(0),
-                "EARLY_BIRD_CHANNEL_ID", LONG_CONFIGURATION_VALUE.apply(0),
+                "EARLY_BIRD_ROLE_ID", STRING_CONFIGURATION_VALUE.get(),
+                "EARLY_BIRD_CHANNEL_ID", STRING_CONFIGURATION_VALUE.get(),
                 "EARLY_BIRD_RANGE_START_DAY_SECONDS", LONG_CONFIGURATION_VALUE.apply(6*60*60L),
                 "EARLY_BIRD_RANGE_END_DAY_SECONDS", LONG_CONFIGURATION_VALUE.apply(9*60*60L)
         ));

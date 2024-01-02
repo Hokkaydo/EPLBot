@@ -127,13 +127,13 @@ public class Main {
                                                    .filter(Map.Entry::getValue)
                                                    .map(Map.Entry::getKey)
                                                    .toList();
-                    moduleManager.enableModules(guild.getIdLong(), modules);
                     StringBuilder log = new StringBuilder("Registering modules for %s :%n".formatted(guild.getName()));
                     for (String module : modules) {
                         log.append("\t%s%n".formatted(module));
                     }
                     String logS = log.toString();
                     LOGGER.log(Level.INFO, logS);
+                    moduleManager.enableModules(guild.getIdLong(), modules);
                 }
         );
         launchPeriodicStatusUpdate();

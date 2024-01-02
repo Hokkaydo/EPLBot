@@ -1,9 +1,9 @@
 package com.github.hokkaydo.eplbot.module.graderetrieve;
 
-import com.github.hokkaydo.eplbot.configuration.Config;
 import com.github.hokkaydo.eplbot.Strings;
 import com.github.hokkaydo.eplbot.command.Command;
 import com.github.hokkaydo.eplbot.command.CommandContext;
+import com.github.hokkaydo.eplbot.configuration.Config;
 import net.dv8tion.jda.api.entities.channel.concrete.PrivateChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
@@ -29,7 +29,7 @@ public class SetupRetrieveChannelCommand implements Command {
         Optional<OptionMapping> quarterOpt = context.options().stream().filter(e -> e.getName().equals("quarter")).findFirst();
         if(quarterOpt.isEmpty()) return;
         examsRetrieveListener.setGradeRetrieveChannelId(context.channel().getIdLong(), quarterOpt.get().getAsInt());
-        Config.updateValue(guildId, "EXAM_RETRIEVE_CHANNEL", quarterOpt.get().getAsInt());
+        Config.updateValue(guildId, "EXAM_RETRIEVE_CHANNEL_ID", context.channel().getId());
     }
 
     @Override
