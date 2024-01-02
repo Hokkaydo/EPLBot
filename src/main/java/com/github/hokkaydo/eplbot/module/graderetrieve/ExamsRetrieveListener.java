@@ -45,7 +45,7 @@ public class ExamsRetrieveListener extends ListenerAdapter {
     private Long examsRetrieveChannelId;
     private int selectedQuarterToRetrieve = 1;
     private final CourseGroupRepository groupRepository;
-    private Long zipMessageId;
+    private final String zipMessageId;
     private final ExamRetrieveThreadRepository repository;
 
     ExamsRetrieveListener(Long guildId) {
@@ -142,8 +142,8 @@ public class ExamsRetrieveListener extends ListenerAdapter {
     }
 
     private void updateSentZip() {
-        Long channelId = Config.getGuildVariable(guildId, "DRIVE_ADMIN_CHANNEL_ID");
-        if(channelId == 0) {
+        String channelId = Config.getGuildVariable(guildId, "DRIVE_ADMIN_CHANNEL_ID");
+        if(channelId.isBlank()) {
             MessageUtil.sendAdminMessage(Strings.getString("DRIVE_ADMIN_CHANNEL_NOT_SETUP"),guildId);
             return;
         }
@@ -152,9 +152,8 @@ public class ExamsRetrieveListener extends ListenerAdapter {
             MessageUtil.sendAdminMessage(Strings.getString("DRIVE_ADMIN_CHANNEL_NOT_SETUP"), guildId);
             return;
         }
-        if(zipMessageId == 0) {
+        if(zipMessageId.isBlank()) {
             channel.sendMessage("Archive d'examens de cette session").addFiles(FileUpload.fromData(ZIP_PATH)).queue(m -> {
-                zipMessageId = m.getIdLong();
                 Config.updateValue(guildId, "EXAM_ZIP_MESSAGE_ID", zipMessageId);
                 m.pin().queue();
             });
