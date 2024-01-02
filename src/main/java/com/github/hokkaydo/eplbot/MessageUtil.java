@@ -20,6 +20,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.logging.Level;
 
@@ -40,7 +41,7 @@ public class MessageUtil {
                        .setFooter(message.getGuild().getName() + " - #" + message.getChannel().getName(), message.getGuild().getIconUrl());
     }
 
-    public static void toEmbedWithAttachements(Message message, Function<EmbedBuilder, MessageCreateAction> send) {
+    public static void toEmbedWithAttachements(Message message, Function<EmbedBuilder, MessageCreateAction> send, Consumer<Message> processSentMessage) {
         MessageCreateAction action = send.apply(toEmbed(message)).addFiles();
         message.getAttachments().stream()
                 .map(m -> new Tuple3<>(m.getFileName(), m.getProxy().download(), m.isSpoiler()))
@@ -53,9 +54,10 @@ public class MessageUtil {
                 .ifPresentOrElse(
                         c -> {
                             c.join();
-                            action.queue();
+                            action.queue(processSentMessage);
                         },
-                        action::queue);
+                        () -> action.queue(processSentMessage)
+                );
     }
 
     public static EmbedBuilder toEmbed(String content) {
