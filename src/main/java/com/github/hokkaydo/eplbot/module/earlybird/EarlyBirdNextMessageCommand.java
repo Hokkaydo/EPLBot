@@ -46,7 +46,7 @@ public class EarlyBirdNextMessageCommand implements Command {
 
     @Override
     public List<OptionData> getOptions() {
-        return Collections.singletonList(new OptionData(OptionType.STRING, "message", "Prochain message matinal que le bot enverra"));
+        return Collections.singletonList(new OptionData(OptionType.STRING, "message", "Prochain message matinal que le bot enverra", true));
     }
 
     @Override
