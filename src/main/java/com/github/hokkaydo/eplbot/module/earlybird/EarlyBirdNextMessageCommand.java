@@ -24,8 +24,8 @@ public class EarlyBirdNextMessageCommand implements Command {
         if(messageOpt.isEmpty()) return;
         if(!context.interaction().isGuildCommand() || context.interaction().getGuild() == null) return;
         long guildId = context.interaction().getGuild().getIdLong();
-        long earlyBirdRoleId = Config.<Long>getGuildVariable(guildId, "EARLY_BIRD_ROLE_ID");
-        if(context.author().getRoles().stream().filter(r -> r.getIdLong() == earlyBirdRoleId).findFirst().isEmpty()) {
+        String earlyBirdRoleId = Config.getGuildVariable(guildId, "EARLY_BIRD_ROLE_ID");
+        if(context.author().getRoles().stream().filter(r -> r.getId().equals(earlyBirdRoleId)).findFirst().isEmpty()) {
             context.replyCallbackAction().setContent(Strings.getString("EARLY_BIRD_NOT_EARLY_BIRD")).queue();
             return;
         }
