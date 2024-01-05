@@ -19,6 +19,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 
 public class EarlyBirdListener extends ListenerAdapter {
 
@@ -43,6 +44,10 @@ public class EarlyBirdListener extends ListenerAdapter {
     private final List<ScheduledFuture<?>> dayLoops = new ArrayList<>();
     private final List<ScheduledFuture<?>> perfectTimeLoops = new ArrayList<>();
     private boolean waitingForAnswer;
+    private static final String[][] LOG_MESSAGES = {
+            {"No message today", "<"},
+            {"Message today!", ">="}
+    };
 
     public EarlyBirdListener(Long guildId) {
         this.guildId = guildId;
@@ -57,9 +62,15 @@ public class EarlyBirdListener extends ListenerAdapter {
         if (deltaStart < 0) {
             deltaStart += 24*60*60;
         }
+        Main.LOGGER.log(Level.INFO, "[EarlyBird] Trying to send in {0} seconds", deltaStart);
         dayLoops.add(EXECUTOR.schedule(() -> {
+            int rnd = RANDOM.nextInt(100);
+            int proba = Config.<Integer>getGuildVariable(guildId, "EARLY_BIRD_MESSAGE_PROBABILITY");
+            String[] logs = LOG_MESSAGES[rnd > proba ? 0 : 1];
+            Main.LOGGER.log(Level.WARNING, "[EarlyBird] %s (%d %s %d)".formatted(logs[0], proba, logs[1], rnd));
             if(RANDOM.nextInt(100) > Config.<Integer>getGuildVariable(guildId, "EARLY_BIRD_MESSAGE_PROBABILITY")) return;
             long waitTime = RANDOM.nextLong(endSeconds - startSeconds);
+            Main.LOGGER.log(Level.WARNING, "[EarlyBird] Wait %d seconds before sending".formatted(waitTime));
             perfectTimeLoops.add(EXECUTOR.schedule(
                     () -> Optional.ofNullable(Main.getJDA().getGuildById(guildId))
                                   .map(guild -> guild.getTextChannelById(Config.getGuildVariable(guildId, "EARLY_BIRD_CHANNEL_ID")))
