@@ -15,8 +15,6 @@ import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
 import net.dv8tion.jda.api.events.message.MessageDeleteEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.MessageUpdateEvent;
-import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
-import net.dv8tion.jda.api.events.message.react.MessageReactionRemoveEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.jetbrains.annotations.NotNull;
 
@@ -155,6 +153,8 @@ public class MirrorManager extends ListenerAdapter {
                 });
     }
 
+    // Commentend until a viable solution is found
+    /*
     @Override
     public void onMessageReactionAdd(@NotNull MessageReactionAddEvent event) {
         mirroredMessages.stream()
@@ -170,6 +170,7 @@ public class MirrorManager extends ListenerAdapter {
                 .findFirst()
                 .ifPresent(mirrorE -> mirrorE.getMessages().forEach((id, m) -> m.removeReaction(event.getReaction())));
     }
+    */
 
     private static class MirroredMessages {
 

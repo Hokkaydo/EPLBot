@@ -2,18 +2,12 @@ package com.github.hokkaydo.eplbot.module.mirror;
 
 import com.github.hokkaydo.eplbot.Main;
 import com.github.hokkaydo.eplbot.MessageUtil;
-import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.entities.EmbedType;
-import net.dv8tion.jda.api.entities.ISnowflake;
 import net.dv8tion.jda.api.entities.Icon;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.MessageEmbed;
-import net.dv8tion.jda.api.entities.MessageReaction;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.Webhook;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
-import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.requests.restaction.WebhookMessageCreateAction;
@@ -23,7 +17,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,8 +36,9 @@ public class MirroredMessage {
     private Consumer<Message> onceMessageSent;
     private OffsetDateTime lastUpdated;
     private boolean threadOwner;
-    private final Map<Emoji, Integer> reactions = new HashMap<>();
+    //private final Map<Emoji, Integer> reactions = new HashMap<>();
     private String authorNameAndNickname;
+    private boolean pinned = false;
 
     MirroredMessage(Message initialMessage, TextChannel textChannel) {
         this.channel = textChannel;
@@ -56,7 +50,7 @@ public class MirroredMessage {
     /**
      * Mirror {@link MirroredMessage#originalMessage} and run a {@link Consumer<Message>} once the mirror message has
      * been sent
-     * @param replyTo the message {@link MirroredMessage#originalMessage} responded to if it an answer, can be null
+     * @param replyTo the message {@link MirroredMessage#originalMessage} responded to if it is an answer, can be null
      * @param onceMessageSent a {@link Consumer<Message>} to run once the mirror message has been sent passing the latter
      *                    as argument
      * */
@@ -82,7 +76,7 @@ public class MirroredMessage {
 
     /**
      * Create the request to send a mirror message
-     * @param members a {@link List<Member>} of loaded server's members used to retrieve the authors's name of
+     * @param members a {@link List<Member>} of loaded server's members used to retrieve the authors' name of
      *                a potential replied message
      * */
     private void createAndSendMessage(List<Member> members) {
@@ -183,12 +177,10 @@ public class MirroredMessage {
     void update(Message initialMessage) {
         updatePin(initialMessage.isPinned());
 
-        if (getWebhook() == null) return;
         if (!mirrorMessage.isWebhookMessage()) return;
+        if (getWebhook() == null) return;
+        if (!(initialMessage.getTimeEdited() == null ? initialMessage.getTimeCreated() : initialMessage.getTimeEdited()).isAfter(lastUpdated)) return;
         checkBanTimeOut(initialMessage.getAuthor(), () -> {
-            if (!(initialMessage.getTimeEdited() == null ? initialMessage.getTimeCreated() : initialMessage.getTimeEdited()).isAfter(lastUpdated))
-                return;
-
             String content = getContent(initialMessage);
             List<Message.Attachment> attachments = initialMessage.getAttachments();
             getWebhook().editRequest(mirrorMessage.getId())
@@ -201,14 +193,15 @@ public class MirroredMessage {
         });
     }
 
-    private void updatePin(boolean pinned) {
-        // Message#isPinned seems to be broken here
-        mirrorMessage.getChannel().retrievePinnedMessages().map(l -> l.stream().map(ISnowflake::getIdLong).filter(id -> id == mirrorMessage.getIdLong()).findFirst()).queue(idOpt -> {
-            if (pinned && idOpt.isEmpty())
-                mirrorMessage.pin().queue();
-            else if (!pinned && idOpt.isPresent())
-                mirrorMessage.unpin().queue();
-        });
+    private void updatePin(boolean shouldPin) {
+        if (!this.pinned && shouldPin) {
+            mirrorMessage.pin().queue();
+            this.pinned = true;
+        }
+        else if (this.pinned && !shouldPin) {
+            mirrorMessage.unpin().queue();
+            this.pinned = false;
+        }
     }
 
     Long getOriginalMessageId() {
@@ -239,8 +232,16 @@ public class MirroredMessage {
         return this.mirror;
     }
 
-    void addReaction(MessageReaction reaction) {
+    // Commented until a viable solution is found
+
+    /*void addReaction(MessageReaction reaction) {
         reactions.put(reaction.getEmoji(), reactions.getOrDefault(reaction.getEmoji(), 0) + 1);
+        updateReactionField();
+    }
+
+    void removeReaction(MessageReaction reaction) {
+        reactions.computeIfPresent(reaction.getEmoji(), (e, i) -> i - 1);
+        if (reactions.getOrDefault(reaction.getEmoji(), 1) <= 0) reactions.remove(reaction.getEmoji());
         updateReactionField();
     }
 
@@ -263,13 +264,7 @@ public class MirroredMessage {
         List<MessageEmbed> otherEmbeds = new ArrayList<>(originalMessage.getEmbeds().stream().filter(e -> e.getType() != EmbedType.RICH).toList());
         otherEmbeds.add(newEmbed.build());
         originalMessage.editMessageEmbeds(otherEmbeds).queue();
-    }
-
-    void removeReaction(MessageReaction reaction) {
-        reactions.computeIfPresent(reaction.getEmoji(), (e, i) -> i - 1);
-        if (reactions.getOrDefault(reaction.getEmoji(), 1) <= 0) reactions.remove(reaction.getEmoji());
-        updateReactionField();
-    }
+    }*/
 
     private record Tuple3<A, B, C>(A a, B b, C c) {
 
