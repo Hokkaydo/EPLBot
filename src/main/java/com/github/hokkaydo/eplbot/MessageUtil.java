@@ -9,6 +9,7 @@ import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
 import net.dv8tion.jda.api.utils.FileUpload;
+import org.jetbrains.annotations.Nullable;
 import org.json.JSONObject;
 
 import java.awt.*;
@@ -17,8 +18,6 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Instant;
-import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -82,10 +81,9 @@ public class MessageUtil {
         adminChannel.sendMessage(message).queue();
     }
 
-    public static String nameAndNickname(List<Member> members, User user) {
-        Optional<Member> authorMember = members.stream().filter(member -> member.getIdLong() == user.getIdLong()).findFirst();
-        boolean hasNickname = authorMember.isPresent() && authorMember.get().getNickname() != null;
-        return (hasNickname  ? authorMember.get().getNickname() + " (" : "") + user.getName() + (hasNickname ? ")" : "");
+    public static String nameAndNickname(@Nullable Member member, User user) {
+        boolean hasNickname = member != null && member.getNickname() != null;
+        return (hasNickname  ? member.getNickname() + " (" : "") + user.getEffectiveName() + (hasNickname ? ")" : "");
     }
 
     /**

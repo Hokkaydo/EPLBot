@@ -2,9 +2,11 @@ package com.github.hokkaydo.eplbot.module.mirror;
 
 import com.github.hokkaydo.eplbot.Main;
 import com.github.hokkaydo.eplbot.MessageUtil;
+import com.github.hokkaydo.eplbot.configuration.Config;
 import net.dv8tion.jda.api.entities.Icon;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.Webhook;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
@@ -32,19 +34,33 @@ public class MirroredMessage {
     private Message mirrorMessage;
     private final TextChannel channel;
     private Message replyTo;
-    private boolean mirror = false;
     private Consumer<Message> onceMessageSent;
     private OffsetDateTime lastUpdated;
     private boolean threadOwner;
     //private final Map<Emoji, Integer> reactions = new HashMap<>();
-    private String authorNameAndNickname;
+    private final String authorNameAndNickname;
     private boolean pinned = false;
 
     MirroredMessage(Message initialMessage, TextChannel textChannel) {
         this.channel = textChannel;
         this.lastUpdated = initialMessage.getTimeCreated();
         this.originalMessage = initialMessage;
-        channel.getGuild().loadMembers().onSuccess(members -> authorNameAndNickname = MessageUtil.nameAndNickname(members, originalMessage.getAuthor()));
+        Member mirrorGuildMember = channel.getGuild().retrieveMemberById(originalMessage.getAuthor().getIdLong()).complete();
+        Member originalGuildMember = initialMessage.getMember();
+        String prefix = "";
+        if(isAssistant(mirrorGuildMember) || isAssistant(originalGuildMember))
+            prefix = "[TA] ";
+        this.authorNameAndNickname = prefix + MessageUtil.nameAndNickname(
+                mirrorGuildMember,
+                originalMessage.getAuthor()
+        );
+    }
+
+    private boolean isAssistant(Member member) {
+        if(member == null) return false;
+        String roleId = Config.getGuildVariable(member.getGuild().getIdLong(), "ASSISTANT_ROLE_ID");
+        if(roleId.isBlank()) return false;
+        return member.getRoles().stream().map(Role::getId).anyMatch(id -> id.equals(roleId));
     }
 
     /**
@@ -57,7 +73,8 @@ public class MirroredMessage {
     void mirrorMessage(@Nullable Message replyTo, Consumer<Message> onceMessageSent) {
         this.replyTo = replyTo;
         this.onceMessageSent = onceMessageSent;
-        channel.getGuild().loadMembers().onSuccess(members -> checkBanTimeOut(originalMessage.getAuthor(), () -> createAndSendMessage(members)));
+
+        checkBanTimeOut(originalMessage.getAuthor(), this::createAndSendMessage);
     }
 
     /**
@@ -76,13 +93,10 @@ public class MirroredMessage {
 
     /**
      * Create the request to send a mirror message
-     * @param members a {@link List<Member>} of loaded server's members used to retrieve the authors' name of
-     *                a potential replied message
      * */
-    private void createAndSendMessage(List<Member> members) {
+    private void createAndSendMessage() {
         String content = getContent(originalMessage);
         if(Main.getJDA().getSelfUser().getAvatar() == null) throw new IllegalStateException("Odds are not in our favor (should never arise)");
-
         // Retrieve author's profile picture or else defaulting on EPLBot profile picture
         Optional.ofNullable(originalMessage.getAuthor().getAvatar()).orElse(Main.getJDA().getSelfUser().getAvatar()).download().thenApply(is -> {
             try {
@@ -93,11 +107,14 @@ public class MirroredMessage {
         }).thenAccept(icon -> {
             WebhookMessageCreateAction<Message> createAction = getWebhook().sendMessage(authorNameAndNickname, icon, content);
             if (replyTo != null) {
-                createAction.addComponents(ActionRow.of(Button.link(replyTo.getJumpUrl(), "↪ %s".formatted(MessageUtil.nameAndNickname(members, replyTo.getAuthor())))));
+                Member replyToAuthor = channel.getGuild().retrieveMemberById(replyTo.getAuthor().getIdLong()).complete();
+                createAction.addComponents(ActionRow.of(Button.link(replyTo.getJumpUrl(), "↪ %s".formatted(MessageUtil.nameAndNickname(replyToAuthor, replyTo.getAuthor())))));
             }
             if (!originalMessage.getEmbeds().isEmpty()) {
                 createAction.addEmbeds(originalMessage.getEmbeds());
             }
+
+
             AtomicReference<WebhookMessageCreateAction<Message>> action = new AtomicReference<>(createAction);
             originalMessage.getAttachments().stream()
                     .map(m -> new Tuple3<>(m.getFileName(), m.getProxy().download(), m.isSpoiler()))
@@ -168,7 +185,6 @@ public class MirroredMessage {
     private void sendMessage(WebhookMessageCreateAction<Message> action, Message initialMessage) {
         action.queue(newMessage -> {
             this.mirrorMessage = newMessage;
-            this.mirror = true;
             updatePin(initialMessage.isPinned());
             onceMessageSent.accept(newMessage);
         });
@@ -177,6 +193,7 @@ public class MirroredMessage {
     void update(Message initialMessage) {
         updatePin(initialMessage.isPinned());
 
+        if(mirrorMessage == null) return;
         if (!mirrorMessage.isWebhookMessage()) return;
         if (getWebhook() == null) return;
         if (!(initialMessage.getTimeEdited() == null ? initialMessage.getTimeCreated() : initialMessage.getTimeEdited()).isAfter(lastUpdated)) return;
@@ -195,11 +212,11 @@ public class MirroredMessage {
 
     private void updatePin(boolean shouldPin) {
         if (!this.pinned && shouldPin) {
-            mirrorMessage.pin().queue();
+            (mirrorMessage == null ? originalMessage : mirrorMessage).pin().queue();
             this.pinned = true;
         }
         else if (this.pinned && !shouldPin) {
-            mirrorMessage.unpin().queue();
+            (mirrorMessage == null ? originalMessage : mirrorMessage).unpin().queue();
             this.pinned = false;
         }
     }
@@ -229,7 +246,7 @@ public class MirroredMessage {
     }
 
     boolean isMirror() {
-        return this.mirror;
+        return this.mirrorMessage != null;
     }
 
     // Commented until a viable solution is found

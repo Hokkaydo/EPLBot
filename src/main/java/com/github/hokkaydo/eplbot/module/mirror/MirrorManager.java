@@ -9,6 +9,7 @@ import com.github.hokkaydo.eplbot.module.mirror.repository.MirrorLinkRepository;
 import com.github.hokkaydo.eplbot.module.mirror.repository.MirrorLinkRepositorySQLite;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageType;
+import net.dv8tion.jda.api.entities.channel.ChannelType;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
@@ -67,6 +68,8 @@ public class MirrorManager extends ListenerAdapter {
         if(event.getMessage().getType().isSystem()) return;
         if(event.getMessage().isWebhookMessage()) return;
         if(!event.getChannel().getType().isGuild()) return;
+        // Can't create webhooks in threads
+        if(event.getChannel().getType() == ChannelType.GUILD_PUBLIC_THREAD || event.getChannel().getType() == ChannelType.GUILD_PRIVATE_THREAD) return;
         // do not mirror already mirrored messages
         if(mirroredMessages.stream().flatMap(m -> m.getMessages().entrySet().stream()).anyMatch(m -> m.getKey() == 0 || m.getKey() == event.getMessageIdLong())) return;
         if(event.getMessage().getType().equals(MessageType.THREAD_STARTER_MESSAGE) || event.getMessage().getType().equals(MessageType.THREAD_CREATED)) {
@@ -199,7 +202,8 @@ public class MirrorManager extends ListenerAdapter {
             if(updatedIds.contains(message.getIdLong())) return;
             for (Map.Entry<Long, MirroredMessage> mirroredMessage : getMessages().entrySet()) {
                 if(mirroredMessage.getKey() == message.getIdLong()) continue;
-                updatedIds.add(mirroredMessage.getValue().getMirrorMessageId());
+                if(mirroredMessage.getValue().isMirror())
+                    updatedIds.add(mirroredMessage.getValue().getMirrorMessageId());
                 mirroredMessage.getValue().update(message);
             }
             updatedIds.clear();
