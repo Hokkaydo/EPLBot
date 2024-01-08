@@ -75,16 +75,16 @@ public class MirrorManager extends ListenerAdapter {
         if(event.getMessage().getType().equals(MessageType.THREAD_STARTER_MESSAGE) || event.getMessage().getType().equals(MessageType.THREAD_CREATED)) {
             ThreadChannel threadChannel = event.getMessage().getChannel().asThreadChannel();
             threadChannel.retrieveParentMessage().queue(parent -> mirrorLinkRepository.readAll().stream().filter(m -> m.has(event.getChannel().asThreadChannel().getParentMessageChannel().asTextChannel())).forEach(mirror -> {
-                GuildMessageChannel other = mirror.other(parent.getChannel().asTextChannel());
+                GuildMessageChannel mirrorChannel = mirror.other(parent.getChannel().asTextChannel());
                 mirroredMessages.stream()
-                        .filter(m -> m.getMessages().values().stream().anyMatch(msg -> (msg.getOriginalMessageId() == parent.getIdLong()) && msg.getChannelId() == other.getIdLong()))
-                        .flatMap(m -> m.getMessages().values().stream().filter(msg -> msg.getChannelId() == other.getIdLong()))
+                        .filter(m -> m.getMessages().values().stream().anyMatch(msg -> (msg.getOriginalMessageId() == parent.getIdLong()) && msg.getChannelId() == mirrorChannel.getIdLong()))
+                        .flatMap(m -> m.getMessages().values().stream().filter(msg -> msg.getChannelId() == mirrorChannel.getIdLong()))
                         .filter(m -> !m.isThreadOwner())
                         .findFirst()
-                        .ifPresentOrElse(message -> {
-                            createThread(message.getOriginalMessageId(), other.getIdLong(), threadChannel);
-                            message.setThreadOwner();
-                        }, () -> createThread(other.getLatestMessageIdLong(), other.getIdLong(), threadChannel));
+                        .ifPresentOrElse(starterThreadMessageMirror -> {
+                            createThread(starterThreadMessageMirror.getOriginalMessageId(), mirrorChannel.getIdLong(), threadChannel);
+                            starterThreadMessageMirror.setThreadOwner();
+                        }, () -> createThread(mirrorChannel.getLatestMessageIdLong(), mirrorChannel.getIdLong(), threadChannel));
             }));
             threadChannel
                     .retrieveParentMessage()
