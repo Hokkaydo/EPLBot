@@ -38,14 +38,14 @@ import java.util.zip.ZipOutputStream;
 
 public class ExamsRetrieveListener extends ListenerAdapter {
 
-    private static final Path ZIP_PATH = Path.of(Main.PERSISTENCE_DIR_PATH + "/exams.zip");
+    static final Path ZIP_PATH = Path.of(Main.PERSISTENCE_DIR_PATH + "/exams.zip");
     private static final String THREAD_MESSAGE_FORMAT = "%s - %s (BAC%d - %s)";
     private static final String EXAMEN_STORING_PATH_FORMAT = "%s/Q%d/%s";
     private final Long guildId;
     private Long examsRetrieveChannelId;
     private int selectedQuarterToRetrieve = 1;
     private final CourseGroupRepository groupRepository;
-    private final String zipMessageId;
+    private String zipMessageId;
     private final ExamRetrieveThreadRepository repository;
 
     ExamsRetrieveListener(Long guildId) {
@@ -154,7 +154,8 @@ public class ExamsRetrieveListener extends ListenerAdapter {
         }
         if(zipMessageId.isBlank()) {
             channel.sendMessage("Archive d'examens de cette session").addFiles(FileUpload.fromData(ZIP_PATH)).queue(m -> {
-                Config.updateValue(guildId, "EXAM_ZIP_MESSAGE_ID", zipMessageId);
+                this.zipMessageId = m.getId();
+                Config.updateValue(guildId, "EXAM_ZIP_MESSAGE_ID", m.getId());
                 m.pin().queue();
             });
             return;
