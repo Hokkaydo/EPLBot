@@ -1,4 +1,4 @@
-FROM eclipse-temurin:19-jdk-jammy
+FROM eclipse-temurin:21-jre
 LABEL authors="hokkaydo"
 
 RUN mkdir -p /home/eplbot/persistence
