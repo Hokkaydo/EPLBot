@@ -29,8 +29,16 @@ dependencies {
     implementation group: 'org.kohsuke', name: 'github-api', version: '1.315'
 }
 
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+}
+
 tasks.register('run', JavaExec) {
     classpath = files('build/libs/EPLBot-1.0-SNAPSHOT-all.jar')
+}
+
+tasks.withType(JavaCompile).each {
+    it.options.compilerArgs.add('--enable-preview')
 }
 
 test {
