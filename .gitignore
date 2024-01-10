@@ -41,3 +41,4 @@ bin/
 ### Project ###
 variables.env
 docker-compose-local.yml
+persistence/

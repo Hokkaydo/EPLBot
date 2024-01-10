@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 
 public class Config {
 
-    private static final String IDENTIFIER_UNDER_STRING_FORM = "Identifiant sous forme de chaîne de caractères";
+    private static final String STRING_FORMAT = "Chaîne de caractères";
     private static final Supplier<ConfigurationParser> MODULE_DISABLED = () -> new ConfigurationParser(() -> false, Object::toString, Boolean::valueOf, "Booléen");
     private static final String INTEGER_FORMAT = "Nombre entier";
     private static final IntFunction<ConfigurationParser> INTEGER_CONFIGURATION_VALUE = init -> new ConfigurationParser(
@@ -42,7 +42,7 @@ public class Config {
             () -> "",
             Object::toString,
             s -> s,
-            IDENTIFIER_UNDER_STRING_FORM
+            STRING_FORMAT
     );
     private static ConfigurationRepository repository;
     private static final Map<String, ConfigurationParser> DEFAULT_CONFIGURATION = new HashMap<>(Map.of(
@@ -53,7 +53,7 @@ public class Config {
                     "Nom de la réaction"
             ),
             "PIN_REACTION_THRESHOLD", INTEGER_CONFIGURATION_VALUE.apply(1),
-            "ADMIN_CHANNEL_ID", INTEGER_CONFIGURATION_VALUE.apply(0),
+            "ADMIN_CHANNEL_ID", STRING_CONFIGURATION_VALUE.get(),
             "CONFESSION_CHANNEL_ID", STRING_CONFIGURATION_VALUE.get(),
             "CONFESSION_VALIDATION_CHANNEL_ID", STRING_CONFIGURATION_VALUE.get(),
             "CONFESSION_EMBED_COLOR", new ConfigurationParser(
@@ -62,8 +62,11 @@ public class Config {
                     Color::decode,
                     "RGB sous forme hexadécimale : Ex #FFFFFF = Blanc"
             ),
+
             "COMMAND_CODE_TIMELIMIT", INTEGER_CONFIGURATION_VALUE.apply(60),
             "DRIVE_ADMIN_CHANNEL_ID", LONG_CONFIGURATION_VALUE.apply(0)
+
+            "DRIVE_ADMIN_CHANNEL_ID", STRING_CONFIGURATION_VALUE.get()
     ));
 
     public static Map<String, ConfigurationParser> getDefaultConfiguration() {
@@ -77,8 +80,9 @@ public class Config {
                     s -> Arrays.stream(s.split(",")).map(a -> a.split(";")).map(a -> Map.entry(a[0], Timestamp.valueOf(a[1]))).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)),
                     "Liste de paires Lien-Timestamp"
             ),
-            "EXAM_RETRIEVE_CHANNEL", LONG_CONFIGURATION_VALUE.apply(15L),
-            "EXAM_ZIP_MESSAGE_ID", LONG_CONFIGURATION_VALUE.apply(15L)
+            "EXAM_RETRIEVE_CHANNEL_ID", STRING_CONFIGURATION_VALUE.get(),
+            "EXAM_ZIP_MESSAGE_ID", STRING_CONFIGURATION_VALUE.get(),
+            "EARLY_BIRD_NEXT_MESSAGE", STRING_CONFIGURATION_VALUE.get()
     );
     static {
         DEFAULT_CONFIGURATION.putAll(Map.of(
@@ -98,8 +102,8 @@ public class Config {
                 "RSS_UPDATE_PERIOD", LONG_CONFIGURATION_VALUE.apply(15L),
                 "ADMIN_CHANNEL_ID", STRING_CONFIGURATION_VALUE.get(),
                 "CONFESSION_WARN_THRESHOLD", INTEGER_CONFIGURATION_VALUE.apply(3),
-                "EARLY_BIRD_ROLE_ID", LONG_CONFIGURATION_VALUE.apply(0),
-                "EARLY_BIRD_CHANNEL_ID", LONG_CONFIGURATION_VALUE.apply(0),
+                "EARLY_BIRD_ROLE_ID", STRING_CONFIGURATION_VALUE.get(),
+                "EARLY_BIRD_CHANNEL_ID", STRING_CONFIGURATION_VALUE.get(),
                 "EARLY_BIRD_RANGE_START_DAY_SECONDS", LONG_CONFIGURATION_VALUE.apply(6*60*60L),
                 "EARLY_BIRD_RANGE_END_DAY_SECONDS", LONG_CONFIGURATION_VALUE.apply(9*60*60L)
         ));
@@ -119,7 +123,8 @@ public class Config {
                 "notice", MODULE_DISABLED.get()
         ));
         DEFAULT_CONFIGURATION.putAll(Map.of(
-                "earlybird", MODULE_DISABLED.get()
+                "earlybird", MODULE_DISABLED.get(),
+                "christmas", MODULE_DISABLED.get()
         ));
     }
     private static final Map<Long, Map<String, Object>> GUILD_CONFIGURATION = new HashMap<>();

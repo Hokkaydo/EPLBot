@@ -5,10 +5,16 @@ import com.github.hokkaydo.eplbot.MessageUtil;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
+import net.dv8tion.jda.api.events.message.MessageDeleteEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.requests.RestAction;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
@@ -19,6 +25,7 @@ public class QuoteListener extends ListenerAdapter {
         this.guildId = guildId;
     }
     private static final Pattern MESSAGE_URL_PATTERN = Pattern.compile("https?://(canary.|ptb.)?discord.com/channels/\\d*/\\d*/\\d*");
+    private final Map<Long, List<Message>> quotes = new HashMap<>();
     @Override
     public void onMessageReceived(@NotNull MessageReceivedEvent event) {
         if(!event.isFromGuild()) return;
@@ -43,10 +50,26 @@ public class QuoteListener extends ListenerAdapter {
                                                                            m.getJumpUrl(),
                                                                            m.getAuthor().getAvatarUrl()
                                                                    ).build()
-                                                           )
+                                                           ),
+                                                           quote -> {
+                                                               List<Message> messages = quotes.getOrDefault(event.getMessageIdLong(), new ArrayList<>());
+                                                               messages.add(quote);
+                                                               quotes.put(event.getMessageIdLong(), messages);
+                                                           }
                                                    )
                                            )
                 );
+    }
+
+    @Override
+    public void onMessageDelete(@NotNull MessageDeleteEvent event) {
+        if(quotes.containsKey(event.getMessageIdLong())) {
+            // Deleting an already deleted message could throw an Exception
+            try {
+                quotes.get(event.getMessageIdLong()).stream().map(Message::delete).forEach(RestAction::queue);
+            } catch (Exception ignored) {}
+            quotes.remove(event.getMessageIdLong());
+        }
     }
 
     private record Tuple3<A, B, C>(A a, B b, C c) {}

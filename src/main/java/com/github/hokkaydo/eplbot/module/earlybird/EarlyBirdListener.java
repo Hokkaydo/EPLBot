@@ -1,6 +1,7 @@
 package com.github.hokkaydo.eplbot.module.earlybird;
 
 import com.github.hokkaydo.eplbot.Main;
+import com.github.hokkaydo.eplbot.MessageUtil;
 import com.github.hokkaydo.eplbot.configuration.Config;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
@@ -18,10 +19,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 
 public class EarlyBirdListener extends ListenerAdapter {
 
-    private static final ScheduledExecutorService EXECUTOR = Executors.newScheduledThreadPool(2);
+    private static final ScheduledExecutorService EXECUTOR = Executors.newScheduledThreadPool(4);
     private static final Random RANDOM = new Random();
     private static final List<String> MESSAGES = List.of(
             "Helloooo !\nBien dormi ?",
@@ -41,48 +43,57 @@ public class EarlyBirdListener extends ListenerAdapter {
     private final Long guildId;
     private final List<ScheduledFuture<?>> dayLoops = new ArrayList<>();
     private final List<ScheduledFuture<?>> perfectTimeLoops = new ArrayList<>();
-    private String nextMessage;
     private boolean waitingForAnswer;
+    private static final String[][] LOG_MESSAGES = {
+            {"No message today", "<"},
+            {"Message today!", ">="}
+    };
 
     public EarlyBirdListener(Long guildId) {
         this.guildId = guildId;
     }
 
-    public void launchRandomSender(long startSeconds, long endSeconds, int messageProbability, long channelId) {
+    public void launchRandomSender() {
+        long startSeconds = Config.getGuildVariable(guildId, "EARLY_BIRD_RANGE_START_DAY_SECONDS");
+        long endSeconds = Config.getGuildVariable(guildId, "EARLY_BIRD_RANGE_END_DAY_SECONDS");
+
         long currentSeconds = LocalTime.now().getLong(ChronoField.SECOND_OF_DAY) + 60*60;
         long deltaStart = startSeconds - currentSeconds;
         if (deltaStart < 0) {
             deltaStart += 24*60*60;
         }
+        Main.LOGGER.log(Level.INFO, "[EarlyBird] Trying to send in {0} seconds", deltaStart);
         dayLoops.add(EXECUTOR.schedule(() -> {
-            if(RANDOM.nextInt(100) > messageProbability) return;
+            int rnd = RANDOM.nextInt(100);
+            int proba = Config.<Integer>getGuildVariable(guildId, "EARLY_BIRD_MESSAGE_PROBABILITY");
+            String[] logs = LOG_MESSAGES[rnd > proba ? 0 : 1];
+            Main.LOGGER.log(Level.WARNING, "[EarlyBird] %s (%d %s %d)".formatted(logs[0], proba, logs[1], rnd));
+            if(RANDOM.nextInt(100) > Config.<Integer>getGuildVariable(guildId, "EARLY_BIRD_MESSAGE_PROBABILITY")) return;
             long waitTime = RANDOM.nextLong(endSeconds - startSeconds);
+            Main.LOGGER.log(Level.WARNING, "[EarlyBird] Wait %d seconds before sending".formatted(waitTime));
             perfectTimeLoops.add(EXECUTOR.schedule(
                     () -> Optional.ofNullable(Main.getJDA().getGuildById(guildId))
-                                  .map(guild -> guild.getTextChannelById(channelId))
-                                  .ifPresent(channel -> {
-                                      if(this.nextMessage != null) {
-                                          channel.sendMessage(this.nextMessage).queue();
-                                          this.nextMessage = "";
-                                          this.waitingForAnswer = true;
-                                          perfectTimeLoops.removeIf(f -> f.isDone() || f.isCancelled());
-                                          return;
-                                      }
-                                      int randomMessageIndex = RANDOM.nextInt(MESSAGES.size());
-                                      channel.sendMessage(MESSAGES.get(randomMessageIndex)).queue(v -> this.waitingForAnswer = true);
-                                      perfectTimeLoops.removeIf(f -> f.isDone() || f.isCancelled());
-                                  }),
+                                  .map(guild -> guild.getTextChannelById(Config.getGuildVariable(guildId, "EARLY_BIRD_CHANNEL_ID")))
+                                  .ifPresentOrElse(channel -> {
+                                              String nextMessage = Config.getGuildState(guildId, "EARLY_BIRD_NEXT_MESSAGE");
+                                              if(nextMessage != null && !nextMessage.isBlank()) {
+                                                  channel.sendMessage(nextMessage).queue();
+                                                  Config.updateValue(guildId, "EARLY_BIRD_NEXT_MESSAGE", "");
+                                                  this.waitingForAnswer = true;
+                                                  perfectTimeLoops.removeIf(f -> f.isDone() || f.isCancelled());
+                                                  return;
+                                              }
+                                              int randomMessageIndex = RANDOM.nextInt(MESSAGES.size());
+                                              channel.sendMessage(MESSAGES.get(randomMessageIndex)).queue(v -> this.waitingForAnswer = true);
+                                              perfectTimeLoops.removeIf(f -> f.isDone() || f.isCancelled());
+                                              dayLoops.removeIf(f -> f.isDone() || f.isCancelled());
+                                              launchRandomSender();
+                                          },
+                                          () -> MessageUtil.sendAdminMessage("EARLY_BIRD_CHANNEL_ID (%s) not found".formatted(Config.getGuildVariable(guildId, "EARLY_BIRD_CHANNEL_ID")), guildId)
+                                  ),
                     waitTime,
                     TimeUnit.SECONDS
             ));
-            long start = Config.getGuildVariable(guildId, "EARLY_BIRD_RANGE_START_DAY_SECONDS");
-            long end = Config.getGuildVariable(guildId, "EARLY_BIRD_RANGE_END_DAY_SECONDS");
-            int probability = Config.getGuildVariable(guildId, "EARLY_BIRD_MESSAGE_PROBABILITY");
-            long channelId2 = Config.getGuildVariable(guildId, "EARLY_BIRD_CHANNEL_ID");
-            dayLoops.removeIf(f -> f.isDone() || f.isCancelled());
-
-            launchRandomSender(start, end, probability, channelId2);
-
         }, deltaStart, TimeUnit.SECONDS));
     }
 
@@ -93,17 +104,18 @@ public class EarlyBirdListener extends ListenerAdapter {
         dayLoops.clear();
     }
 
-    public void setNextMessage(String message) {
-        this.nextMessage = message;
+    public void restart() {
+        cancel();
+        launchRandomSender();
     }
 
     @Override
     public void onMessageReceived(@NotNull MessageReceivedEvent event) {
         if(!waitingForAnswer) return;
-        long channelId = Config.<Long>getGuildVariable(guildId, "EARLY_BIRD_CHANNEL_ID");
-        if(event.getChannel().getIdLong() != channelId || event.isWebhookMessage() || event.getAuthor().isBot() || event.getAuthor().isSystem()) return;
+        String channelId = Config.getGuildVariable(guildId, "EARLY_BIRD_CHANNEL_ID");
+        if(!event.getChannel().getId().equals(channelId) || event.isWebhookMessage() || event.getAuthor().isBot() || event.getAuthor().isSystem()) return;
         this.waitingForAnswer = false;
-        long earlyBirdRoleId = Config.<Long>getGuildVariable(guildId, "EARLY_BIRD_ROLE_ID");
+        String earlyBirdRoleId = Config.getGuildVariable(guildId, "EARLY_BIRD_ROLE_ID");
         Optional.ofNullable(Main.getJDA().getGuildById(guildId)).map(guild -> guild.getRoleById(earlyBirdRoleId)).ifPresent(role -> {
             role.getGuild().findMembersWithRoles(role).onSuccess(members -> members.stream().filter(m -> m.getUser().getIdLong() != event.getAuthor().getIdLong()).map(m -> role.getGuild().removeRoleFromMember(m.getUser(), role)).forEach(RestAction::queue));
             role.getGuild().addRoleToMember(event.getAuthor(), role).queue();

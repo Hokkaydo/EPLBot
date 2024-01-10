@@ -18,22 +18,18 @@ import java.util.function.Supplier;
 
 public class EarlyBirdNextMessageCommand implements Command {
 
-    private final long guildId;
-    private final EarlyBirdListener earlyBirdListener;
-    EarlyBirdNextMessageCommand(long guildId, EarlyBirdListener earlyBirdListener) {
-        this.guildId = guildId;
-        this.earlyBirdListener = earlyBirdListener;
-    }
     @Override
     public void executeCommand(CommandContext context) {
         Optional<String> messageOpt = context.options().stream().filter(o -> o.getName().equals("message")).findFirst().map(OptionMapping::getAsString);
         if(messageOpt.isEmpty()) return;
-        long earlyBirdRoleId = Config.<Long>getGuildVariable(guildId, "EARLY_BIRD_ROLE_ID");
-        if(context.author().getRoles().stream().filter(r -> r.getIdLong() == earlyBirdRoleId).findFirst().isEmpty()) {
+        if(!context.interaction().isGuildCommand() || context.interaction().getGuild() == null) return;
+        long guildId = context.interaction().getGuild().getIdLong();
+        String earlyBirdRoleId = Config.getGuildVariable(guildId, "EARLY_BIRD_ROLE_ID");
+        if(context.author().getRoles().stream().filter(r -> r.getId().equals(earlyBirdRoleId)).findFirst().isEmpty()) {
             context.replyCallbackAction().setContent(Strings.getString("EARLY_BIRD_NOT_EARLY_BIRD")).queue();
             return;
         }
-        earlyBirdListener.setNextMessage(messageOpt.get());
+        Config.updateValue(guildId, "EARLY_BIRD_NEXT_MESSAGE", messageOpt.get());
         MessageUtil.sendAdminMessage("Prochain message matinal enregistré par %s :%n >>> %s".formatted(context.author().getAsMention(), messageOpt.get()), guildId);
         context.replyCallbackAction().setContent(Strings.getString("EARLY_BIRD_NEXT_MESSAGE_REGISTERED")).queue();
     }
@@ -50,7 +46,7 @@ public class EarlyBirdNextMessageCommand implements Command {
 
     @Override
     public List<OptionData> getOptions() {
-        return Collections.singletonList(new OptionData(OptionType.STRING, "message", "Prochain message matinal que le bot enverra"));
+        return Collections.singletonList(new OptionData(OptionType.STRING, "message", "Prochain message matinal que le bot enverra", true));
     }
 
     @Override
