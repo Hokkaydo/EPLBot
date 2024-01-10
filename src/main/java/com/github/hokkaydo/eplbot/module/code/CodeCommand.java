@@ -40,28 +40,29 @@ public class CodeCommand extends ListenerAdapter implements Command{
             "java", new JavaRunner()
         );
     private static final long MAX_SENT_FILE_SIZE = 8L * 1024 * 1024; 
+    private static String CURRENT_LANG = null;
     @Override
     public void executeCommand(CommandContext context) {
         Guild guild = context.interaction().getGuild();
         if(guild == null) return;
         if (context.options().size() <= 1) {
             context.interaction().replyModal(Modal.create(context.author().getId() + "submitCode","Execute du code")
-                                                     .addActionRow(TextInput.create("language", "Language", TextInputStyle.PARAGRAPH).setPlaceholder("python|rust|java").setRequired(true).build())
                                                      .addActionRow(TextInput.create("body", "Code", TextInputStyle.PARAGRAPH).setPlaceholder("Code").setRequired(true).build())
                                                      .build()).queue();
+            CURRENT_LANG = context.options().get(0).getAsString();
             return;
         } 
         context.replyCallbackAction().setContent("Processing since: <t:" + Instant.now().getEpochSecond() + ":R>").setEphemeral(false).queue();
         context.options()
-                .get(0)
+                .get(1)
                 .getAsAttachment()
                 .getProxy()
                 .downloadToFile(new File(("%s"+File.pathSeparator+"input.txt").formatted(TEMP_DIR)))
                 .thenAcceptAsync(file -> {
                     String content = readFromFile(file).orElse("");
-                    Runner runner = RUNNER_MAP.get(context.options().get(1).getAsString());
+                    Runner runner = RUNNER_MAP.get(context.options().get(0).getAsString());
                     String result = runner.run(content, Config.getGuildVariable(guild.getIdLong(), "COMMAND_CODE_TIMELIMIT"));
-                    performSubmit(context.channel(),content, context.options().get(1).getAsString());
+                    performSubmit(context.channel(),content, context.options().get(0).getAsString());
                     performResponse(context.channel(),result);
                     file.delete();
                 })
@@ -74,15 +75,17 @@ public class CodeCommand extends ListenerAdapter implements Command{
     @Override
     public void onModalInteraction(@NotNull ModalInteractionEvent event) {
         if(event.getInteraction().getType() != InteractionType.MODAL_SUBMIT || !event.getModalId().contains("Code")) return;
-        Optional<ModalMapping> lang = Optional.ofNullable(event.getInteraction().getValue("language"));
         Optional<ModalMapping> body = Optional.ofNullable(event.getInteraction().getValue("body"));
         Guild guild = event.getGuild();
-        if(lang.isEmpty() || body.isEmpty() || guild == null) return;
+        if( CURRENT_LANG == null||body.isEmpty() || guild == null){
+            System.out.println("here");
+            return;
 
+        } 
         Integer runTimeout = Config.getGuildVariable(guild.getIdLong(), "COMMAND_CODE_TIMELIMIT");
         event.getInteraction().reply("Processing since: <t:" + Instant.now().getEpochSecond() + ":R>").queue();
 
-        String languageOption = Objects.requireNonNull(lang.get().getAsString());
+        String languageOption = CURRENT_LANG;
         String bodyStr = Objects.requireNonNull(body.get().getAsString());
         Runner runner = RUNNER_MAP.get(languageOption);
         performSubmit(event.getMessageChannel(),bodyStr, languageOption);
@@ -180,11 +183,12 @@ public class CodeCommand extends ListenerAdapter implements Command{
     @Override
     public List<OptionData> getOptions() {
         return List.of(
-                new OptionData(OptionType.ATTACHMENT, "file", Strings.getString("COMMAND_CODE_FILE_OPTION_DESCRIPTION"), false),
-                new OptionData(OptionType.STRING, "language", Strings.getString("COMMAND_CODE_LANG_OPTION_DESCRIPTION"), false)
-                        .addChoice("python", "python")
-                        .addChoice("rust", "rust")
-                        .addChoice("java", "java")
+            new OptionData(OptionType.STRING, "language", Strings.getString("COMMAND_CODE_LANG_OPTION_DESCRIPTION"), true)
+                .addChoice("python", "python")
+                .addChoice("rust", "rust")
+                .addChoice("java", "java"),
+            new OptionData(OptionType.ATTACHMENT, "file", Strings.getString("COMMAND_CODE_FILE_OPTION_DESCRIPTION"), false)
+
         );
     }
     @Override
