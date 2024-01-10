@@ -64,8 +64,6 @@ public class Config {
             ),
 
             "COMMAND_CODE_TIMELIMIT", INTEGER_CONFIGURATION_VALUE.apply(60),
-            "DRIVE_ADMIN_CHANNEL_ID", LONG_CONFIGURATION_VALUE.apply(0)
-
             "DRIVE_ADMIN_CHANNEL_ID", STRING_CONFIGURATION_VALUE.get()
     ));
 
