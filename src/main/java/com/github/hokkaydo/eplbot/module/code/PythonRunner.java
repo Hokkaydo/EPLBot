@@ -32,10 +32,12 @@ public class PythonRunner implements Runner {
             FileWriter writer = new FileWriter(sourceFile);
             writer.write(input);
             writer.close();
-            Process process = new ProcessBuilder("python",  sourceFile.getAbsolutePath()).redirectErrorStream(true).start();
-            while ((line = new BufferedReader(new InputStreamReader(process.getInputStream())).readLine()) != null) {
+            Process process = new ProcessBuilder("python", sourceFile.getAbsolutePath()).redirectErrorStream(true).start();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            while ((line = reader.readLine()) != null) {
                 output.append(line).append("\n");
             }
+            reader.close();
         } catch (IOException e) {
             e.printStackTrace();
             return "Server side error code P01 " + e.getMessage();
