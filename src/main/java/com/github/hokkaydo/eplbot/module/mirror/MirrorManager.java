@@ -74,7 +74,6 @@ public class MirrorManager extends ListenerAdapter {
 
         if(event.getMessage().isEphemeral()) return;
         if(event.getMessage().getType().isSystem()) return;
-        if(event.getMessage().isWebhookMessage()) return;
         if(!event.getChannel().getType().isGuild()) return;
 
         // do not mirror already mirrored messages
