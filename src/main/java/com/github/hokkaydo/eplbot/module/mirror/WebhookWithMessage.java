@@ -20,13 +20,20 @@ import java.util.function.Function;
 public class WebhookWithMessage {
 
     private final WebhookImpl webhook;
-    public WebhookWithMessage(WebhookImpl webhook) {
+    private final boolean threadWebhook;
+    private final long threadId;
+    public WebhookWithMessage(WebhookImpl webhook, boolean threadWebhook, long threadId) {
         this.webhook = webhook;
+        this.threadWebhook = threadWebhook;
+        this.threadId = threadId;
     }
 
     public WebhookMessageCreateAction<Message> sendRequest() {
         checkToken();
         Route.CompiledRoute route = Route.Webhooks.EXECUTE_WEBHOOK.compile(webhook.getId(), webhook.getToken());
+        if(this.threadWebhook)
+            route = route.withQueryParams("thread_id", String.valueOf(this.threadId));
+
         Function<DataObject, Message> transform = json -> createMessage((JDAImpl) webhook.getJDA(), json);
         route = route.withQueryParams("wait", "true");
         WebhookMessageCreateActionImpl<Message> action = new WebhookMessageCreateActionImpl<>(webhook.getJDA(), route, transform);
@@ -39,6 +46,8 @@ public class WebhookWithMessage {
         Checks.isSnowflake(messageId);
         Route.CompiledRoute route = Route.Webhooks.EXECUTE_WEBHOOK_EDIT.compile(webhook.getId(), webhook.getToken(), messageId);
         route = route.withQueryParams("wait", "true");
+        if(this.threadWebhook)
+            route = route.withQueryParams("thread_id", String.valueOf(this.threadId));
         Function<DataObject, Message> transform = json -> createMessage((JDAImpl) webhook.getJDA(), json);
 
         WebhookMessageEditActionImpl<Message> action = new WebhookMessageEditActionImpl<>(webhook.getJDA(), route, transform);

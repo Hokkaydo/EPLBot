@@ -3,13 +3,20 @@ package com.github.hokkaydo.eplbot.module.mirror;
 import com.github.hokkaydo.eplbot.Main;
 import com.github.hokkaydo.eplbot.MessageUtil;
 import com.github.hokkaydo.eplbot.configuration.Config;
+import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.EmbedType;
 import net.dv8tion.jda.api.entities.Icon;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.MessageReaction;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.Webhook;
-import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.channel.attribute.IWebhookContainer;
+import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
+import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.requests.restaction.WebhookMessageCreateAction;
@@ -19,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,26 +34,33 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
+import static net.dv8tion.jda.api.entities.Message.MAX_CONTENT_LENGTH;
+
 public class MirroredMessage {
 
     private static final Map<Long, WebhookWithMessage> CHANNEL_WEBHOOK = new HashMap<>();
     private static final String DEFAULT_WEBHOOK_NAME = "MIRROR_WEBHOOK";
     private final Message originalMessage;
     private Message mirrorMessage;
-    private final TextChannel channel;
+    private final GuildMessageChannel channel;
     private Message replyTo;
     private Consumer<Message> onceMessageSent;
     private OffsetDateTime lastUpdated;
     private boolean threadOwner;
-    //private final Map<Emoji, Integer> reactions = new HashMap<>();
+    private final Map<Emoji, Integer> reactions = new HashMap<>();
     private final String authorNameAndNickname;
     private boolean pinned = false;
+    private final boolean threadMirror;
+    private final Map<Long, Member> mirrorMembers;
 
-    MirroredMessage(Message initialMessage, TextChannel textChannel) {
+    MirroredMessage(Message initialMessage, GuildMessageChannel textChannel, List<Member> mirrorMembers) {
         this.channel = textChannel;
+        this.threadMirror = channel instanceof ThreadChannel;
         this.lastUpdated = initialMessage.getTimeCreated();
         this.originalMessage = initialMessage;
-        Member mirrorGuildMember = channel.getGuild().retrieveMemberById(originalMessage.getAuthor().getIdLong()).complete();
+        this.mirrorMembers  = new HashMap<>();
+        mirrorMembers.forEach(member -> this.mirrorMembers.put(member.getIdLong(), member));
+        Member mirrorGuildMember = this.mirrorMembers.get(originalMessage.getAuthor().getIdLong());
         Member originalGuildMember = initialMessage.getMember();
         String prefix = "";
         if(isAssistant(mirrorGuildMember) || isAssistant(originalGuildMember))
@@ -107,7 +122,7 @@ public class MirroredMessage {
         }).thenAccept(icon -> {
             WebhookMessageCreateAction<Message> createAction = getWebhook().sendMessage(authorNameAndNickname, icon, content);
             if (replyTo != null) {
-                Member replyToAuthor = channel.getGuild().retrieveMemberById(replyTo.getAuthor().getIdLong()).complete();
+                Member replyToAuthor = mirrorMembers.get(replyTo.getAuthor().getIdLong());
                 createAction.addComponents(ActionRow.of(Button.link(replyTo.getJumpUrl(), "↪ %s".formatted(MessageUtil.nameAndNickname(replyToAuthor, replyTo.getAuthor())))));
             }
             if (!originalMessage.getEmbeds().isEmpty()) {
@@ -144,9 +159,9 @@ public class MirroredMessage {
     private String getContent(Message message) {
         String content = message.getContentRaw();
         if (content.isBlank()) {
-            content = message.getEmbeds().isEmpty() ? "" : message.getEmbeds().get(0).getDescription();
+            content = message.getEmbeds().isEmpty() ? "" : message.getEmbeds().getFirst().getDescription();
         }
-        return content;
+        return content == null ? "" : content.substring(0, Math.min(content.length(), MAX_CONTENT_LENGTH));
     }
 
     /**
@@ -154,26 +169,40 @@ public class MirroredMessage {
      * @return retrieved or created {@link WebhookWithMessage}
      * */
     private WebhookWithMessage getWebhook() {
-        List<Webhook> webhooks = channel.retrieveWebhooks().complete();
 
         // Check if a webhook is already known for this channel
-        if(CHANNEL_WEBHOOK.containsKey(channel.getIdLong())) {
+        if (CHANNEL_WEBHOOK.containsKey(channel.getIdLong())) {
             return CHANNEL_WEBHOOK.get(channel.getIdLong());
         }
+        IWebhookContainer webhookContainer = getiWebhookContainer();
 
         // Check if a webhook already exists in this channel
+        List<Webhook> webhooks = webhookContainer.retrieveWebhooks().complete();
         Optional<Webhook> webhookOpt = webhooks.stream().filter(w -> w.getOwner() != null && w.getOwner().getIdLong() == Main.getJDA().getSelfUser().getIdLong()).findFirst();
         if (webhookOpt.isPresent() && webhookOpt.get().getToken() != null) {
-            WebhookWithMessage webhook = new WebhookWithMessage((WebhookImpl) webhookOpt.get());
+            WebhookWithMessage webhook = new WebhookWithMessage((WebhookImpl) webhookOpt.get(), isThreadMirror(), getChannelId());
             CHANNEL_WEBHOOK.put(channel.getIdLong(), webhook);
             return webhook;
         }
 
         // Webhook has not been found => creating new one
-        Webhook webhook = channel.createWebhook(DEFAULT_WEBHOOK_NAME).complete();
-        WebhookWithMessage wh = new WebhookWithMessage((WebhookImpl) webhook);
+        Webhook webhook = webhookContainer.createWebhook(DEFAULT_WEBHOOK_NAME).complete();
+        WebhookWithMessage wh = new WebhookWithMessage((WebhookImpl) webhook, isThreadMirror(), getChannelId());
         CHANNEL_WEBHOOK.put(channel.getIdLong(), wh);
         return wh;
+    }
+
+    private IWebhookContainer getiWebhookContainer() {
+        IWebhookContainer webhookContainer;
+        if (channel instanceof ThreadChannel threadChanel) {
+            if (!(threadChanel.getParentMessageChannel() instanceof IWebhookContainer parentChannel))
+                throw new IllegalStateException();
+            webhookContainer = parentChannel;
+        } else {
+            if (!(channel instanceof IWebhookContainer webhookChannel)) throw new IllegalStateException();
+            webhookContainer = webhookChannel;
+        }
+        return webhookContainer;
     }
 
     /**
@@ -190,24 +219,8 @@ public class MirroredMessage {
         });
     }
 
-    void update(Message initialMessage) {
-        updatePin(initialMessage.isPinned());
-
-        if(mirrorMessage == null) return;
-        if (!mirrorMessage.isWebhookMessage()) return;
-        if (getWebhook() == null) return;
-        if (!(initialMessage.getTimeEdited() == null ? initialMessage.getTimeCreated() : initialMessage.getTimeEdited()).isAfter(lastUpdated)) return;
-        checkBanTimeOut(initialMessage.getAuthor(), () -> {
-            String content = getContent(initialMessage);
-            List<Message.Attachment> attachments = initialMessage.getAttachments();
-            getWebhook().editRequest(mirrorMessage.getId())
-                    .setContent(content)
-                    .setAttachments(attachments)
-                    .queue(
-                            m -> this.lastUpdated = m.getTimeEdited() == null ? m.getTimeCreated() : m.getTimeEdited(),
-                            throwable -> {}
-                    );
-        });
+    boolean isThreadMirror() {
+        return this.threadMirror;
     }
 
     private void updatePin(boolean shouldPin) {
@@ -241,6 +254,26 @@ public class MirroredMessage {
         this.threadOwner = true;
     }
 
+    void update(Message initialMessage) {
+        updatePin(initialMessage.isPinned());
+
+        if(mirrorMessage == null) return;
+        if (!mirrorMessage.isWebhookMessage()) return;
+        if (getWebhook() == null) return;
+        if (!(initialMessage.getTimeEdited() == null ? initialMessage.getTimeCreated() : initialMessage.getTimeEdited()).isAfter(lastUpdated)) return;
+        checkBanTimeOut(initialMessage.getAuthor(), () -> {
+            String content = getContent(initialMessage);
+            List<Message.Attachment> attachments = initialMessage.getAttachments();
+            getWebhook().editRequest(mirrorMessage.getId())
+                    .setContent(content)
+                    .setAttachments(attachments)
+                    .queue(
+                            m -> this.lastUpdated = m.getTimeEdited() == null ? m.getTimeCreated() : m.getTimeEdited(),
+                            _ -> {}
+                    );
+        });
+    }
+
     boolean isThreadOwner() {
         return this.threadOwner;
     }
@@ -249,26 +282,28 @@ public class MirroredMessage {
         return this.mirrorMessage != null;
     }
 
-    // Commented until a viable solution is found
 
-    /*void addReaction(MessageReaction reaction) {
+    /**
+     * @deprecated no viable way to add reactions to messages
+     * */
+    @SuppressWarnings("unused")
+    @Deprecated
+    void addReaction(MessageReaction reaction) {
         reactions.put(reaction.getEmoji(), reactions.getOrDefault(reaction.getEmoji(), 0) + 1);
         updateReactionField();
     }
 
-    void removeReaction(MessageReaction reaction) {
-        reactions.computeIfPresent(reaction.getEmoji(), (e, i) -> i - 1);
-        if (reactions.getOrDefault(reaction.getEmoji(), 1) <= 0) reactions.remove(reaction.getEmoji());
-        updateReactionField();
-    }
-
+    /**
+     * @deprecated no viable way to add reactions to messages
+     * */
+    @Deprecated
     private void updateReactionField() {
         StringBuilder reactionString = new StringBuilder();
         List<Map.Entry<Emoji, Integer>> entries = new ArrayList<>(reactions.entrySet());
         for (int i = 0; i < entries.size() - 1; i++) {
             reactionString.append(entries.get(i).getKey().getFormatted()).append(": ").append(entries.get(i).getValue()).append(", ");
         }
-        reactionString.append(entries.get(entries.size() - 1).getKey().getFormatted()).append(": ").append(entries.get(entries.size() - 1).getValue());
+        reactionString.append(entries.getLast().getKey().getFormatted()).append(": ").append(entries.getLast().getValue());
 
         Optional<MessageEmbed> oldEmbed = originalMessage.getEmbeds().stream().filter(e -> e.getType() == EmbedType.RICH).findFirst();
         if (oldEmbed.isEmpty()) return;
@@ -281,17 +316,25 @@ public class MirroredMessage {
         List<MessageEmbed> otherEmbeds = new ArrayList<>(originalMessage.getEmbeds().stream().filter(e -> e.getType() != EmbedType.RICH).toList());
         otherEmbeds.add(newEmbed.build());
         originalMessage.editMessageEmbeds(otherEmbeds).queue();
-    }*/
+    }
+
+    /**
+     * @deprecated no viable way to add reactions to messages
+     * */
+    @SuppressWarnings("unused")
+    @Deprecated
+    void removeReaction(MessageReaction reaction) {
+        reactions.computeIfPresent(reaction.getEmoji(), (e, i) -> i - 1);
+        if (reactions.getOrDefault(reaction.getEmoji(), 1) <= 0) reactions.remove(reaction.getEmoji());
+        updateReactionField();
+    }
+
 
     private record Tuple3<A, B, C>(A a, B b, C c) {
 
         @Override
         public String toString() {
-            return "Tuple2{" +
-                           "a=" + a +
-                           ", b=" + b +
-                           ", c=" + c +
-                           '}';
+            return STR."Tuple2{a=\{a}, b=\{b}, c=\{c}\{'}'}";
         }
 
     }
