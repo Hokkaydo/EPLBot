@@ -158,10 +158,7 @@ public class MirroredMessage {
      * */
     private String getContent(Message message) {
         String content = message.getContentRaw();
-        if (content.isBlank()) {
-            content = message.getEmbeds().isEmpty() ? "" : message.getEmbeds().getFirst().getDescription();
-        }
-        return content == null ? "" : content.substring(0, Math.min(content.length(), MAX_CONTENT_LENGTH));
+        return content.substring(0, Math.min(content.length(), MAX_CONTENT_LENGTH));
     }
 
     /**

@@ -46,7 +46,7 @@ public class QuoteListener extends ListenerAdapter {
                                                            m,
                                                            e -> event.getMessage().replyEmbeds(
                                                                    e.setAuthor(
-                                                                           MessageUtil.nameAndNickname(event.getGuild().retrieveMemberById(m.getAuthor().getIdLong()).complete(), m.getAuthor()),
+                                                                           MessageUtil.nameAndNickname(members.stream().filter(member -> member.getIdLong() == m.getAuthor().getIdLong()).findFirst().orElse(null), m.getAuthor()),
                                                                            m.getJumpUrl(),
                                                                            m.getAuthor().getAvatarUrl()
                                                                    ).build()
@@ -67,7 +67,7 @@ public class QuoteListener extends ListenerAdapter {
             // Deleting an already deleted message could throw an Exception
             try {
                 quotes.get(event.getMessageIdLong()).stream().map(Message::delete).forEach(RestAction::queue);
-            } catch (Exception ignored){}
+            } catch (Exception ignored){/*Ignored*/}
             quotes.remove(event.getMessageIdLong());
         }
     }
