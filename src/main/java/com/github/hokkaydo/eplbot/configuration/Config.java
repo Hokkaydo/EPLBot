@@ -106,7 +106,8 @@ public class Config {
         ));
         DEFAULT_CONFIGURATION.putAll(Map.of(
                 "EARLY_BIRD_MESSAGE_PROBABILITY", INTEGER_CONFIGURATION_VALUE.apply(33),
-                "ASSISTANT_ROLE_ID", STRING_CONFIGURATION_VALUE.get()
+                "ASSISTANT_ROLE_ID", STRING_CONFIGURATION_VALUE.get(),
+                "MODERATOR_ROLE_ID", STRING_CONFIGURATION_VALUE.get()
         ));
 
         // Modules

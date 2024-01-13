@@ -109,5 +109,7 @@
   "EARLY_BIRD_NEXT_MESSAGE_COMMAND_HELP": "Permet d'enregistrer le prochain message de réveil lorsqu'on est le lève-tôt.\n Cette commande ne peut être utilisée que par le détenteur du rôle `Lève-tôt`.\n Elle prend en paramètre le message à envoyer.",
   "EARLY_BIRD_NEXT_MESSAGE_COMMAND_DESCRIPTION": "Permet d'enregistrer le prochain message de réveil lorsqu'on est le lève-tôt",
   "EARLY_BIRD_RESTART_COMMAND_HELP": "Permet de redémarrer le timer du module EarlyBird",
-  "EARLY_BIRD_RESTART_COMMAND_DESCRIPTION": "Permet de redémarrer le timer du module EarlyBird"
+  "EARLY_BIRD_RESTART_COMMAND_DESCRIPTION": "Permet de redémarrer le timer du module EarlyBird",
+  "QUOTE_DELETE_NOT_ALLOWED": "Vous n'êtes pas autorisé à supprimer ce message",
+  "QUOTE_DELETED": "Quote supprimée"
 }
