@@ -83,6 +83,7 @@ public class Config {
             "EARLY_BIRD_NEXT_MESSAGE", STRING_CONFIGURATION_VALUE.get()
     );
     static {
+        // Configuration keys
         DEFAULT_CONFIGURATION.putAll(Map.of(
                 "RSS_FEEDS", new ConfigurationParser(
                         () -> new ArrayList<>(List.of("https://www.developpez.com/index/rss")),
@@ -106,8 +107,11 @@ public class Config {
                 "EARLY_BIRD_RANGE_END_DAY_SECONDS", LONG_CONFIGURATION_VALUE.apply(9*60*60L)
         ));
         DEFAULT_CONFIGURATION.putAll(Map.of(
-                "EARLY_BIRD_MESSAGE_PROBABILITY", INTEGER_CONFIGURATION_VALUE.apply(33)
+                "EARLY_BIRD_MESSAGE_PROBABILITY", INTEGER_CONFIGURATION_VALUE.apply(33),
+                "ASSISTANT_ROLE_ID", STRING_CONFIGURATION_VALUE.get()
         ));
+
+        // Modules
         DEFAULT_CONFIGURATION.putAll(Map.of(
                 "configuration", new ConfigurationParser(() -> true, Object::toString, Boolean::valueOf, "Booléen"),
                 "autopin", MODULE_DISABLED.get(),

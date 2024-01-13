@@ -1,4 +1,4 @@
-FROM eclipse-temurin:19-jdk-jammy
+FROM eclipse-temurin:21-jre
 RUN apt-get update -y
 RUN apt-get install -y python3 rustc
 RUN ln -s /usr/bin/python3 /usr/bin/python
@@ -8,4 +8,4 @@ RUN mkdir -p /home/eplbot/persistence
 COPY build/libs/EPLBot-1.0-SNAPSHOT-all.jar /home/eplbot/eplbot.jar
 COPY variables.env /home/eplbot/variables.env
 WORKDIR /home/eplbot
-ENTRYPOINT ["java", "-jar", "eplbot.jar"]
+ENTRYPOINT ["java", "--enable-preview", "-jar", "eplbot.jar"]

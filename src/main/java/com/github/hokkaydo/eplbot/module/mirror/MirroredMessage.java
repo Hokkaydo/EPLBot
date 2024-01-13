@@ -2,197 +2,236 @@ package com.github.hokkaydo.eplbot.module.mirror;
 
 import com.github.hokkaydo.eplbot.Main;
 import com.github.hokkaydo.eplbot.MessageUtil;
+import com.github.hokkaydo.eplbot.configuration.Config;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.EmbedType;
-import net.dv8tion.jda.api.entities.ISnowflake;
 import net.dv8tion.jda.api.entities.Icon;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.MessageReaction;
+import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.Webhook;
-import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.channel.attribute.IWebhookContainer;
+import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
-import net.dv8tion.jda.api.managers.WebhookManager;
-import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.requests.restaction.WebhookMessageCreateAction;
 import net.dv8tion.jda.api.utils.FileUpload;
-import net.dv8tion.jda.api.utils.ImageProxy;
 import net.dv8tion.jda.internal.entities.WebhookImpl;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-import java.util.logging.Level;
+
+import static net.dv8tion.jda.api.entities.Message.MAX_CONTENT_LENGTH;
 
 public class MirroredMessage {
 
+    private static final Map<Long, WebhookWithMessage> CHANNEL_WEBHOOK = new HashMap<>();
+    private static final String DEFAULT_WEBHOOK_NAME = "MIRROR_WEBHOOK";
     private final Message originalMessage;
     private Message mirrorMessage;
-    private boolean mirror = false;
     private final GuildMessageChannel channel;
+    private Message replyTo;
+    private Consumer<Message> onceMessageSent;
     private OffsetDateTime lastUpdated;
     private boolean threadOwner;
     private final Map<Emoji, Integer> reactions = new HashMap<>();
-    private WebhookWithMessage webhook;
+    private final String authorNameAndNickname;
+    private boolean pinned = false;
+    private final boolean threadMirror;
+    private final Map<Long, Member> mirrorMembers;
 
-    MirroredMessage(Message initialMessage, GuildMessageChannel textChannel) {
+    MirroredMessage(Message initialMessage, GuildMessageChannel textChannel, List<Member> mirrorMembers) {
         this.channel = textChannel;
+        this.threadMirror = channel instanceof ThreadChannel;
         this.lastUpdated = initialMessage.getTimeCreated();
         this.originalMessage = initialMessage;
+        this.mirrorMembers  = new HashMap<>();
+        mirrorMembers.forEach(member -> this.mirrorMembers.put(member.getIdLong(), member));
+        Member mirrorGuildMember = this.mirrorMembers.get(originalMessage.getAuthor().getIdLong());
+        Member originalGuildMember = initialMessage.getMember();
+        String prefix = "";
+        if(isAssistant(mirrorGuildMember) || isAssistant(originalGuildMember))
+            prefix = "[TA] ";
+        this.authorNameAndNickname = prefix + MessageUtil.nameAndNickname(
+                mirrorGuildMember,
+                originalMessage.getAuthor()
+        );
     }
 
-    private void checkBanTimeOut(User user, Runnable runnable) {
+    private boolean isAssistant(Member member) {
+        if(member == null) return false;
+        String roleId = Config.getGuildVariable(member.getGuild().getIdLong(), "ASSISTANT_ROLE_ID");
+        if(roleId.isBlank()) return false;
+        return member.getRoles().stream().map(Role::getId).anyMatch(id -> id.equals(roleId));
+    }
+
+    /**
+     * Mirror {@link MirroredMessage#originalMessage} and run a {@link Consumer<Message>} once the mirror message has
+     * been sent
+     * @param replyTo the message {@link MirroredMessage#originalMessage} responded to if it is an answer, can be null
+     * @param onceMessageSent a {@link Consumer<Message>} to run once the mirror message has been sent passing the latter
+     *                    as argument
+     * */
+    void mirrorMessage(@Nullable Message replyTo, Consumer<Message> onceMessageSent) {
+        this.replyTo = replyTo;
+        this.onceMessageSent = onceMessageSent;
+
+        checkBanTimeOut(originalMessage.getAuthor(), this::createAndSendMessage);
+    }
+
+    /**
+     * Check if a given {@link User} is currently not timed out before running the given {@link Runnable}
+     * @param user the user to check time out for
+     * @param notBanned the {@link Runnable} to run if the given user is not currently timed out
+     * */
+    private void checkBanTimeOut(User user, Runnable notBanned) {
         channel.getGuild().retrieveBanList().queue(list -> {
             if (list.stream().anyMatch(b -> b.getUser().getIdLong() == user.getIdLong())) return;
             Member authorMember = channel.getGuild().getMemberById(user.getIdLong());
             if (authorMember != null && (authorMember.isTimedOut())) return;
-            runnable.run();
+            notBanned.run();
         });
     }
 
-    void mirrorMessage(Message replyTo, Consumer<Message> sentMessage) {
-        TextChannel textChannel = Main.getJDA().getTextChannelById(channel.getId());
-        if (textChannel == null) return;
-        channel.getGuild().loadMembers().onSuccess(members -> cleanWebhooks(
-                textChannel,
-                members,
-                () -> createWebhook(textChannel, members, () -> checkBanTimeOut(originalMessage.getAuthor(), () -> createAndSendMessage(replyTo, members, sentMessage))),
-                () -> checkBanTimeOut(originalMessage.getAuthor(), () -> createAndSendMessage(replyTo, members, sentMessage))
-        ));
-    }
-
-    private void createAndSendMessage(Message replyTo, List<Member> members, Consumer<Message> sentMessage) {
-        WebhookMessageCreateAction<Message> createAction;
+    /**
+     * Create the request to send a mirror message
+     * */
+    private void createAndSendMessage() {
         String content = getContent(originalMessage);
-        createAction = this.webhook.sendMessage(content);
-        if (replyTo != null) {
-            createAction.addComponents(ActionRow.of(Button.link(replyTo.getJumpUrl(), "↪ %s".formatted(MessageUtil.nameAndNickname(members, replyTo.getAuthor())))));
-        }
-        if (!originalMessage.getEmbeds().isEmpty()) {
-            createAction.addEmbeds(originalMessage.getEmbeds());
-        }
-        AtomicReference<WebhookMessageCreateAction<Message>> action = new AtomicReference<>(createAction);
-        originalMessage.getAttachments().stream()
-                .map(m -> new Tuple3<>(m.getFileName(), m.getProxy().download(), m.isSpoiler()))
-                .map(tuple3 -> tuple3.b()
-                                       .thenApply(i -> FileUpload.fromData(i, tuple3.a()))
-                                       .thenApply(f -> Boolean.TRUE.equals(tuple3.c()) ? f.asSpoiler() : f)
-                )
-                .map(c -> c.thenAccept(f -> action.get().addFiles(f)))
-                .reduce((a, b) -> {
-                    a.join();
-                    return b;
-                })
-                .ifPresentOrElse(
-                        c -> {
-                            c.join();
-                            sendMessage(action.get(), originalMessage, sentMessage);
-                        },
-                        () -> sendMessage(action.get(), originalMessage, sentMessage));
-    }
-
-
-    private void cleanWebhooks(TextChannel channel, List<Member> members, Runnable noSimilarWebhookFound, Runnable similarWebhookFound) {
-        channel.retrieveWebhooks().queue(webhooks -> {
-            Optional<Webhook> webhookOpt = webhooks.stream().sorted(Comparator.comparing(ISnowflake::getTimeCreated).reversed()).filter(w -> w.getName().equals(MessageUtil.nameAndNickname(members, originalMessage.getAuthor()))).findFirst();
-            if (webhookOpt.isPresent() && webhookOpt.get().getToken() != null) {
-                this.webhook = new WebhookWithMessage((WebhookImpl) webhookOpt.get());
-                similarWebhookFound.run();
-                return;
-            }
-            if (webhooks.size() >= 10)
-                webhooks.stream().filter(w -> w.getOwner() != null && w.getOwner().getIdLong() == Main.getJDA().getSelfUser().getIdLong())
-                        .sorted(Comparator.comparing(ISnowflake::getTimeCreated))
-                        .limit(5)
-                        .map(Webhook::delete)
-                        .forEach(RestAction::queue);
-            noSimilarWebhookFound.run();
-        });
-    }
-
-    private void createWebhook(TextChannel textChannel, List<Member> members, Runnable then) {
-        ImageProxy avatarProxy = originalMessage.getAuthor().getAvatar();
-        CompletableFuture<InputStream> avatarFuture = avatarProxy == null ? CompletableFuture.completedFuture(null) : avatarProxy.download();
-        textChannel.createWebhook(MessageUtil.nameAndNickname(members, originalMessage.getAuthor())).queue(w -> avatarFuture.thenAccept(is -> {
+        if(Main.getJDA().getSelfUser().getAvatar() == null) throw new IllegalStateException("Odds are not in our favor (should never arise)");
+        // Retrieve author's profile picture or else defaulting on EPLBot profile picture
+        Optional.ofNullable(originalMessage.getAuthor().getAvatar()).orElse(Main.getJDA().getSelfUser().getAvatar()).download().thenApply(is -> {
             try {
-                WebhookManager manager = w.getManager().setName(MessageUtil.nameAndNickname(members, originalMessage.getAuthor())).setChannel((TextChannel) channel);
-                if (is != null)
-                    manager = manager.setAvatar(Icon.from(is));
-                manager.queue();
-                this.webhook = new WebhookWithMessage((WebhookImpl) w);
-                MirrorModule.getExecutorService().schedule(() -> {
-                    w.delete().queue();
-                    this.webhook = null;
-                }, 10L, TimeUnit.MINUTES);
-                then.run();
+                return Icon.from(is);
             } catch (IOException e) {
-                Main.LOGGER.log(Level.WARNING, "Could not send webhook files");
+                throw new RuntimeException(e);
             }
-        }));
-    }
+        }).thenAccept(icon -> {
+            WebhookMessageCreateAction<Message> createAction = getWebhook().sendMessage(authorNameAndNickname, icon, content);
+            if (replyTo != null) {
+                Member replyToAuthor = mirrorMembers.get(replyTo.getAuthor().getIdLong());
+                createAction.addComponents(ActionRow.of(Button.link(replyTo.getJumpUrl(), "↪ %s".formatted(MessageUtil.nameAndNickname(replyToAuthor, replyTo.getAuthor())))));
+            }
+            if (!originalMessage.getEmbeds().isEmpty()) {
+                createAction.addEmbeds(originalMessage.getEmbeds());
+            }
 
-    private void sendMessage(WebhookMessageCreateAction<Message> messageToSend, Message initialMessage, Consumer<Message> sentMessage) {
-        messageToSend.queue(newMessage -> {
-            this.mirrorMessage = newMessage;
-            this.mirror = true;
-            updatePin(initialMessage.isPinned());
-            sentMessage.accept(newMessage);
+
+            AtomicReference<WebhookMessageCreateAction<Message>> action = new AtomicReference<>(createAction);
+            originalMessage.getAttachments().stream()
+                    .map(m -> new Tuple3<>(m.getFileName(), m.getProxy().download(), m.isSpoiler()))
+                    .map(tuple3 -> tuple3.b()
+                                           .thenApply(i -> FileUpload.fromData(i, tuple3.a()))
+                                           .thenApply(f -> Boolean.TRUE.equals(tuple3.c()) ? f.asSpoiler() : f)
+                    )
+                    .map(c -> c.thenAccept(f -> action.get().addFiles(f)))
+                    .reduce((a, b) -> {
+                        a.join();
+                        return b;
+                    })
+                    .ifPresentOrElse(
+                            c -> {
+                                c.join();
+                                sendMessage(action.get(), originalMessage);
+                            },
+                            () -> sendMessage(action.get(), originalMessage));
         });
     }
 
+    /**
+     * Retrieve the content of a given {@link Message}
+     * @param message the message to retrieve text content from
+     * @return message's content
+     * */
     private String getContent(Message message) {
         String content = message.getContentRaw();
         if (content.isBlank()) {
-            content = message.getEmbeds().isEmpty() ? "" : message.getEmbeds().get(0).getDescription();
+            content = message.getEmbeds().isEmpty() ? "" : message.getEmbeds().getFirst().getDescription();
         }
-        return content;
+        return content == null ? "" : content.substring(0, Math.min(content.length(), MAX_CONTENT_LENGTH));
     }
 
-    void update(Message initialMessage) {
-        updatePin(initialMessage.isPinned());
+    /**
+     * Retrieve or create new mirroring webhook in the current channel
+     * @return retrieved or created {@link WebhookWithMessage}
+     * */
+    private WebhookWithMessage getWebhook() {
 
+        // Check if a webhook is already known for this channel
+        if (CHANNEL_WEBHOOK.containsKey(channel.getIdLong())) {
+            return CHANNEL_WEBHOOK.get(channel.getIdLong());
+        }
+        IWebhookContainer webhookContainer = getiWebhookContainer();
 
-        if (this.webhook == null) return;
-        if (!mirrorMessage.isWebhookMessage()) return;
-        checkBanTimeOut(initialMessage.getAuthor(), () -> {
-            if (!(initialMessage.getTimeEdited() == null ? initialMessage.getTimeCreated() : initialMessage.getTimeEdited()).isAfter(lastUpdated))
-                return;
+        // Check if a webhook already exists in this channel
+        List<Webhook> webhooks = webhookContainer.retrieveWebhooks().complete();
+        Optional<Webhook> webhookOpt = webhooks.stream().filter(w -> w.getOwner() != null && w.getOwner().getIdLong() == Main.getJDA().getSelfUser().getIdLong()).findFirst();
+        if (webhookOpt.isPresent() && webhookOpt.get().getToken() != null) {
+            WebhookWithMessage webhook = new WebhookWithMessage((WebhookImpl) webhookOpt.get(), isThreadMirror(), getChannelId());
+            CHANNEL_WEBHOOK.put(channel.getIdLong(), webhook);
+            return webhook;
+        }
 
-            String content = getContent(initialMessage);
-            List<Message.Attachment> attachments = initialMessage.getAttachments();
-            webhook.editRequest(mirrorMessage.getId())
-                    .setContent(content)
-                    .setAttachments(attachments)
-                    .queue(
-                            m -> this.lastUpdated = m.getTimeEdited() == null ? m.getTimeCreated() : m.getTimeEdited(),
-                            throwable -> {}
-                    );
+        // Webhook has not been found => creating new one
+        Webhook webhook = webhookContainer.createWebhook(DEFAULT_WEBHOOK_NAME).complete();
+        WebhookWithMessage wh = new WebhookWithMessage((WebhookImpl) webhook, isThreadMirror(), getChannelId());
+        CHANNEL_WEBHOOK.put(channel.getIdLong(), wh);
+        return wh;
+    }
+
+    private IWebhookContainer getiWebhookContainer() {
+        IWebhookContainer webhookContainer;
+        if (channel instanceof ThreadChannel threadChanel) {
+            if (!(threadChanel.getParentMessageChannel() instanceof IWebhookContainer parentChannel))
+                throw new IllegalStateException();
+            webhookContainer = parentChannel;
+        } else {
+            if (!(channel instanceof IWebhookContainer webhookChannel)) throw new IllegalStateException();
+            webhookContainer = webhookChannel;
+        }
+        return webhookContainer;
+    }
+
+    /**
+     * Execute a {@link WebhookMessageCreateAction<Message>} request and passes the result to
+     * {@link MirroredMessage#onceMessageSent}
+     * @param action the request to process
+     * @param initialMessage the mirrored message
+     * */
+    private void sendMessage(WebhookMessageCreateAction<Message> action, Message initialMessage) {
+        action.queue(newMessage -> {
+            this.mirrorMessage = newMessage;
+            updatePin(initialMessage.isPinned());
+            onceMessageSent.accept(newMessage);
         });
     }
 
-    private void updatePin(boolean pinned) {
-        // Message#isPinned seems to be broken here
-        mirrorMessage.getChannel().retrievePinnedMessages().map(l -> l.stream().map(ISnowflake::getIdLong).filter(id -> id == mirrorMessage.getIdLong()).findFirst()).queue(idOpt -> {
-            if (pinned && idOpt.isEmpty())
-                mirrorMessage.pin().queue();
-            else if (!pinned && idOpt.isPresent())
-                mirrorMessage.unpin().queue();
-        });
+    boolean isThreadMirror() {
+        return this.threadMirror;
+    }
+
+    private void updatePin(boolean shouldPin) {
+        if (!this.pinned && shouldPin) {
+            (mirrorMessage == null ? originalMessage : mirrorMessage).pin().queue();
+            this.pinned = true;
+        }
+        else if (this.pinned && !shouldPin) {
+            (mirrorMessage == null ? originalMessage : mirrorMessage).unpin().queue();
+            this.pinned = false;
+        }
     }
 
     Long getOriginalMessageId() {
@@ -215,26 +254,56 @@ public class MirroredMessage {
         this.threadOwner = true;
     }
 
+    void update(Message initialMessage) {
+        updatePin(initialMessage.isPinned());
+
+        if(mirrorMessage == null) return;
+        if (!mirrorMessage.isWebhookMessage()) return;
+        if (getWebhook() == null) return;
+        if (!(initialMessage.getTimeEdited() == null ? initialMessage.getTimeCreated() : initialMessage.getTimeEdited()).isAfter(lastUpdated)) return;
+        checkBanTimeOut(initialMessage.getAuthor(), () -> {
+            String content = getContent(initialMessage);
+            List<Message.Attachment> attachments = initialMessage.getAttachments();
+            getWebhook().editRequest(mirrorMessage.getId())
+                    .setContent(content)
+                    .setAttachments(attachments)
+                    .queue(
+                            m -> this.lastUpdated = m.getTimeEdited() == null ? m.getTimeCreated() : m.getTimeEdited(),
+                            _ -> {}
+                    );
+        });
+    }
+
     boolean isThreadOwner() {
         return this.threadOwner;
     }
 
     boolean isMirror() {
-        return this.mirror;
+        return this.mirrorMessage != null;
     }
 
+
+    /**
+     * @deprecated no viable way to add reactions to messages
+     * */
+    @SuppressWarnings("unused")
+    @Deprecated
     void addReaction(MessageReaction reaction) {
         reactions.put(reaction.getEmoji(), reactions.getOrDefault(reaction.getEmoji(), 0) + 1);
         updateReactionField();
     }
 
+    /**
+     * @deprecated no viable way to add reactions to messages
+     * */
+    @Deprecated
     private void updateReactionField() {
         StringBuilder reactionString = new StringBuilder();
         List<Map.Entry<Emoji, Integer>> entries = new ArrayList<>(reactions.entrySet());
         for (int i = 0; i < entries.size() - 1; i++) {
             reactionString.append(entries.get(i).getKey().getFormatted()).append(": ").append(entries.get(i).getValue()).append(", ");
         }
-        reactionString.append(entries.get(entries.size() - 1).getKey().getFormatted()).append(": ").append(entries.get(entries.size() - 1).getValue());
+        reactionString.append(entries.getLast().getKey().getFormatted()).append(": ").append(entries.getLast().getValue());
 
         Optional<MessageEmbed> oldEmbed = originalMessage.getEmbeds().stream().filter(e -> e.getType() == EmbedType.RICH).findFirst();
         if (oldEmbed.isEmpty()) return;
@@ -249,21 +318,23 @@ public class MirroredMessage {
         originalMessage.editMessageEmbeds(otherEmbeds).queue();
     }
 
+    /**
+     * @deprecated no viable way to add reactions to messages
+     * */
+    @SuppressWarnings("unused")
+    @Deprecated
     void removeReaction(MessageReaction reaction) {
         reactions.computeIfPresent(reaction.getEmoji(), (e, i) -> i - 1);
         if (reactions.getOrDefault(reaction.getEmoji(), 1) <= 0) reactions.remove(reaction.getEmoji());
         updateReactionField();
     }
 
+
     private record Tuple3<A, B, C>(A a, B b, C c) {
 
         @Override
         public String toString() {
-            return "Tuple2{" +
-                           "a=" + a +
-                           ", b=" + b +
-                           ", c=" + c +
-                           '}';
+            return STR."Tuple2{a=\{a}, b=\{b}, c=\{c}\{'}'}";
         }
 
     }
