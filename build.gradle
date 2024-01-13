@@ -14,7 +14,8 @@ repositories {
 dependencies {
     testImplementation platform('org.junit:junit-bom:5.9.1')
     testImplementation 'org.junit.jupiter:junit-jupiter'
-    implementation("net.dv8tion:JDA:5.0.0-beta.8")
+    implementation("net.dv8tion:JDA:5.0.0-beta.19")
+    // RSS helper
     implementation("rome:rome:1.0")
     // https://mvnrepository.com/artifact/org.json/json
     implementation group: 'org.json', name: 'json', version: '20230227'
@@ -30,6 +31,10 @@ dependencies {
 
 tasks.register('run', JavaExec) {
     classpath = files('build/libs/EPLBot-1.0-SNAPSHOT-all.jar')
+}
+
+tasks.withType(JavaCompile).each {
+    it.options.compilerArgs.add('--enable-preview')
 }
 
 test {
