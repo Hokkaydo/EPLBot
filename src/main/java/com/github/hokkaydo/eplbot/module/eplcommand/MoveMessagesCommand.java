@@ -52,10 +52,10 @@ public class MoveMessagesCommand implements Command {
             Message message = sortedMessages.get(i);
             MessageEmbed embed = MessageUtil.toEmbed(message).build();
             if(i == sortedMessages.size() - 1) {
-                newChannel.sendMessageEmbeds(embed).and(message.delete()).queue(s -> sendMovedAmountMessage(context, sortedMessages.size()));
+                newChannel.sendMessageEmbeds(embed).and(message.delete()).queue(_ -> sendMovedAmountMessage(context, sortedMessages.size()));
                 break;
             }
-            newChannel.sendMessageEmbeds(embed).queue(s -> message.delete().queue());
+            newChannel.sendMessageEmbeds(embed).queue(_ -> message.delete().queue());
         }
     }
 

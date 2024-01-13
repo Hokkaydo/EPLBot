@@ -10,7 +10,7 @@ import java.util.List;
 
 public class WarnedConfessionRepositorySQLite implements WarnedConfessionRepository {
     private final JdbcTemplate jdbcTemplate;
-    private static final RowMapper<WarnedConfession> mapper = (ResultSet rs, int numRow) ->
+    private static final RowMapper<WarnedConfession> mapper = (ResultSet rs, int _) ->
             new WarnedConfession(
                 rs.getLong("moderator_id"),
                 rs.getLong("author_id"),

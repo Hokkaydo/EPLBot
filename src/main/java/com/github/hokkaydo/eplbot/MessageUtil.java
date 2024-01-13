@@ -6,18 +6,15 @@ import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
-import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
 import net.dv8tion.jda.api.utils.FileUpload;
 import org.jetbrains.annotations.Nullable;
 import org.json.JSONObject;
 
-import java.awt.*;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.time.Instant;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -37,7 +34,7 @@ public class MessageUtil {
                        .setAuthor(message.getAuthor().getName(), message.getJumpUrl(), message.getAuthor().getAvatarUrl())
                        .appendDescription(message.getContentRaw())
                        .setTimestamp(message.getTimeCreated())
-                       .setFooter(message.getGuild().getName() + " - #" + message.getChannel().getName(), message.getGuild().getIconUrl());
+                       .setFooter(STR."\{message.getGuild().getName()} - #\{message.getChannel().getName()}", message.getGuild().getIconUrl());
     }
 
     public static void toEmbedWithAttachements(Message message, Function<EmbedBuilder, MessageCreateAction> send, Consumer<Message> processSentMessage) {
@@ -59,17 +56,6 @@ public class MessageUtil {
                 );
     }
 
-    public static EmbedBuilder toEmbed(String content) {
-        return new EmbedBuilder()
-                       .setAuthor(Main.getJDA().getSelfUser().getName(), "https://github.com/Hokkaydo/EPLBot", Main.getJDA().getSelfUser().getAvatarUrl())
-                       .appendDescription(content)
-                       .setTimestamp(Instant.now());
-    }
-
-    public static void sendWarning(String content, MessageChannel channel) {
-        channel.sendMessageEmbeds(toEmbed(content).setColor(Color.YELLOW).build()).queue();
-    }
-
     private MessageUtil() {}
 
     public static void sendAdminMessage(String message, Long guildId) {
@@ -83,7 +69,7 @@ public class MessageUtil {
 
     public static String nameAndNickname(@Nullable Member member, User user) {
         boolean hasNickname = member != null && member.getNickname() != null;
-        return (hasNickname  ? member.getNickname() + " (" : "") + user.getEffectiveName() + (hasNickname ? ")" : "");
+        return (hasNickname  ? STR."\{member.getNickname()} (" : "") + user.getEffectiveName() + (hasNickname ? ")" : "");
     }
 
     /**
@@ -97,7 +83,7 @@ public class MessageUtil {
         if (hastebinPostRequest == null)
             hastebinPostRequest = HttpRequest.newBuilder()
                                           .header("Content-Type", "text/plain")
-                                          .header("Authorization", "Bearer " + System.getenv("HASTEBIN_API_TOKEN"))
+                                          .header("Authorization", STR."Bearer \{System.getenv("HASTEBIN_API_TOKEN")}")
                                           .uri(URI.create(HASTEBIN_API_POST_URL));
 
         return client.sendAsync(hastebinPostRequest.POST(HttpRequest.BodyPublishers.ofString(data)).build(), HttpResponse.BodyHandlers.ofString())

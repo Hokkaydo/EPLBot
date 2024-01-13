@@ -172,7 +172,7 @@ public class NoticeCommand extends ListenerAdapter implements Command {
         }
         String groupName = (String)data[0];
         String action = (String)data[1];
-        String selectedCourse = (String) event.getInteraction().getValues().get(0);
+        String selectedCourse = (String) event.getInteraction().getValues().getFirst();
 
         if(action.equals(WRITE_ACTION)) {
             event.replyModal(writeNotice(authorId + NOTICE_MODAL_NAME_SUFFIX, selectedCourse, authorId, groupName)).queue();
@@ -188,7 +188,7 @@ public class NoticeCommand extends ListenerAdapter implements Command {
                                                 .setPlaceholder("Entrez votre avis");
         getOldValue(authorId, selectedValue, courses.stream().anyMatch(c -> c.code().equals(selectedValue))).map(Notice::content).ifPresent(textBuilder::setValue);
         String name = courses.stream().anyMatch(c -> c.code().equals(subjectId)) ?
-                              selectedValue + " " + courseRepository.getByCourseCode(selectedValue).map(Course::name).orElse("") :
+                              STR."\{selectedValue} \{courseRepository.getByCourseCode(selectedValue).map(Course::name).orElse("")}" :
                               selectedValue;
         return Modal.create(modalKey, String.format("Avis - %s", name))
                        .addActionRow(textBuilder.build())
@@ -225,7 +225,7 @@ public class NoticeCommand extends ListenerAdapter implements Command {
 
     private String toString(List<String> links) {
         if(links.isEmpty()) return  "";
-        return " - " + links.get(0) + links.stream().skip(1).reduce("", (a,b) -> a + "\n - " + b);
+        return STR." - \{links.get(0)}\{links.stream().skip(1).reduce("", (a, b) -> a + "\n - " + b)}";
     }
 
     private void storeNotice(String authorId, String subjectId, Date timestamp, String type, String content) {

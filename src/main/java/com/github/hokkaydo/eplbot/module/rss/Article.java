@@ -7,13 +7,7 @@ public record Article(String title, String description, String link, String imgU
 
     @Override
     public String toString() {
-        return "Article{" +
-                       "title='" + title + '\'' +
-                       ", description='" + description + '\'' +
-                       ", link='" + link + '\'' +
-                       ", imgURL='" + imgURL + '\'' +
-                       ", publishedDate='" + publishedDate +
-                       '}';
+        return STR."Article{title='\{title}\{'\''}, description='\{description}\{'\''}, link='\{link}\{'\''}, imgURL='\{imgURL}\{'\''}, publishedDate='\{publishedDate}\{'}'}";
     }
 
     @Override

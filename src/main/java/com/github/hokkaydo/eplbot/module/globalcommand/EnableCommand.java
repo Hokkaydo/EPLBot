@@ -21,10 +21,10 @@ public class EnableCommand implements Command {
     }
     @Override
     public void executeCommand(CommandContext context) {
-        OptionMapping featureOption = context.options().get(0);
+        OptionMapping featureOption = context.options().getFirst();
         if(featureOption == null) return;
         Main.getModuleManager().enableModule(featureOption.getAsString(), guildId);
-        context.replyCallbackAction().setContent("Enabled `" + featureOption.getAsString() + "` :white_check_mark:").queue();
+        context.replyCallbackAction().setContent(STR."Enabled `\{featureOption.getAsString()}` :white_check_mark:").queue();
     }
 
     @Override

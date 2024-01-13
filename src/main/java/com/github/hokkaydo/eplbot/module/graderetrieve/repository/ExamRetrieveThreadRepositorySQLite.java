@@ -13,7 +13,7 @@ public class ExamRetrieveThreadRepositorySQLite implements ExamRetrieveThreadRep
 
     private final JdbcTemplate jdbcTemplate;
 
-    private static final RowMapper<ExamsRetrieveThread> mapper = (ResultSet rs, int numRow) -> new ExamsRetrieveThread(rs.getLong("message_id"), rs.getString("path"));
+    private static final RowMapper<ExamsRetrieveThread> mapper = (ResultSet rs, int _) -> new ExamsRetrieveThread(rs.getLong("message_id"), rs.getString("path"));
 
 
     public ExamRetrieveThreadRepositorySQLite(DataSource dataSource) {

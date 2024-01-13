@@ -14,7 +14,7 @@ import java.util.Optional;
 public class CourseRepositorySQLite implements CourseRepository {
 
     private final JdbcTemplate jdbcTemplate;
-    private static final RowMapper<Course> mapper = (rs, rowNum) -> new Course(
+    private static final RowMapper<Course> mapper = (rs, _) -> new Course(
             rs.getString("course_code"),
             rs.getString("course_name"),
             rs.getInt("quarter"),
@@ -36,7 +36,7 @@ public class CourseRepositorySQLite implements CourseRepository {
         String ors = Arrays.stream(quarters).skip(1).mapToObj(" OR quarter = %s"::formatted).reduce((s1, s2) -> s1 + s2).orElse("");
 
         List<Course> list = jdbcTemplate.query(
-                "SELECT * FROM courses WHERE group_id = ? AND (quarter = ? " + ors + ")",
+                STR."SELECT * FROM courses WHERE group_id = ? AND (quarter = ? \{ors})",
                 mapper,
                 id, quarters[0]
         );

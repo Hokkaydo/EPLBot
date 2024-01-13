@@ -1,9 +1,9 @@
 package com.github.hokkaydo.eplbot.module.globalcommand;
 
-import com.github.hokkaydo.eplbot.configuration.Config;
 import com.github.hokkaydo.eplbot.Strings;
 import com.github.hokkaydo.eplbot.command.Command;
 import com.github.hokkaydo.eplbot.command.CommandContext;
+import com.github.hokkaydo.eplbot.configuration.Config;
 import net.dv8tion.jda.api.entities.channel.concrete.PrivateChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
@@ -27,8 +27,8 @@ public class StateCommand implements Command {
         if(subCommand.isEmpty()) {
             context.replyCallbackAction().setContent(
                     Config.getDefaultState().keySet().stream()
-                            .map(k ->  "`" + k + "`: " + Config.getGuildState(guildId, k))
-                            .reduce((s1, s2) -> s1 + "\n" + s2)
+                            .map(k -> STR."`\{k}`: \{Config.getGuildState(guildId, k)}")
+                            .reduce((s1, s2) -> STR."\{s1}\n\{s2}")
                             .orElse("")
             ).queue();
             return;

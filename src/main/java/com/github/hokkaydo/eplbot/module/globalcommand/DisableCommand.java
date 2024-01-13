@@ -21,14 +21,14 @@ public class DisableCommand implements Command {
     }
     @Override
     public void executeCommand(CommandContext context) {
-        OptionMapping featureOption = context.options().get(0);
+        OptionMapping featureOption = context.options().getFirst();
         if(featureOption == null) return;
         if(featureOption.getAsString().equals("configuration")) {
             context.replyCallbackAction().setContent("Mais t'es complètement zinzin ma parole").queue();
             return;
         }
         Main.getModuleManager().disableModule(featureOption.getAsString(), guildId);
-        context.replyCallbackAction().setContent("Disabled `" + featureOption.getAsString() + "` :x:").queue();
+        context.replyCallbackAction().setContent(STR."Disabled `\{featureOption.getAsString()}` :x:").queue();
     }
 
     @Override

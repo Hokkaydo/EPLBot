@@ -88,7 +88,7 @@ public class ExamsRetrieveListener extends ListenerAdapter {
     private void updateZipFile(String path, List<Message.Attachment> attachments) {
         Map<String, String> env = new HashMap<>();
         env.put("create", "true");
-        URI uri = URI.create("jar:" + ZIP_PATH.toUri());
+        URI uri = URI.create(STR."jar:\{ZIP_PATH.toUri()}");
         attachments.stream()
                 .map(a -> new Tuple<>(a.getFileName(), a.getProxy().downloadToPath()))
                 .forEach(t -> t.b.thenAccept(tempPath -> {
@@ -122,7 +122,7 @@ public class ExamsRetrieveListener extends ListenerAdapter {
         attachments.stream()
                 .map(a -> new Tuple<>(a.getFileName(), a.getProxy().download()))
                 .forEach(t -> t.b.thenAccept(fis -> {
-                    ZipEntry zipEntry = new ZipEntry(path + "/" + t.a);
+                    ZipEntry zipEntry = new ZipEntry(STR."\{path}/\{t.a}");
                     try {
                         zipOut.putNextEntry(zipEntry);
                         byte[] bytes = new byte[1024];

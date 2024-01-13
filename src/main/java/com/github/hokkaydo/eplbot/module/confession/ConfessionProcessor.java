@@ -88,9 +88,9 @@ public class ConfessionProcessor extends ListenerAdapter {
         confessionAuthor.put(confessUUID, context.user().getIdLong());
         MessageCreateBuilder data = MessageCreateBuilder.from(embedBuilder.build())
                                             .addActionRow(
-                                                    Button.primary("validate-confession;" + confessUUID, Emoji.fromUnicode("✅")),
-                                                    Button.primary("warn-confession;" + confessUUID, Emoji.fromUnicode("⚠")),
-                                                    Button.primary("refuse-confession;" + confessUUID, Emoji.fromUnicode("❌"))
+                                                    Button.primary(STR."validate-confession;\{confessUUID}", Emoji.fromUnicode("✅")),
+                                                    Button.primary(STR."warn-confession;\{confessUUID}", Emoji.fromUnicode("⚠")),
+                                                    Button.primary(STR."refuse-confession;\{confessUUID}", Emoji.fromUnicode("❌"))
                                             );
         if(following) {
             confessFollowing.add(confessUUID);
@@ -181,7 +181,7 @@ public class ConfessionProcessor extends ListenerAdapter {
                                                                        user == null ? "USER NOT ON SERVER" : user.getAsMention(),
                                                                        threshold,
                                                                        threshold,
-                                                                       user == null ? "USER NOT ON SERVER" : "@" + user.getNickname()
+                                                                       user == null ? "USER NOT ON SERVER" : STR."@\{user.getNickname()}"
                                                                )
                                        )
                                        .setColor(Color.ORANGE);

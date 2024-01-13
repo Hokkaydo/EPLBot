@@ -45,7 +45,7 @@ public class DatabaseManager {
         TABLES.stream().map(model ->
             "CREATE TABLE IF NOT EXISTS %s ( id INTEGER PRIMARY KEY AUTOINCREMENT %s ); %s".formatted(
                     model.name(), 
-                    model.parameters().entrySet().stream().map(e -> e.getKey() + " " + e.getValue()).reduce("", "%s,%s"::formatted),
+                    model.parameters().entrySet().stream().map(e -> STR."\{e.getKey()} \{e.getValue()}").reduce("", "%s,%s"::formatted),
                     drop ? "delete from sqlite_sequence where name='%s';".formatted(model.name()) : ""
             )
         ).forEach(template::execute);
@@ -74,7 +74,7 @@ public class DatabaseManager {
 
 
     public static void initialize(String persistenceDirPath) {
-        dataSource = SQLiteDatasourceFactory.create(persistenceDirPath + "/database.sqlite");
+        dataSource = SQLiteDatasourceFactory.create(STR."\{persistenceDirPath}/database.sqlite");
     }
 
 }
