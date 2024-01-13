@@ -20,6 +20,7 @@ import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.dv8tion.jda.api.interactions.components.buttons.ButtonInteraction;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 
@@ -143,12 +144,12 @@ public class ConfessionProcessor extends ListenerAdapter {
         if(event.getGuild() == null || event.getGuild().getIdLong() != guildId) return;
         UUID uuid = UUID.fromString(id.split(";")[1]);
         if(id.startsWith("validate")) {
-            updateValidationEmbedColor(VALID, event.getMessage());
+            updateValidationEmbedColor(VALID, event.getInteraction(), event.getMessage());
             sendConfession(uuid, event.getGuild().getIdLong());
         } else if(id.startsWith("refuse")){
-            updateValidationEmbedColor(REFUSED, event.getMessage());
+            updateValidationEmbedColor(REFUSED, event.getInteraction(), event.getMessage());
         } else {
-            updateValidationEmbedColor(WARNED, event.getMessage());
+            updateValidationEmbedColor(WARNED, event.getInteraction(), event.getMessage());
             warn(event.getUser().getIdLong(), uuid);
         }
         event.getMessage().editMessageComponents(Collections.emptyList()).queue();
@@ -197,11 +198,11 @@ public class ConfessionProcessor extends ListenerAdapter {
             }
         });
     }
-    private void updateValidationEmbedColor(int state, Message message) {
+    private void updateValidationEmbedColor(int state, ButtonInteraction interaction, Message message) {
         if(message.getEmbeds().isEmpty() || message.getEmbeds().getFirst().getFields().isEmpty()) return;
         MessageEmbed embed = message.getEmbeds().getFirst();
         EmbedBuilder builder = new EmbedBuilder(embed).setColor(VALIDATION_EMBED_COLORS[state]).clearFields().addField(VALIDATION_EMBED_TITLES[state], Objects.requireNonNull(embed.getFields().getFirst().getValue()), true);
-        message.editMessageEmbeds(builder.build()).queue();
+        interaction.editMessageEmbeds(builder.build()).queue();
     }
 
     public void clearWarnings(long authorId) {

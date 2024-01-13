@@ -16,7 +16,6 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
-import net.dv8tion.jda.api.requests.RestAction;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -117,9 +116,14 @@ public class QuoteListener extends ListenerAdapter {
     public void onMessageDelete(@NotNull MessageDeleteEvent event) {
         if(quotesOfMessage.containsKey(event.getMessageIdLong())) {
             // Deleting an already deleted message could throw an Exception
-            try {
-                quotesOfMessage.get(event.getMessageIdLong()).stream().map(Message::delete).forEach(RestAction::queue);
-            } catch (Exception ignored){/*Ignored*/}
+            quotesOfMessage.get(event.getMessageIdLong())
+                    .stream()
+                    .map(Message::delete).map(a -> a.onErrorMap(_ -> null))
+                    .forEach(a -> {
+                        try {
+                            a.onErrorMap(_ -> null).queue();
+                        }catch (Exception ignored) { /*Ignored*/}
+                    });
             quotesOfMessage.remove(event.getMessageIdLong());
         }
     }
