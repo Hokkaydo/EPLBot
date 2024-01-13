@@ -88,7 +88,7 @@ public class HelpCommand implements Command {
 
     @Override
     public boolean ephemeralReply() {
-        return false;
+        return true;
     }
 
     @Override
