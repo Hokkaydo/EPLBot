@@ -41,8 +41,8 @@ public class QuoteListener extends ListenerAdapter {
 
     @Override
     public void onButtonInteraction(ButtonInteractionEvent event) {
+        if(event.getGuild() == null || event.getGuild().getIdLong() != guildId || event.getMember() == null) return; // not a guild event
         if(event.getButton().getId() == null || !event.getButton().getId().contains("delete-quote")) return;
-        if(event.getMember() == null) return; // not a guild event
 
         String modRoleId = Config.getGuildVariable(guildId,"MODERATOR_ROLE_ID");
         Role modRole = modRoleId.isBlank() ? null : Main.getJDA().getRoleById(Config.getGuildVariable(guildId,"MODERATOR_ROLE_ID"));
@@ -50,9 +50,10 @@ public class QuoteListener extends ListenerAdapter {
             MessageUtil.sendAdminMessage("Moderator role ID is no set !",guildId);
         boolean mod = event.getMember().getRoles().stream().max(Comparator.comparing(Role::getPosition)).map(role -> modRole != null && role.getPosition() >= modRole.getPosition()).orElse(false);
         if(!mod && (!quotes.containsKey(event.getMessageIdLong()) || !quotes.get(event.getMessageIdLong()).allowedToDeleteUserIds().contains(event.getUser().getIdLong()))) {
-            event.getInteraction().deferReply().setEphemeral(true).setContent(Strings.getString("QUOTE_DELETE_NOT_ALLOWED")).queue();
+            event.getInteraction().deferReply(true).setContent(Strings.getString("QUOTE_DELETE_NOT_ALLOWED")).queue();
             return;
         }
+        event.getInteraction().deferReply(true).setContent(Strings.getString("QUOTE_DELETED")).queue();
         event.getChannel().deleteMessageById(event.getMessageIdLong()).queue();
         quotes.remove(event.getMessageIdLong());
     }

@@ -139,23 +139,19 @@ public class ConfessionProcessor extends ListenerAdapter {
     @Override
     public void onButtonInteraction(ButtonInteractionEvent event) {
         String id = event.getButton().getId();
+        if(id == null || !id.contains(CONFESSION)) return;
         if(event.getGuild() == null || event.getGuild().getIdLong() != guildId) return;
-        assert id != null;
-        if(id.contains(CONFESSION)) {
-            UUID uuid = UUID.fromString(id.split(";")[1]);
-            if(id.startsWith("validate")) {
-                updateValidationEmbedColor(VALID, event.getMessage());
-                sendConfession(uuid, event.getGuild().getIdLong());
-            } else if(id.startsWith("refuse")){
-                updateValidationEmbedColor(REFUSED, event.getMessage());
-            } else {
-                updateValidationEmbedColor(WARNED, event.getMessage());
-                warn(event.getUser().getIdLong(), uuid);
-            }
-            event.getMessage().editMessageComponents(Collections.emptyList()).queue();
-            return;
+        UUID uuid = UUID.fromString(id.split(";")[1]);
+        if(id.startsWith("validate")) {
+            updateValidationEmbedColor(VALID, event.getMessage());
+            sendConfession(uuid, event.getGuild().getIdLong());
+        } else if(id.startsWith("refuse")){
+            updateValidationEmbedColor(REFUSED, event.getMessage());
+        } else {
+            updateValidationEmbedColor(WARNED, event.getMessage());
+            warn(event.getUser().getIdLong(), uuid);
         }
-        event.reply("unknown").queue();
+        event.getMessage().editMessageComponents(Collections.emptyList()).queue();
     }
 
     private void warn(Long moderatorId, UUID uuid) {
@@ -202,9 +198,9 @@ public class ConfessionProcessor extends ListenerAdapter {
         });
     }
     private void updateValidationEmbedColor(int state, Message message) {
-        if(message.getEmbeds().isEmpty() || message.getEmbeds().get(0).getFields().isEmpty()) return;
-        MessageEmbed embed = message.getEmbeds().get(0);
-        EmbedBuilder builder = new EmbedBuilder(embed).setColor(VALIDATION_EMBED_COLORS[state]).clearFields().addField(VALIDATION_EMBED_TITLES[state], Objects.requireNonNull(embed.getFields().get(0).getValue()), true);
+        if(message.getEmbeds().isEmpty() || message.getEmbeds().getFirst().getFields().isEmpty()) return;
+        MessageEmbed embed = message.getEmbeds().getFirst();
+        EmbedBuilder builder = new EmbedBuilder(embed).setColor(VALIDATION_EMBED_COLORS[state]).clearFields().addField(VALIDATION_EMBED_TITLES[state], Objects.requireNonNull(embed.getFields().getFirst().getValue()), true);
         message.editMessageEmbeds(builder.build()).queue();
     }
 
