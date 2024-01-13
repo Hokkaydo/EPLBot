@@ -24,6 +24,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 public class QuoteListener extends ListenerAdapter {
@@ -37,6 +41,8 @@ public class QuoteListener extends ListenerAdapter {
     private final Map<Long, List<Message>> quotesOfMessage = new HashMap<>();
     // key: quote id, value: Quote
     private final Map<Long, Quote> quotes = new HashMap<>();
+    private final static ScheduledExecutorService executor = Executors.newScheduledThreadPool(4);
+    private final Map<Long, ScheduledFuture<?>> removeDeleteButtonTasks = new HashMap<>();
 
     @Override
     public void onButtonInteraction(ButtonInteractionEvent event) {
@@ -108,8 +114,15 @@ public class QuoteListener extends ListenerAdapter {
                     // Add 🗑 emote to delete quote if reacted with
                     quote.editMessageComponents(ActionRow.of(Button.primary("delete-quote", Emoji.fromUnicode("\uD83D\uDDD1")))).queue();
                     quotes.put(quote.getIdLong(), new Quote(quote, quoter.getAuthor().getIdLong(), quoted.getAuthor().getIdLong()));
+                    removeDeleteButtonTasks.put(quote.getIdLong(), executor.schedule(() -> this.removeDeleteButton(quote.getIdLong()), 5, TimeUnit.MINUTES));
                 }
         );
+    }
+
+    private void removeDeleteButton(Long quoteId) {
+        if(!removeDeleteButtonTasks.containsKey(quoteId)) return;
+        removeDeleteButtonTasks.remove(quoteId).cancel(true);
+        quotes.remove(quoteId);
     }
 
     @Override
