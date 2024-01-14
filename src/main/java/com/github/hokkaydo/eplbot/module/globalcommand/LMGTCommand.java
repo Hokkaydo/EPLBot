@@ -33,7 +33,7 @@ public class LMGTCommand implements Command {
 
     @Override
     public List<OptionData> getOptions() {
-        return Collections.singletonList(new OptionData(OptionType.STRING, "subject", "Sujet à chercher", true));
+        return Collections.singletonList(new OptionData(OptionType.STRING, "Sujet", "Sujet à chercher", true));
     }
 
     @Override
