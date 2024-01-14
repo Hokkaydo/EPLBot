@@ -112,6 +112,8 @@
   "EARLY_BIRD_RESTART_COMMAND_DESCRIPTION": "Permet de redémarrer le timer du module EarlyBird",
   "QUOTE_DELETE_NOT_ALLOWED": "Vous n'êtes pas autorisé à supprimer ce message",
   "QUOTE_DELETED": "Quote supprimée",
+  "LMGT_COMMAND_DESCRIPTION": "Envoie un lien d'apprentissage pour l'utilisation de Google à ceux qui ne savent pas s'en servir",
+  "LMGT_COMMAND_HELP": "Envoie un lien https://letmegooglethat.com/ avec la recherche passée en argument `subject`"
   "EARLY_BIRD_MESSAGE_TOO_LONG": "Votre message dépasse les %d caractères autorisés !\nVeuillez réessayer",
   "EARLY_BIRD_NEXT_MESSAGE_REGISTERED_DM": "Votre message a bien été enregistré :\n>>> %s"
 }
