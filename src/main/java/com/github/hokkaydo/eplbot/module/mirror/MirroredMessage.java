@@ -120,7 +120,7 @@ public class MirroredMessage {
                 throw new RuntimeException(e);
             }
         }).thenAccept(icon -> {
-            WebhookMessageCreateAction<Message> createAction = getWebhook().sendMessage(authorNameAndNickname, icon, content);
+            WebhookMessageCreateAction<Message> createAction = getWebhook().sendMessage(authorNameAndNickname, icon, content, originalMessage.getAuthor().getIdLong());
             if (replyTo != null) {
                 Member replyToAuthor = mirrorMembers.get(replyTo.getAuthor().getIdLong());
                 createAction.addComponents(ActionRow.of(Button.link(replyTo.getJumpUrl(), "↪ %s".formatted(MessageUtil.nameAndNickname(replyToAuthor, replyTo.getAuthor())))));

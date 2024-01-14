@@ -22,6 +22,7 @@ public class WebhookWithMessage {
     private final WebhookImpl webhook;
     private final boolean threadWebhook;
     private final long threadId;
+    private long lastAuthorId = 0L;
     public WebhookWithMessage(WebhookImpl webhook, boolean threadWebhook, long threadId) {
         this.webhook = webhook;
         this.threadWebhook = threadWebhook;
@@ -55,8 +56,11 @@ public class WebhookWithMessage {
         return action;
     }
 
-    public WebhookMessageCreateAction<Message> sendMessage(String name, Icon avatar, String content) {
-        webhook.getManager().setName(name).setAvatar(avatar).complete();
+    public WebhookMessageCreateAction<Message> sendMessage(String name, Icon avatar, String content, Long authorId) {
+        if(this.lastAuthorId != authorId) {
+            webhook.getManager().setName(name).setAvatar(avatar).complete();
+            this.lastAuthorId = authorId;
+        }
         return sendRequest().setContent(content);
     }
 
