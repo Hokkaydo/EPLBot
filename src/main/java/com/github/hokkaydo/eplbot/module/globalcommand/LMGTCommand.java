@@ -7,6 +7,8 @@ import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 
+import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
@@ -18,7 +20,7 @@ public class LMGTCommand implements Command {
     public void executeCommand(CommandContext context) {
         if(context.options().isEmpty()) throw new IllegalStateException("Should not arise");
         String subject = context.options().getFirst().getAsString();
-        context.replyCallbackAction().setContent(STR."\{LMGT_link}\{subject}").queue();
+        context.replyCallbackAction().setContent(STR."\{LMGT_link}\{URLEncoder.encode(subject, Charset.defaultCharset())}").queue();
     }
 
     @Override
