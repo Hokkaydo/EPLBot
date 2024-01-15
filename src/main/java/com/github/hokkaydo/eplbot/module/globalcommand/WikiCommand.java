@@ -173,16 +173,25 @@ public class WikiCommand implements Command {
                                                .orElse(new ArrayList<>())
                                                .stream()
                                                .peek(element -> element.children().stream().filter(el -> el.tagName().equals("ul")).forEach(Element::remove))
+                                               .map(Element::html)
+                                               .map(this::markdown)
+                                               .map(md -> new Element("div").html(md))
                                                .map(Element::text)
                                                .toList();
-
-
             return Optional.of(List.of(etymology, List.of(type, spelling), definitions));
         }
 
         @Override
         public String getFormattedQueryLink(String query) {
             return BASE_LINK + query;
+        }
+
+        private String markdown(String html) {
+            StringBuilder newString = new StringBuilder();
+            boolean buildLink = false;
+            String link = "";
+            String text = "";
+            return "";
         }
 
     }
