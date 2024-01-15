@@ -112,9 +112,14 @@ public class WikiCommand implements Command {
 
     private static class WikitionaryScrapper implements WikiScrapper {
 
-        private static final String BASE_LINK = "https://fr.wiktionary.org/wiki/";
+        private static final String WIKITIONARY_URL = "https://fr.wiktionary.org";
+        private static final String BASE_LINK = STR."\{WIKITIONARY_URL}/wiki/";
         private static final String NO_RESULT_FOUND = "Pas de résultat pour";
         private static final String ETYMOLOGY = "Étymologie";
+        private static final Strings.RabinKarp LINK_OPENING_TAG_SEARCHER = Strings.getSearcher("<a ");
+        private static final Strings.RabinKarp LINK_CLOSING_TAG_SEARCHER = Strings.getSearcher("</a>");
+        private static final Strings.RabinKarp HREF_ATTR_SEARCHER = Strings.getSearcher("href=\"");
+
         @Override
         public Optional<List<List<String>>> query(String query) {
             Document document;
@@ -186,12 +191,54 @@ public class WikiCommand implements Command {
             return BASE_LINK + query;
         }
 
+        /**
+         * Convert HTML text to Markdown
+         * @param html text to convert
+         * @return Markdown text
+         * @apiNote currently only supporting links conversion
+         * */
         private String markdown(String html) {
-            StringBuilder newString = new StringBuilder();
-            boolean buildLink = false;
-            String link = "";
-            String text = "";
-            return "";
+            List<Integer> openingTags = LINK_OPENING_TAG_SEARCHER.search(html);
+            List<Integer> closingTags = LINK_CLOSING_TAG_SEARCHER.search(html);
+            List<Integer> hrefAttributes = HREF_ATTR_SEARCHER.search(html);
+            if(openingTags.size() != closingTags.size() || openingTags.isEmpty()) // html bad formatted or no links
+                return html;
+
+            StringBuilder markdown = new StringBuilder();
+            int textStart = 0;
+            for (int i = 0; i < openingTags.size(); i++) {
+                int openingTagIndex = openingTags.get(i);
+                int closingTagIndex = closingTags.get(i);
+                if(openingTagIndex != 0) {
+                    markdown.append(html, textStart, openingTagIndex);
+                }
+                String link = "";
+                int href = hrefAttributes.stream().filter(idx -> idx >= openingTagIndex).findFirst().orElse(-1);
+                if(href != -1) {
+                    int secondQuote = findFirst(html, href + 6, '"');
+                    if(secondQuote != -1) {
+                        link = WIKITIONARY_URL + html.substring(href + 6, secondQuote);
+                    }
+                }
+                int closeOpeningTag = findFirst(html, openingTagIndex, '>');
+                markdown.append(STR."[\{html.substring(closeOpeningTag + 1, closingTagIndex)}](\{link})");
+                textStart = closingTagIndex + 4;
+            }
+            return markdown.toString();
+        }
+
+        /**
+         * Find first occurrence of given char in text starting a given index
+         * @param text text to search char in
+         * @param start index to start the search from
+         * @param c the char to search for
+         * @return index of first char's occurrence if found, -1 otherwise
+         * */
+        private int findFirst(String text, int start, char c) {
+            for (int i = start; i < text.length(); i++) {
+                if(text.charAt(i) == c) return i;
+            }
+            return -1;
         }
 
     }
