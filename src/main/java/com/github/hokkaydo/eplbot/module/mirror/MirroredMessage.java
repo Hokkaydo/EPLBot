@@ -111,9 +111,8 @@ public class MirroredMessage {
      * */
     private void createAndSendMessage() {
         String content = getContent(originalMessage);
-        if(Main.getJDA().getSelfUser().getAvatar() == null) throw new IllegalStateException("Odds are not in our favor (should never arise)");
-        // Retrieve author's profile picture or else defaulting on EPLBot profile picture
-        Optional.ofNullable(originalMessage.getAuthor().getAvatar()).orElse(Main.getJDA().getSelfUser().getAvatar()).download().thenApply(is -> {
+        // Retrieve author's profile picture or else defaulting on default profile picture
+        Optional.ofNullable(originalMessage.getAuthor().getAvatar()).orElse(Main.getJDA().getSelfUser().getDefaultAvatar()).download().thenApply(is -> {
             try {
                 return Icon.from(is);
             } catch (IOException e) {
