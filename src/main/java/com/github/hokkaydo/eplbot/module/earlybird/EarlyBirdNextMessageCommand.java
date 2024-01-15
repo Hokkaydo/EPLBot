@@ -67,6 +67,7 @@ public class EarlyBirdNextMessageCommand extends ListenerAdapter implements Comm
         Config.updateValue(event.getGuild().getIdLong(), "EARLY_BIRD_NEXT_MESSAGE", content);
         MessageUtil.sendAdminMessage("Prochain message matinal enregistré par %s :%n >>> %s".formatted(event.getUser().getAsMention(), content), event.getGuild().getIdLong());
         event.reply(Strings.getString("EARLY_BIRD_NEXT_MESSAGE_REGISTERED")).queue();
+        event.getUser().openPrivateChannel().queue(dm -> dm.sendMessage(Strings.getString("EARLY_BIRD_NEXT_MESSAGE_REGISTERED_DM").formatted(content)).queue());
     }
 
     @Override
