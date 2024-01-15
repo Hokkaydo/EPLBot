@@ -19,6 +19,7 @@ import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -122,7 +123,7 @@ public class QuoteListener extends ListenerAdapter {
     private void removeDeleteButton(Long quoteId) {
         if(!removeDeleteButtonTasks.containsKey(quoteId)) return;
         removeDeleteButtonTasks.remove(quoteId).cancel(true);
-        quotes.remove(quoteId);
+        quotes.remove(quoteId).quote.editMessageComponents(Collections.emptyList()).queue();
     }
 
     @Override
