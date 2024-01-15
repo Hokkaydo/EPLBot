@@ -81,6 +81,7 @@ public class EarlyBirdListener extends ListenerAdapter {
                                                   Config.updateValue(guildId, "EARLY_BIRD_NEXT_MESSAGE", "");
                                                   this.waitingForAnswer = true;
                                                   perfectTimeLoops.removeIf(f -> f.isDone() || f.isCancelled());
+                                                  launchRandomSender();
                                                   return;
                                               }
                                               int randomMessageIndex = RANDOM.nextInt(MESSAGES.size());
