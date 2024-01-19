@@ -106,6 +106,7 @@
   "COMMAND_CODE_UNEXISTENDMETHOD":"La fonction main n'existe pas, vérifier que la méthode main est publique et prend en argument String[] args ",
   "COMMAND_CODE_UNCALLABLEMETHOD" : "La fonction main n'a pas pu être appelée, vérifier que la méthode main est publique et prend en argument String[] args ",
   "COMMAND_CODE_EXCEEDED_FILE_SIZE":"Le fichier a atteint la taille de plus de 8mb",
+  "COMMAND_CODE_NO_LANGUAGE_SPECIFIED": "Uh Oh, il semble qu'un des problèmes suivants ait surgi : aucun code n'a été soumis, aucun langage n'a été spécifié, ou l'interaction a été trop longue. Pour résoudre ce problème, veuillez réessayer. Si le problème persiste, veuillez contacter un administrateur. Désolé pour le contretemps.",
   "COMMAND_CONFIG_HELP": "Permet la configuration et consultation des paramètres du bot spécifiques au serveur via `/config <name> <value>`.\n- Si la valeur est omise, la commande renverra la valeur actuelle du paramètre `<name>`. \n- Si les 2 paramètres sont omis, la configuration totale du serveur sera affichée.\n- Si le nom est omis, mais pas la valeur, la commande renverra une erreur.",
   "COMMAND_NOTICE_SELECT_MESSAGE": "Veuillez sélectionner le cours pour lequel vous souhaitez donner/consulter un avis",
   "COMMAND_NOTICE_DESCRIPTION": "Permet d'ajouter ou éditer un avis sur un cours / groupe",

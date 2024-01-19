@@ -18,7 +18,7 @@ import net.dv8tion.jda.api.interactions.modals.ModalMapping;
 import net.dv8tion.jda.api.utils.FileUpload;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Supplier;
 import java.io.FileWriter;
 import java.io.BufferedReader;
@@ -26,43 +26,44 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.stream.Collectors;
-import java.util.List;
-import java.util.Objects;
 import java.time.Instant;
-import java.util.Map;
 
 
 public class CodeCommand extends ListenerAdapter implements Command{
-    private static final String TEMP_DIR = System.getProperty("user.dir")+File.separator+"src"+File.separator+"temp";
-    private static final Map<String, Runner> RUNNER_MAP = Map.of(
-            "python", new PythonRunner(),
-            "rust", new RustCompiler(),
-            "java", new JavaRunner()
-        );
+    private static final String TEMP_DIR = STR."\{System.getProperty("user.dir")}\{File.separator}src\{File.separator}temp";
+    private static final Map<String, Runner> RUNNER_MAP;
+
+    private static final String OUT_FILE = "result.txt";
+    private static final String OUT_RESPONSE = "responseCode.txt";
+    private static final String CODE_PYTHON_KEY = "python";
+    private static final String COMMAND_PYTHON_IN = "python";
+    static {
+        RUNNER_MAP = Map.of(CODE_PYTHON_KEY, new PythonRunner(), "rust", new RustCompiler(), "java", new JavaRunner());
+    }
     private static final long MAX_SENT_FILE_SIZE = 8L * 1024 * 1024; 
-    private static String CURRENT_LANG = null;
+    private static String currentLang;
     @Override
     public void executeCommand(CommandContext context) {
         Guild guild = context.interaction().getGuild();
         if(guild == null) return;
         if (context.options().size() <= 1) {
-            context.interaction().replyModal(Modal.create(context.author().getId() + "submitCode","Execute du code")
+            context.interaction().replyModal(Modal.create(STR."\{context.author().getId()}submitCode","Execute du code")
                                                      .addActionRow(TextInput.create("body", "Code", TextInputStyle.PARAGRAPH).setPlaceholder("Code").setRequired(true).build())
                                                      .build()).queue();
-            CURRENT_LANG = context.options().get(0).getAsString();
+            currentLang = context.options().getFirst().getAsString();
             return;
         } 
-        context.replyCallbackAction().setContent("Processing since: <t:" + Instant.now().getEpochSecond() + ":R>").setEphemeral(false).queue();
+        context.replyCallbackAction().setContent(STR."Processing since: <t:\{Instant.now().getEpochSecond()}:R>").setEphemeral(false).queue();
         context.options()
                 .get(1)
                 .getAsAttachment()
                 .getProxy()
-                .downloadToFile(new File(("%s"+File.pathSeparator+"input.txt").formatted(TEMP_DIR)))
+                .downloadToFile(new File((STR."%s\{File.pathSeparator}input.txt").formatted(TEMP_DIR)))
                 .thenAcceptAsync(file -> {
                     String content = readFromFile(file).orElse("");
-                    Runner runner = RUNNER_MAP.get(context.options().get(0).getAsString());
+                    Runner runner = RUNNER_MAP.get(context.options().getFirst().getAsString());
                     String result = runner.run(content, Config.getGuildVariable(guild.getIdLong(), "COMMAND_CODE_TIMELIMIT"));
-                    performSubmit(context.channel(),content, context.options().get(0).getAsString());
+                    performSubmit(context.channel(),content, context.options().getFirst().getAsString());
                     performResponse(context.channel(),result);
                     file.delete();
                 })
@@ -77,15 +78,15 @@ public class CodeCommand extends ListenerAdapter implements Command{
         if(event.getInteraction().getType() != InteractionType.MODAL_SUBMIT || !event.getModalId().contains("Code")) return;
         Optional<ModalMapping> body = Optional.ofNullable(event.getInteraction().getValue("body"));
         Guild guild = event.getGuild();
-        if( CURRENT_LANG == null||body.isEmpty() || guild == null){
-            System.out.println("here");
+        if( currentLang == null||body.isEmpty() || guild == null){
+            performResponse(event.getMessageChannel(),Strings.getString("COMMAND_CODE_NO_LANGUAGE_SPECIFIED"));
             return;
 
         } 
         Integer runTimeout = Config.getGuildVariable(guild.getIdLong(), "COMMAND_CODE_TIMELIMIT");
-        event.getInteraction().reply("Processing since: <t:" + Instant.now().getEpochSecond() + ":R>").queue();
+        event.getInteraction().reply(STR."Processing since: <t:\{Instant.now().getEpochSecond()}:R>").queue();
 
-        String languageOption = CURRENT_LANG;
+        String languageOption = currentLang;
         String bodyStr = Objects.requireNonNull(body.get().getAsString());
         Runner runner = RUNNER_MAP.get(languageOption);
         performSubmit(event.getMessageChannel(),bodyStr, languageOption);
@@ -109,7 +110,7 @@ public class CodeCommand extends ListenerAdapter implements Command{
     }
     private void performResponse(MessageChannel textChannel, String result){
         if (validateMessageLength(result)){
-            textChannel.sendMessage("`"+result+"`").queue();
+            textChannel.sendMessage(STR."`\{result}`").queue();
             return;
         }
         File submitted = createResponseAsFile(result);
@@ -124,40 +125,37 @@ public class CodeCommand extends ListenerAdapter implements Command{
         textChannel.sendMessage(Strings.getString("COMMAND_CODE_EXCEEDED_FILE_SIZE")).queue();
     }
     private void sendWrappedCodeAsText(MessageChannel textChannel, String bodyStr, String codeName){
-        textChannel.sendMessage("```"+codeName.toLowerCase()+"\n"+bodyStr+"\n```").queue();
+        textChannel.sendMessage(STR."```\{codeName.toLowerCase()}\n\{bodyStr}\n```").queue();
     }
     private boolean validateMessageLength(String content){
         return content.length() < 2000;
     }
     private File createWrappedCodeAsFile(String bodyStr){
-        try {
-            FileWriter myWriter = new FileWriter(("%s"+File.separator+"responseCode.txt").formatted(TEMP_DIR));
+        try (FileWriter myWriter = new FileWriter((STR."%s\{File.separator}\{OUT_RESPONSE}").formatted(TEMP_DIR))){
             myWriter.write(bodyStr);
-            myWriter.close();
-            return new File(("%s"+File.separator+"responseCode.txt").formatted(TEMP_DIR));
+            return new File((STR."%s\{File.separator}\{OUT_RESPONSE}").formatted(TEMP_DIR));
         } catch (IOException e){
             e.printStackTrace();
             return null;
         } 
     }
     private void sendSubmittedAsFile(MessageChannel textChannel,File serverFile){
-        FileUpload file = FileUpload.fromData(serverFile,"responseCode.txt");
+        FileUpload file = FileUpload.fromData(serverFile,OUT_RESPONSE);
         textChannel.sendFiles(file).queue(s -> serverFile.delete());
     }
     private File createResponseAsFile(String result){
-        try {
-            FileWriter myWriter = new FileWriter(("%s"+File.separator+"result.txt").formatted(TEMP_DIR));
+        try (FileWriter myWriter = new FileWriter((STR."%s\{File.separator}\{OUT_FILE}").formatted(TEMP_DIR))){
             myWriter.write(result);
-            myWriter.close();
-            return new File(("%s"+File.separator+"result.txt").formatted(TEMP_DIR));
+            return new File((STR."%s\{File.separator}\{OUT_FILE}").formatted(TEMP_DIR));
         } catch (IOException e){
             e.printStackTrace();
             return null;
         }
     }
-    private void sendResponseAsFile(MessageChannel textChannel, File serverFile){
-        FileUpload file = FileUpload.fromData(serverFile,"result.txt");
-        textChannel.sendFiles(file).queue(s -> serverFile.delete());
+    private void sendResponseAsFile(MessageChannel textChannel, File serverFile) {
+        FileUpload file = FileUpload.fromData(serverFile, OUT_FILE);
+        textChannel.sendFiles(file)
+                .queue(s -> serverFile.delete());
     }
     private boolean validateFileSize(File file){
         long fileSizeInBytes = file.length();
@@ -184,7 +182,7 @@ public class CodeCommand extends ListenerAdapter implements Command{
     public List<OptionData> getOptions() {
         return List.of(
             new OptionData(OptionType.STRING, "language", Strings.getString("COMMAND_CODE_LANG_OPTION_DESCRIPTION"), true)
-                .addChoice("python", "python")
+                .addChoice(COMMAND_PYTHON_IN, CODE_PYTHON_KEY)
                 .addChoice("rust", "rust")
                 .addChoice("java", "java"),
             new OptionData(OptionType.ATTACHMENT, "file", Strings.getString("COMMAND_CODE_FILE_OPTION_DESCRIPTION"), false)

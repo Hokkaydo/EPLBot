@@ -13,7 +13,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public class RustCompiler implements Runner{
-    private static final String CURRENT_DIR = System.getProperty("user.dir") + File.separator+"src"+File.separator+"temp"+File.separator;
+    private static final String CURRENT_DIR = STR."\{System.getProperty("user.dir")}\{File.separator}src\{File.separator}temp\{File.separator}";
     private static final String[] VALID_EXTENSIONS = {".exe", ".pdb", ".rs"};
 
     private static final ScheduledExecutorService SCHEDULER = new ScheduledThreadPoolExecutor(1);
@@ -25,18 +25,15 @@ public class RustCompiler implements Runner{
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         File sourceFile;
         Process compile;
-        try {
-
-            sourceFile = new File(CURRENT_DIR, "temp.rs");
-            sourceFile.deleteOnExit();
-            FileWriter writer = new FileWriter(sourceFile);
+        sourceFile = new File(CURRENT_DIR, "temp.rs");
+        sourceFile.deleteOnExit();
+        try (FileWriter writer = new FileWriter(sourceFile)){
             writer.write(input);
-            writer.close();
             compile = new ProcessBuilder("rustc", sourceFile.getAbsolutePath()).directory(new File(CURRENT_DIR)).redirectErrorStream(true).start();
 
         } catch (IOException e) {
             e.printStackTrace();
-            return "Server error code R01" + e;
+            return STR."Server error code R01\{e}";
         }
         int compileExitCode;
         try{
@@ -44,22 +41,22 @@ public class RustCompiler implements Runner{
         }catch (InterruptedException e){
             Thread.currentThread().interrupt();
             e.printStackTrace();
-            return "Server error code R02" + e;
+            return STR."Server error code R02\{e}";
         }
         BufferedReader reader = new BufferedReader(new InputStreamReader(compile.getInputStream()));
         String line;
         try {
             while ((line = reader.readLine()) != null) {
-                outputStream.write((line + "\n").getBytes());
+                outputStream.write((STR."\{line}\n").getBytes());
             }
         } catch (IOException e){
             e.printStackTrace();
-            return "Server error code R03" + e;
+            return STR."Server error code R03\{e}";
         }
 
         if (compileExitCode != 0) {
             deleteFiles();
-            return "Compilation failed:\n" + outputStream;
+            return STR."Compilation failed:\n\{outputStream}";
         }
         String executableFileName = sourceFile.getName().replace(".rs", "");
         File executableFile = new File(CURRENT_DIR, executableFileName);
@@ -72,7 +69,7 @@ public class RustCompiler implements Runner{
             run = new ProcessBuilder(new File(CURRENT_DIR, executableFileName).getAbsolutePath()).directory(new File(CURRENT_DIR)).redirectErrorStream(true).start();
         } catch (IOException e){
             e.printStackTrace();
-            return "Server error code R04" + e;
+            return STR."Server error code R04\{e}";
         }
 
         BufferedReader reader2 = new BufferedReader(new InputStreamReader(run.getInputStream()));
@@ -80,12 +77,12 @@ public class RustCompiler implements Runner{
         String line2;
         try {
             while ((line2 = reader2.readLine()) != null) {
-                outputStream.write((line2 + "\n").getBytes());
+                outputStream.write((STR."\{line2}\n").getBytes());
             }
         } catch (IOException e){
             e.printStackTrace();
             Thread.currentThread().interrupt();
-            return "Server error code R05" + e;
+            return STR."Server error code R05\{e}";
         }
         if (!timeOut.isDone()) {
             deleteFiles();
@@ -96,9 +93,9 @@ public class RustCompiler implements Runner{
         String output = outputStream.toString().trim();
         Thread.currentThread().interrupt();
         if (output.isEmpty()) {
-            return "Run failed: Timelimit exceeded "+ runTimeout +" s";
+            return STR."Run failed: Timelimit exceeded \{runTimeout} s";
         } else {
-            return "Run failed:\n" + output;
+            return STR."Run failed:\n\{output}";
         }
 
     }

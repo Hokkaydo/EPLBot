@@ -21,7 +21,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class JavaRunner implements Runner{
-    private static final String OUTPUT_PATH = System.getProperty("user.dir")+File.separator+"src"+File.separator+"temp"+File.separator;
+    private static final String OUTPUT_PATH = STR."\{System.getProperty("user.dir")}\{File.separator}src\{File.separator}temp\{File.separator}";
     private static final ScheduledExecutorService SCHEDULER = new ScheduledThreadPoolExecutor(1);
     private static final String WRAPPER_TEMPLATE = """
         import java.util.*;
@@ -41,37 +41,37 @@ public class JavaRunner implements Runner{
             input = addWrapper(input);
         }
         String className = regexClassName(input);
-        writeFile(input,Path.of(OUTPUT_PATH+File.separator+className+".java"));
-        String filePath = OUTPUT_PATH + File.separator + className + ".java";
+        writeFile(input,Path.of(STR."\{OUTPUT_PATH}\{File.separator}\{className}.java"));
+        String filePath = STR."\{OUTPUT_PATH}\{File.separator}\{className}.java";
 
         ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
         if (ToolProvider.getSystemJavaCompiler().run(null, null, new PrintStream(errorStream), filePath) != 0) {
             deleteFiles( className);
-            return "Compilation failed:\n" + errorStream;
+            return STR."Compilation failed:\n\{errorStream}";
         }
 
         ScheduledFuture<?> timeOut = SCHEDULER.schedule(() -> {}, runTimeout, TimeUnit.SECONDS);
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         try {
-            Process process = new ProcessBuilder(System.getProperty("java.home") + File.separator + "bin" + File.separator + "java", "-cp", System.getProperty("java.class.path") + File.pathSeparator + OUTPUT_PATH, regexClassName(input)).redirectErrorStream(true).start();
+            Process process = new ProcessBuilder(STR."\{System.getProperty("java.home")}\{File.separator}bin\{File.separator}java", "-cp", System.getProperty("java.class.path") + File.pathSeparator + OUTPUT_PATH, regexClassName(input)).redirectErrorStream(true).start();
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String line;
             while ((line = reader.readLine()) != null) {
-                outputStream.write((line + "\n").getBytes());
+                outputStream.write((STR."\{line}\n").getBytes());
             }
 
         } catch (Exception e) {
             e.printStackTrace();
-            return "Server side error code J01" + e.getMessage();
+            return STR."Server side error code J01\{e.getMessage()}";
         }
         if (timeOut.isDone()) {
             deleteFiles( className);
             String output = outputStream.toString().trim();
             if (output.isEmpty()) {
-                return "Run failed: Timelimit exceeded "+ runTimeout +" s";
+                return STR."Run failed: Timelimit exceeded \{runTimeout} s";
             } else {
-                return "Run failed:\n" + output;
+                return STR."Run failed:\n\{output}";
             }
         }
         timeOut.cancel(true);
@@ -88,7 +88,7 @@ public class JavaRunner implements Runner{
     }
     public static boolean requiresWrapper(String javaCode) {
         boolean hasClass = Pattern.compile("\\bpublic\\s+class\\s+[A-Z][a-zA-Z0-9]*").matcher(javaCode).find();
-        boolean hasMainMethod = Pattern.compile("\\bpublic\\s+static\\s+void\\s+main\\s*\\(\\s*String\\[\\]\\s+[a-zA-Z0-9]*\\s*\\)").matcher(javaCode).find();
+        boolean hasMainMethod = Pattern.compile("\\bpublic\\s+static\\s+void\\s+main\\s*\\(\\s*String\\[]\\s+[a-zA-Z0-9]*\\s*\\)").matcher(javaCode).find();
         return !hasMainMethod && !hasClass;
     }
     public static String addWrapper(String input){
@@ -102,12 +102,17 @@ public class JavaRunner implements Runner{
             e.printStackTrace();
         }
     }
+    public static class NoClassDefinitionFoundException extends RuntimeException {
+        public NoClassDefinitionFoundException(String message) {
+            super(message);
+        }
+    }
     public static String regexClassName(String input){
         Matcher matcher = Pattern.compile("class\\s+(\\w+)\\s*\\{").matcher(input);
         if (matcher.find()) {
             return matcher.group(1).replaceAll("\\s+", "");
         } 
-        throw new RuntimeException("No class definition found.");
+        throw new NoClassDefinitionFoundException("No class definition found.");
     }
     
     public static String safeImports(String input){
@@ -128,7 +133,7 @@ public class JavaRunner implements Runner{
                 "net",
                 "org"
         );
-        String regex = "(?i)import\\s+" + String.join("|", dangerousImports).replace("\\.", "\\\\.") + "\\s*;";
+        String regex = STR."(?i)import\\s+\{String.join("|", dangerousImports).replace("\\.", "\\\\.")}\\s*;";
         return input.replace(regex, "");
     }
 }

@@ -13,7 +13,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public class PythonRunner implements Runner {
-    private static final String CURRENT_DIR = System.getProperty("user.dir") + File.separator+"src"+File.separator+"temp"+File.separator;
+    private static final String CURRENT_DIR = STR."\{System.getProperty("user.dir")}\{File.separator}src\{File.separator}temp\{File.separator}";
     private static final ScheduledExecutorService SCHEDULER = new ScheduledThreadPoolExecutor(1);
 
     @Override
@@ -28,10 +28,8 @@ public class PythonRunner implements Runner {
         ScheduledFuture<?> timeOut = SCHEDULER.schedule(() -> {}, runTimeout, TimeUnit.SECONDS);
         StringBuilder output = new StringBuilder();
         String line;
-        try {
-            FileWriter writer = new FileWriter(sourceFile);
+        try (FileWriter writer = new FileWriter(sourceFile)){
             writer.write(input);
-            writer.close();
             Process process = new ProcessBuilder("python", sourceFile.getAbsolutePath()).redirectErrorStream(true).start();
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             while ((line = reader.readLine()) != null) {
@@ -40,15 +38,15 @@ public class PythonRunner implements Runner {
             reader.close();
         } catch (IOException e) {
             e.printStackTrace();
-            return "Server side error code P01 " + e.getMessage();
+            return STR."Server side error code P01 \{e.getMessage()}";
         }
         if (timeOut.isDone()) {
             deleteFiles();
             String outProcess = output.toString();
             if (outProcess.isEmpty()) {
-                return "Run failed: Timelimit exceeded " + runTimeout + " s";
+                return STR."Run failed: Timelimit exceeded \{runTimeout} s";
             } else {
-                return "Run succeeded:\n" + outProcess;
+                return STR."Run succeeded:\n\{outProcess}";
             }
         }
         deleteFiles();
