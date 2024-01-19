@@ -75,9 +75,10 @@ public class MirrorManager extends ListenerAdapter {
         if(event.getMessage().isEphemeral()) return;
         if(event.getMessage().getType().isSystem()) return;
         if(!event.getChannel().getType().isGuild()) return;
+        if(event.isWebhookMessage() && event.getMessage().getType() != MessageType.SLASH_COMMAND) return;
 
         // do not mirror already mirrored messages
-        if(mirroredMessages.stream().flatMap(m -> m.getMessages().entrySet().stream()).anyMatch(m -> m.getKey() == 0 || m.getKey() == event.getMessageIdLong())) return;
+        if(mirroredMessages.stream().flatMap(m -> m.getMessages().entrySet().stream()).anyMatch(m -> m.getKey() == event.getMessageIdLong())) return;
 
 
         // If thread starter, create mirror thread

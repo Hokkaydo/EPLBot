@@ -57,7 +57,7 @@ public class DebugCommand implements Command {
         List<CompletableFuture<Void>> requests = new ArrayList<>();
 
         for (CRUDRepository<?> repository : repositories) {
-            output.computeIfAbsent(repository.getClass().getSimpleName(), s -> new ArrayList<>());
+            output.computeIfAbsent(repository.getClass().getSimpleName(), _ -> new ArrayList<>());
             StringBuilder s = new StringBuilder();
 
             for (Object o : repository.readAll()) {
@@ -94,14 +94,14 @@ public class DebugCommand implements Command {
 
     private static String listToString(List<String> list) {
         if(list.isEmpty()) return "Empty repository";
-        String first = list.get(0);
-        list.remove(0);
-        return first + list.stream().reduce("", (a,b) -> a + " - " + b);
+        String first = list.getFirst();
+        list.removeFirst();
+        return first + list.stream().reduce("", (a,b) -> STR."\{a} - \{b}");
     }
 
     @Override
     public void executeCommand(CommandContext context) {
-        String sub = context.options().get(0).getAsString();
+        String sub = context.options().getFirst().getAsString();
         context.author().getUser().openPrivateChannel().queue(c -> SUB_COMMANDS.getOrDefault(sub, DEFAULT).accept(c));
         context.replyCallbackAction().setContent("Done !").queue();
     }

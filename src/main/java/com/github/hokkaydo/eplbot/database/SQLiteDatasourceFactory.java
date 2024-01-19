@@ -10,7 +10,7 @@ public class SQLiteDatasourceFactory {
     private SQLiteDatasourceFactory() {}
     public static DataSource create(String path) {
         DriverManagerDataSource dataSource = new DriverManagerDataSource();
-        dataSource.setUrl("jdbc:sqlite:"+path);
+        dataSource.setUrl(STR."jdbc:sqlite:\{path}");
         return dataSource;
     }
 }

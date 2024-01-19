@@ -81,10 +81,11 @@ public class EarlyBirdListener extends ListenerAdapter {
                                                   Config.updateValue(guildId, "EARLY_BIRD_NEXT_MESSAGE", "");
                                                   this.waitingForAnswer = true;
                                                   perfectTimeLoops.removeIf(f -> f.isDone() || f.isCancelled());
+                                                  launchRandomSender();
                                                   return;
                                               }
                                               int randomMessageIndex = RANDOM.nextInt(MESSAGES.size());
-                                              channel.sendMessage(MESSAGES.get(randomMessageIndex)).queue(v -> this.waitingForAnswer = true);
+                                              channel.sendMessage(MESSAGES.get(randomMessageIndex)).queue(_ -> this.waitingForAnswer = true);
                                               perfectTimeLoops.removeIf(f -> f.isDone() || f.isCancelled());
                                               dayLoops.removeIf(f -> f.isDone() || f.isCancelled());
                                               launchRandomSender();

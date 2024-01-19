@@ -37,7 +37,7 @@ public class HelpCommand implements Command {
         }
         List<String> helps = Main.getCommandManager().getCommands(guildId).stream()
                                      .filter(c -> Main.getCommandManager().isEnabled(guildId, c.getClass()) || context.author().hasPermission(Permission.ADMINISTRATOR))
-                                     .map(c -> "__" + c.getName() + "__: \n" + c.help().get())
+                                     .map(c -> STR."__\{c.getName()}__: \n\{c.help().get()}")
                                      .toList();
         StringBuilder stringBuilder = new StringBuilder("__AIDE :__");
         boolean firstSent = false;
@@ -88,7 +88,7 @@ public class HelpCommand implements Command {
 
     @Override
     public boolean ephemeralReply() {
-        return false;
+        return true;
     }
 
     @Override

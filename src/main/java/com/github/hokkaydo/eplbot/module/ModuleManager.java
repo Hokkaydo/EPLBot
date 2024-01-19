@@ -21,17 +21,9 @@ public class ModuleManager {
         return modules.stream().filter(m -> m.getGuildId().equals(guildId)).toList();
     }
 
-    public <T extends Module> List<T> getModule(@NotNull Class<T> clazz) {
-        return modules.stream().filter(clazz::isInstance).map(clazz::cast).toList();
-    }
-
 
     public <T extends Module> Optional<T> getModuleByName(String name, Long guildId, @NotNull Class<T> clazz) {
         return modules.stream().filter(m -> m.getGuildId().equals(guildId) && m.getName().equals(name)).filter(clazz::isInstance).map(clazz::cast).findFirst();
-    }
-
-    public boolean isModuleEnabled(Long guildId, String name) {
-        return modules.stream().filter(m -> m.getGuildId().equals(guildId) && m.getName().equals(name)).findFirst().map(Module::isEnabled).orElse(false);
     }
 
     public void disableModule(String name, Long guildId) {

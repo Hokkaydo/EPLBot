@@ -111,16 +111,15 @@ public class MirroredMessage {
      * */
     private void createAndSendMessage() {
         String content = getContent(originalMessage);
-        if(Main.getJDA().getSelfUser().getAvatar() == null) throw new IllegalStateException("Odds are not in our favor (should never arise)");
-        // Retrieve author's profile picture or else defaulting on EPLBot profile picture
-        Optional.ofNullable(originalMessage.getAuthor().getAvatar()).orElse(Main.getJDA().getSelfUser().getAvatar()).download().thenApply(is -> {
+        // Retrieve author's profile picture or else defaulting on default profile picture
+        Optional.ofNullable(originalMessage.getAuthor().getAvatar()).orElse(Main.getJDA().getSelfUser().getDefaultAvatar()).download().thenApply(is -> {
             try {
                 return Icon.from(is);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }).thenAccept(icon -> {
-            WebhookMessageCreateAction<Message> createAction = getWebhook().sendMessage(authorNameAndNickname, icon, content);
+            WebhookMessageCreateAction<Message> createAction = getWebhook().sendMessage(authorNameAndNickname, icon, content, originalMessage.getAuthor().getIdLong());
             if (replyTo != null) {
                 Member replyToAuthor = mirrorMembers.get(replyTo.getAuthor().getIdLong());
                 createAction.addComponents(ActionRow.of(Button.link(replyTo.getJumpUrl(), "↪ %s".formatted(MessageUtil.nameAndNickname(replyToAuthor, replyTo.getAuthor())))));

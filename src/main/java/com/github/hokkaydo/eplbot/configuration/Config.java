@@ -74,7 +74,7 @@ public class Config {
     private static final Map<String, ConfigurationParser> DEFAULT_STATE = Map.of(
             "LAST_RSS_ARTICLE_DATE", new ConfigurationParser(
                     () -> new HashMap<>(Map.of("https://www.developpez.com/index/rss", Timestamp.from(Instant.EPOCH))),
-                    m -> ((Map<String, Timestamp>) m).entrySet().stream().map(e -> e.getKey() + ";" + e.getValue()).reduce("", (a,b) ->  a.isBlank() ? b : a + "," + b),
+                    m -> ((Map<String, Timestamp>) m).entrySet().stream().map(e -> STR."\{e.getKey()};\{e.getValue()}").reduce("", (a, b) ->  a.isBlank() ? b : STR."\{a},\{b}"),
                     s -> Arrays.stream(s.split(",")).map(a -> a.split(";")).map(a -> Map.entry(a[0], Timestamp.valueOf(a[1]))).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)),
                     "Liste de paires Lien-Timestamp"
             ),
@@ -108,7 +108,8 @@ public class Config {
         ));
         DEFAULT_CONFIGURATION.putAll(Map.of(
                 "EARLY_BIRD_MESSAGE_PROBABILITY", INTEGER_CONFIGURATION_VALUE.apply(33),
-                "ASSISTANT_ROLE_ID", STRING_CONFIGURATION_VALUE.get()
+                "ASSISTANT_ROLE_ID", STRING_CONFIGURATION_VALUE.get(),
+                "MODERATOR_ROLE_ID", STRING_CONFIGURATION_VALUE.get()
         ));
 
         // Modules
@@ -162,11 +163,11 @@ public class Config {
     public static void updateValue(Long guildId, String key, Object value) {
         if(!DEFAULT_CONFIGURATION.containsKey(key)) {
             if(!DEFAULT_STATE.containsKey(key)) throw new IllegalStateException("Configuration key isn't allowed");
-            GUILD_STATE.computeIfAbsent(guildId, id -> new HashMap<>());
+            GUILD_STATE.computeIfAbsent(guildId, _ -> new HashMap<>());
             GUILD_STATE.get(guildId).put(key, value);
             saveValue(guildId, key, value);
         }
-        GUILD_CONFIGURATION.computeIfAbsent(guildId, id -> new HashMap<>());
+        GUILD_CONFIGURATION.computeIfAbsent(guildId, _ -> new HashMap<>());
         GUILD_CONFIGURATION.get(guildId).put(key, value);
         saveValue(guildId, key, value);
     }
@@ -191,13 +192,13 @@ public class Config {
 
     private static void saveValue(Long guildId, String key, Object value) {
         if(DEFAULT_CONFIGURATION.containsKey(key)) {
-            GUILD_CONFIGURATION.computeIfAbsent(guildId, id -> DEFAULT_CONFIGURATION_VALUES.get());
+            GUILD_CONFIGURATION.computeIfAbsent(guildId, _ -> DEFAULT_CONFIGURATION_VALUES.get());
             String val = DEFAULT_CONFIGURATION.get(key).toConfig.apply(value);
             repository.updateGuildVariable(guildId, key, val);
             GUILD_CONFIGURATION.get(guildId).put(key, value);
         } else {
             if(!DEFAULT_STATE.containsKey(key)) return;
-            GUILD_STATE.computeIfAbsent(guildId, id -> DEFAULT_STATE_VALUES.get());
+            GUILD_STATE.computeIfAbsent(guildId, _ -> DEFAULT_STATE_VALUES.get());
             String val = DEFAULT_STATE.get(key).toConfig.apply(value);
             repository.updateGuildState(guildId, key, val);
             GUILD_STATE.get(guildId).put(key, value);

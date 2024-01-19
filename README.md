@@ -6,7 +6,7 @@ ___
 
 Avant de commencer, assurez-vous d'avoir les éléments suivants :
 
-- Java Development Kit (JDK) 17 installé sur votre machine.
+- Java Development Kit (JDK) 21 installé sur votre machine.
 - Un compte Discord pour créer un bot et obtenir un jeton d'authentification.
 - Gradle installé (ou vous pouvez utiliser la version fournie avec le projet).
 
@@ -35,22 +35,21 @@ Avant de commencer, assurez-vous d'avoir les éléments suivants :
     ./gradlew shadowJar
     ```
 
-5. Ajoutez les variables d'environnement :
-
-    ```shell
-    DISCORD_BOT_TOKEN=votre-jeton
-    TEST_DISCORD_ID=id-de-votre-discord-de-test
-    ```
-
-6. Exécutez le bot Discord en utilisant la commande :
-
-    ```shell
+5. Renommez le fichier `variables.env.example` en `variables.env` et renseignez-y vos variables d'environnement suivant :
+   - `DISCORD_BOT_TOKEN`: Jeton d'identification de votre bot Discord
+   - `TEST_DISCORD_ID`: Identifiant du discord sur lequel vous souhaitez tester le bot
+   - `GITHUB_APPLICATION_ID`: Identifiant de l'application Github liée (permet de gérer les issues) *(Optionnel)* 
+   - `GITHUB_APPLICATION_INSTALLATION_ID`: Identifiant d'installation de l'application Github liée (permet de gérer les issues) *(Optionnel)*
+   - `HASTEBIN_TOKEN`: Jeton d'identification auprès de l'API de Hastebin
+   
+6. Lancez le bot :
+ ```shell
       ./gradlew run
-    ```
+   ```
 
 # Docker
 
-Pour executer le bot avec docker, voici la marche à suivre.
+Pour exécuter le bot dans un conteneur Docker, voici la marche à suivre.
 
 1. Build l'image Docker
 
@@ -70,7 +69,8 @@ Le bot propose un système modulaire permettant d'activer et désactiver les mod
 
 Les contributions à ce projet sont les bienvenues. Si vous souhaitez apporter des améliorations, veuillez créer une branche à partir de la branche `master`, effectuer vos modifications et soumettre une Pull Request (PR).
 
-Afin de savoir ce qui est prévu ou en cours, n'hésitez pas à consulter le [kanban](https://github.com/users/Hokkaydo/projects/3/views/1) du projet.
+Pensez à consulter [CONTRIBUTION.md](CONTRIBUTION.md) afin de comprendre la structure du projet
+
 ## Ressources
 
 - Documentation JDA : [https://github.com/DV8FromTheWorld/JDA](https://github.com/DV8FromTheWorld/JDA)

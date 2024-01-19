@@ -1,9 +1,9 @@
 package com.github.hokkaydo.eplbot.module.rss;
 
-import com.github.hokkaydo.eplbot.configuration.Config;
 import com.github.hokkaydo.eplbot.Main;
 import com.github.hokkaydo.eplbot.MessageUtil;
 import com.github.hokkaydo.eplbot.Strings;
+import com.github.hokkaydo.eplbot.configuration.Config;
 import com.sun.syndication.feed.synd.SyndEnclosure;
 import com.sun.syndication.feed.synd.SyndEntry;
 import com.sun.syndication.feed.synd.SyndFeed;
@@ -33,35 +33,15 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Will probably be removed sonner or later
+ * */
 public class RssReader {
 
     private final Set<Integer> articles = new HashSet<>();
     private final ScheduledExecutorService service = Executors.newScheduledThreadPool(1);
 
     private final Map<Long, ScheduledFuture<?>> futures = new HashMap<>();
-
-    private SortedSet<Article> read(String feedUrl) throws IOException, FeedException {
-        URL feedSource = new URL(feedUrl);
-        SyndFeedInput input = new SyndFeedInput();
-        SyndFeed feed = input.build(new XmlReader(feedSource));
-        Iterator<SyndEntry> itr = feed.getEntries().iterator();
-        SortedSet<Article> results = new TreeSet<>(Comparator.comparing(Article::publishedDate));
-        while (itr.hasNext()) {
-            SyndEntry syndEntry = itr.next();
-
-            results.add(
-                    new Article(
-                            syndEntry.getTitle(),
-                            syndEntry.getDescription().getValue(),
-                            syndEntry.getLink(),
-                            ((SyndEnclosure)syndEntry.getEnclosures().get(0)).getUrl(),
-                            syndEntry.getPublishedDate()
-                    )
-            );
-        }
-
-        return results;
-    }
 
     private void run(Long guildId) {
         Map<String, Timestamp> lastDateMap = Config.getGuildState(guildId, "LAST_RSS_ARTICLE_DATE");
@@ -79,7 +59,7 @@ public class RssReader {
                 articles.add(result.hashCode());
                 MessageEmbed embed = new EmbedBuilder()
                                              .setTitle(result.title())
-                                             .addField("", "[Voir](" + result.link() + ")", false)
+                                             .addField("", STR."[Voir](\{result.link()})", false)
                                              .setTimestamp(result.publishedDate().toInstant())
                                              .setThumbnail(result.imgURL())
                                              .setAuthor(URI.create(result.link()).getHost(), result.link())
@@ -96,6 +76,29 @@ public class RssReader {
             lastDateMap.put(url, Timestamp.from(results.last().publishedDate().toInstant()));
             Config.updateValue(guildId, "LAST_RSS_ARTICLE_DATE", lastDateMap);
         }
+    }
+
+    private SortedSet<Article> read(String feedUrl) throws IOException, FeedException {
+        URL feedSource = URI.create(feedUrl).toURL();
+        SyndFeedInput input = new SyndFeedInput();
+        SyndFeed feed = input.build(new XmlReader(feedSource));
+        Iterator<SyndEntry> itr = feed.getEntries().iterator();
+        SortedSet<Article> results = new TreeSet<>(Comparator.comparing(Article::publishedDate));
+        while (itr.hasNext()) {
+            SyndEntry syndEntry = itr.next();
+
+            results.add(
+                    new Article(
+                            syndEntry.getTitle(),
+                            syndEntry.getDescription().getValue(),
+                            syndEntry.getLink(),
+                            ((SyndEnclosure)syndEntry.getEnclosures().getFirst()).getUrl(),
+                            syndEntry.getPublishedDate()
+                    )
+            );
+        }
+
+        return results;
     }
 
     void launch(Long guildId) {

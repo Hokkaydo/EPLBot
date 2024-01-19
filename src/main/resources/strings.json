@@ -120,8 +120,16 @@
   "COMMAND_NOTICE_NO_NOTICE_FOUND": "Aucune notion enregistrée pour cette sélection",
   "EARLY_BIRD_NOT_EARLY_BIRD": "Vous n'êtes assurément pas un lève-tôt :rage:",
   "EARLY_BIRD_NEXT_MESSAGE_REGISTERED": "Votre doux message sera le prochain à annoncer le réveil :innocent:",
-  "EARLY_BIRD_NEXT_MESSAGE_COMMAND_HELP": "Permet d'enregistrer le prochain message de réveil lorsqu'on est le lève-tôt.\n Cette commande ne peut être utilisée que par le détenteur du rôle `Lève-tôt`.\n Elle prend en paramètre le message à envoyer.",
+  "EARLY_BIRD_NEXT_MESSAGE_COMMAND_HELP": "Permet d'enregistrer le prochain message de réveil lorsqu'on est le lève-tôt.\n Cette commande ne peut être utilisée que par le détenteur du rôle `Lève-tôt`.\n Elle ouvre une boîte de dialogue demandant d'entrer un message.",
   "EARLY_BIRD_NEXT_MESSAGE_COMMAND_DESCRIPTION": "Permet d'enregistrer le prochain message de réveil lorsqu'on est le lève-tôt",
   "EARLY_BIRD_RESTART_COMMAND_HELP": "Permet de redémarrer le timer du module EarlyBird",
-  "EARLY_BIRD_RESTART_COMMAND_DESCRIPTION": "Permet de redémarrer le timer du module EarlyBird"
+  "EARLY_BIRD_RESTART_COMMAND_DESCRIPTION": "Permet de redémarrer le timer du module EarlyBird",
+  "QUOTE_DELETE_NOT_ALLOWED": "Vous n'êtes pas autorisé à supprimer ce message",
+  "QUOTE_DELETED": "Quote supprimée",
+  "LMGT_COMMAND_DESCRIPTION": "Envoie un lien d'apprentissage pour l'utilisation de Google à ceux qui ne savent pas s'en servir",
+  "LMGT_COMMAND_HELP": "Envoie un lien https://letmegooglethat.com/ avec la recherche passée en argument `subject`",
+  "EARLY_BIRD_MESSAGE_TOO_LONG": "Votre message dépasse les %d caractères autorisés !\nVeuillez réessayer",
+  "EARLY_BIRD_NEXT_MESSAGE_REGISTERED_DM": "Votre message a bien été enregistré :\n>>> %s",
+  "WIKI_COMMAND_DESCRIPTION": "Permet de chercher la définition d'un mot en ligne",
+  "WIKI_COMMAND_HELP": "Permet de chercher la définition d'un mot en ligne"
 }

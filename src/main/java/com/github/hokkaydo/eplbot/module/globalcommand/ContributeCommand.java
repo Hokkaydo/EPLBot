@@ -24,32 +24,34 @@ public class ContributeCommand implements Command {
     @Override
     public void executeCommand(CommandContext context) {
         HttpRequest request = HttpRequest.newBuilder().GET().uri(URI.create("https://api.github.com/repos/Hokkaydo/EPLBot/contributors")).build();
-        HttpClient.newHttpClient()
-                .sendAsync(request, HttpResponse.BodyHandlers.ofString()).thenApply(HttpResponse::body)
-                .thenApply(JSONTokener::new)
-                .thenApply(JSONArray::new)
-                .thenAccept(array -> {
-                    EmbedBuilder embedBuilder = new EmbedBuilder();
-                    embedBuilder.addField(
-                            "Dépôt",
-                            """
-                            Vous pouvez contribuer en soumettant une PR sur le dépôt à l'adresse https://github.com/Hokkaydo/EPLBot.
-                            Pensez à jeter un coup d'œil au kanban d'avancement dans l'onglet `Projects` afin de voir ce qu'il y a à faire.
-                                    """,
-                            true
-                    );
-                    StringBuilder contributors = new StringBuilder();
-                    for (int i = 0; i < array.length(); i++) {
-                        JSONObject object = array.getJSONObject(i);
-                        String nickname = object.getString("login");
-                        if(nickname.equalsIgnoreCase("Hokkaydo")) continue;
-                        contributors.append(nickname).append("\n");
-                    }
-                    contributors.append("Hokkaydo");
-                    embedBuilder.addField("Contributeur%s :heart:".formatted(!array.isEmpty() ? "s" : ""), contributors.toString(),false);
-                    embedBuilder.setAuthor(Main.getJDA().getSelfUser().getName(), "https://github.com/Hokkaydo/EPLBot", Main.getJDA().getSelfUser().getAvatarUrl());
-                    context.replyCallbackAction().setEmbeds(embedBuilder.build()).queue();
-                });
+        try(HttpClient client = HttpClient.newHttpClient()) {
+            client
+                    .sendAsync(request, HttpResponse.BodyHandlers.ofString()).thenApply(HttpResponse::body)
+                    .thenApply(JSONTokener::new)
+                    .thenApply(JSONArray::new)
+                    .thenAccept(array -> {
+                        EmbedBuilder embedBuilder = new EmbedBuilder();
+                        embedBuilder.addField(
+                                "Dépôt",
+                                """
+                                        Vous pouvez contribuer en soumettant une PR sur le dépôt à l'adresse https://github.com/Hokkaydo/EPLBot.
+                                        Pensez à jeter un coup d'œil au kanban d'avancement dans l'onglet `Projects` afin de voir ce qu'il y a à faire.
+                                                """,
+                                true
+                        );
+                        StringBuilder contributors = new StringBuilder();
+                        for (int i = 0; i < array.length(); i++) {
+                            JSONObject object = array.getJSONObject(i);
+                            String nickname = object.getString("login");
+                            if (nickname.equalsIgnoreCase("Hokkaydo")) continue;
+                            contributors.append(nickname).append("\n");
+                        }
+                        contributors.append("Hokkaydo");
+                        embedBuilder.addField("Contributeur%s :heart:".formatted(!array.isEmpty() ? "s" : ""), contributors.toString(), false);
+                        embedBuilder.setAuthor(Main.getJDA().getSelfUser().getName(), "https://github.com/Hokkaydo/EPLBot", Main.getJDA().getSelfUser().getAvatarUrl());
+                        context.replyCallbackAction().setEmbeds(embedBuilder.build()).queue();
+                    });
+        }
     }
 
     @Override

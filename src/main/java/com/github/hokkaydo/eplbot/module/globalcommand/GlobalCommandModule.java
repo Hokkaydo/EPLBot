@@ -23,7 +23,8 @@ public class GlobalCommandModule extends Module {
     private final ContributeCommand contributeCommand;
     private final IssueCommand issueCommand;
     private final CodeCommand codeCommand;
-
+    private final LMGTCommand lmgtCommand;
+    private final WikiCommand wikiCommand;
     public GlobalCommandModule(@NotNull Long guildId) {
         super(guildId);
         enableCommand = new EnableCommand(getGuildId());
@@ -37,6 +38,8 @@ public class GlobalCommandModule extends Module {
         contributeCommand = new ContributeCommand();
         issueCommand = new IssueCommand();
         codeCommand = new CodeCommand();
+        lmgtCommand = new LMGTCommand();
+        wikiCommand = new WikiCommand();
     }
 
     @Override
@@ -58,6 +61,8 @@ public class GlobalCommandModule extends Module {
                 contributeCommand,
                 issueCommand,
                 codeCommand
+                lmgtCommand,
+                wikiCommand
         );
     }
 

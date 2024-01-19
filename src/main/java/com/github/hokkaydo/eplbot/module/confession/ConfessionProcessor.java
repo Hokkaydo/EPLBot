@@ -20,6 +20,7 @@ import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.dv8tion.jda.api.interactions.components.buttons.ButtonInteraction;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 
@@ -87,9 +88,9 @@ public class ConfessionProcessor extends ListenerAdapter {
         confessionAuthor.put(confessUUID, context.user().getIdLong());
         MessageCreateBuilder data = MessageCreateBuilder.from(embedBuilder.build())
                                             .addActionRow(
-                                                    Button.primary("validate-confession;" + confessUUID, Emoji.fromUnicode("✅")),
-                                                    Button.primary("warn-confession;" + confessUUID, Emoji.fromUnicode("⚠")),
-                                                    Button.primary("refuse-confession;" + confessUUID, Emoji.fromUnicode("❌"))
+                                                    Button.primary(STR."validate-confession;\{confessUUID}", Emoji.fromUnicode("✅")),
+                                                    Button.primary(STR."warn-confession;\{confessUUID}", Emoji.fromUnicode("⚠")),
+                                                    Button.primary(STR."refuse-confession;\{confessUUID}", Emoji.fromUnicode("❌"))
                                             );
         if(following) {
             confessFollowing.add(confessUUID);
@@ -139,23 +140,19 @@ public class ConfessionProcessor extends ListenerAdapter {
     @Override
     public void onButtonInteraction(ButtonInteractionEvent event) {
         String id = event.getButton().getId();
+        if(id == null || !id.contains(CONFESSION)) return;
         if(event.getGuild() == null || event.getGuild().getIdLong() != guildId) return;
-        assert id != null;
-        if(id.contains(CONFESSION)) {
-            UUID uuid = UUID.fromString(id.split(";")[1]);
-            if(id.startsWith("validate")) {
-                updateValidationEmbedColor(VALID, event.getMessage());
-                sendConfession(uuid, event.getGuild().getIdLong());
-            } else if(id.startsWith("refuse")){
-                updateValidationEmbedColor(REFUSED, event.getMessage());
-            } else {
-                updateValidationEmbedColor(WARNED, event.getMessage());
-                warn(event.getUser().getIdLong(), uuid);
-            }
-            event.getMessage().editMessageComponents(Collections.emptyList()).queue();
-            return;
+        UUID uuid = UUID.fromString(id.split(";")[1]);
+        if(id.startsWith("validate")) {
+            updateValidationEmbedColor(VALID, event.getInteraction(), event.getMessage());
+            sendConfession(uuid, event.getGuild().getIdLong());
+        } else if(id.startsWith("refuse")){
+            updateValidationEmbedColor(REFUSED, event.getInteraction(), event.getMessage());
+        } else {
+            updateValidationEmbedColor(WARNED, event.getInteraction(), event.getMessage());
+            warn(event.getUser().getIdLong(), uuid);
         }
-        event.reply("unknown").queue();
+        event.getMessage().editMessageComponents(Collections.emptyList()).queue();
     }
 
     private void warn(Long moderatorId, UUID uuid) {
@@ -184,7 +181,7 @@ public class ConfessionProcessor extends ListenerAdapter {
                                                                        user == null ? "USER NOT ON SERVER" : user.getAsMention(),
                                                                        threshold,
                                                                        threshold,
-                                                                       user == null ? "USER NOT ON SERVER" : "@" + user.getNickname()
+                                                                       user == null ? "USER NOT ON SERVER" : STR."@\{user.getNickname()}"
                                                                )
                                        )
                                        .setColor(Color.ORANGE);
@@ -201,11 +198,11 @@ public class ConfessionProcessor extends ListenerAdapter {
             }
         });
     }
-    private void updateValidationEmbedColor(int state, Message message) {
-        if(message.getEmbeds().isEmpty() || message.getEmbeds().get(0).getFields().isEmpty()) return;
-        MessageEmbed embed = message.getEmbeds().get(0);
-        EmbedBuilder builder = new EmbedBuilder(embed).setColor(VALIDATION_EMBED_COLORS[state]).clearFields().addField(VALIDATION_EMBED_TITLES[state], Objects.requireNonNull(embed.getFields().get(0).getValue()), true);
-        message.editMessageEmbeds(builder.build()).queue();
+    private void updateValidationEmbedColor(int state, ButtonInteraction interaction, Message message) {
+        if(message.getEmbeds().isEmpty() || message.getEmbeds().getFirst().getFields().isEmpty()) return;
+        MessageEmbed embed = message.getEmbeds().getFirst();
+        EmbedBuilder builder = new EmbedBuilder(embed).setColor(VALIDATION_EMBED_COLORS[state]).clearFields().addField(VALIDATION_EMBED_TITLES[state], Objects.requireNonNull(embed.getFields().getFirst().getValue()), true);
+        interaction.editMessageEmbeds(builder.build()).queue();
     }
 
     public void clearWarnings(long authorId) {

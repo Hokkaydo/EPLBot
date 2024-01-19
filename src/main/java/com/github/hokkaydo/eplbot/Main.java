@@ -22,13 +22,10 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -114,7 +111,7 @@ public class Main {
                       .addEventListeners(commandManager, guildStateListener)
                       .build();
         jda.awaitReady();
-        //redirectError(); //TODO not working properly
+
         registerModules();
         jda.getGuilds().forEach(guild -> {
                     List<String> modules = Config.getModulesStatuses(
@@ -200,22 +197,6 @@ public class Main {
             commandManager.addGlobalCommands(m.getGlobalCommands());
             commandManager.enableGlobalCommands((m.getGlobalCommands().stream().map(Command::getClass).collect(Collectors.toList())));
         });
-    }
-
-    private static void redirectError() {
-        ByteArrayOutputStream b = new ByteArrayOutputStream();
-        System.setErr(new PrintStream(b));
-        jda.retrieveUserById(347348560389603329L).flatMap(User::openPrivateChannel).queue(privateChannel -> new Thread(() -> {
-            while (true) {
-                byte[] arr = new byte[0];
-                while (arr.length == 0) {
-                    arr = b.toByteArray();
-                }
-                b.reset();
-                byte[] finalArr = arr;
-                privateChannel.sendMessage(new String(finalArr)).queue();
-            }
-        }).start());
     }
 
     private static <T> T instantiate(Class<T> clazz, Long guildId) {

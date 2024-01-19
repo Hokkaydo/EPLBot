@@ -31,7 +31,7 @@ public class EarlyBirdModule extends Module {
 
     @Override
     public List<ListenerAdapter> getListeners() {
-        return List.of(earlyBirdListener);
+        return List.of(earlyBirdListener, earlyBirdNextMessageCommand);
     }
 
     @Override
