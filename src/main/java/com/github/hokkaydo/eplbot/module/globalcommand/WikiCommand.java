@@ -73,7 +73,7 @@ public class WikiCommand implements Command {
     public List<OptionData> getOptions() {
         return List.of(
                 new OptionData(OptionType.STRING, "mot", "Mot à définir", true),
-                new OptionData(OptionType.STRING, "lang", "Langue")
+                new OptionData(OptionType.STRING, "lang", "Langue", true)
                         .addChoice("en", "en")
                         .addChoice("fr", "fr")
                         .addChoice("it", "it")
