@@ -117,5 +117,6 @@
   "EARLY_BIRD_MESSAGE_TOO_LONG": "Votre message dépasse les %d caractères autorisés !\nVeuillez réessayer",
   "EARLY_BIRD_NEXT_MESSAGE_REGISTERED_DM": "Votre message a bien été enregistré :\n>>> %s",
   "WIKI_COMMAND_DESCRIPTION": "Permet de chercher la définition d'un mot en ligne",
-  "WIKI_COMMAND_HELP": "Permet de chercher la définition d'un mot en ligne"
+  "WIKI_COMMAND_HELP": "Permet de chercher la définition d'un mot en ligne",
+  "WIKI_COMMAND_NOT_FOUND": "Définition introuvable.\n:warning: La recherche peut échouer rapidement si vous utilisez plusieurs mots, pensez à n'en utiliser qu'un seul."
 }

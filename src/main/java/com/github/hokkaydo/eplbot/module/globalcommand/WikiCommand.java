@@ -16,7 +16,6 @@ import java.awt.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -28,14 +27,15 @@ public class WikiCommand implements Command {
     private static final int MAX_FIELD_SIZE = 1024;
     @Override
     public void executeCommand(CommandContext context) {
-        if(context.options().isEmpty()) throw new IllegalStateException("Should never arise");
+        if(context.options().size() < 2) throw new IllegalStateException("Should never arise");
         String query = context.options().getFirst().getAsString();
-        Optional<List<List<String>>> response = scrapper.query(query);
+        String lang = context.options().get(1).getAsString();
+        Optional<List<List<String>>> response = scrapper.query(query, lang);
         if(response.isEmpty()) {
             context.replyCallbackAction().setContent(Strings.getString("WIKI_COMMAND_NOT_FOUND")).queue();
             return;
         }
-        context.replyCallbackAction().setEmbeds(toEmbed(query,scrapper.getFormattedQueryLink(query), response.get()).build()).queue();
+        context.replyCallbackAction().setEmbeds(toEmbed(query,scrapper.getFormattedQueryLink(query, lang), response.get()).build()).queue();
     }
 
     private EmbedBuilder toEmbed(String query, String link, List<List<String>> response) {
@@ -71,7 +71,15 @@ public class WikiCommand implements Command {
 
     @Override
     public List<OptionData> getOptions() {
-        return Collections.singletonList(new OptionData(OptionType.STRING, "mot", "Mot à définir"));
+        return List.of(
+                new OptionData(OptionType.STRING, "mot", "Mot à définir", true),
+                new OptionData(OptionType.STRING, "lang", "Langue")
+                        .addChoice("en", "en")
+                        .addChoice("fr", "fr")
+                        .addChoice("it", "it")
+                        .addChoice("nl","nl")
+                        .addChoice("pl", "pl")
+        );
     }
 
     @Override
@@ -99,20 +107,22 @@ public class WikiCommand implements Command {
         /**
          * Query a word definition
          * @param query word to query definition for
+         * @param lang the lang to use in definition searching
          * @return an {@link Optional} containing a list of interesting entries if found, empty otherwise
          * */
-        Optional<List<List<String>>> query(String query);
+        Optional<List<List<String>>> query(String query, String lang);
         /**
          * Get formatted query link
          * @param query the queried word
+         * @param lang the lang to use in definition searching
          * @return a link corresponding to the query
          * */
-        String getFormattedQueryLink(String query);
+        String getFormattedQueryLink(String query, String lang);
     }
 
     private static class WikitionaryScrapper implements WikiScrapper {
 
-        private static final String WIKITIONARY_URL = "https://fr.wiktionary.org";
+        private static final String WIKITIONARY_URL = "https://%s.wiktionary.org";
         private static final String BASE_LINK = STR."\{WIKITIONARY_URL}/wiki/";
         private static final String NO_RESULT_FOUND = "Pas de résultat pour";
         private static final String ETYMOLOGY = "Étymologie";
@@ -121,10 +131,10 @@ public class WikiCommand implements Command {
         private static final Strings.RabinKarp HREF_ATTR_SEARCHER = Strings.getSearcher("href=\"");
 
         @Override
-        public Optional<List<List<String>>> query(String query) {
+        public Optional<List<List<String>>> query(String query, String lang) {
             Document document;
             try {
-                document = Jsoup.connect(BASE_LINK + query).get();
+                document = Jsoup.connect(BASE_LINK.formatted(lang) + query).get();
             } catch (IOException e) {
                 return Optional.empty();
             }
@@ -187,8 +197,8 @@ public class WikiCommand implements Command {
         }
 
         @Override
-        public String getFormattedQueryLink(String query) {
-            return BASE_LINK + query;
+        public String getFormattedQueryLink(String query, String lang) {
+            return BASE_LINK.formatted(lang) + query;
         }
 
         /**
