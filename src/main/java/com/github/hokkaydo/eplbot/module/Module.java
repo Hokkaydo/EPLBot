@@ -15,7 +15,7 @@ public abstract class Module {
 
     private final Long guildId;
 
-    protected Module(@NotNull Long guildId) {
+    public Module(@NotNull Long guildId) {
         this.guildId = guildId;
     }
 
