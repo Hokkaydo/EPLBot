@@ -118,5 +118,9 @@
   "EARLY_BIRD_NEXT_MESSAGE_REGISTERED_DM": "Votre message a bien été enregistré :\n>>> %s",
   "WIKI_COMMAND_DESCRIPTION": "Permet de chercher la définition d'un mot en ligne",
   "WIKI_COMMAND_HELP": "Permet de chercher la définition d'un mot en ligne",
-  "WIKI_COMMAND_NOT_FOUND": "Définition introuvable.\n:warning: La recherche peut échouer rapidement si vous utilisez plusieurs mots, pensez à n'en utiliser qu'un seul."
+  "WIKI_COMMAND_NOT_FOUND": "Définition introuvable.\n:warning: La recherche peut échouer rapidement si vous utilisez plusieurs mots, pensez à n'en utiliser qu'un seul.",
+  "BOOKMARK_COMMAND_DESCRIPTION": "Permet de consulter vos signets en message privés",
+  "BOOKMARK_COMMAND_HELP": "Permet de consulter vos signets en messages privés",
+  "BOOKMARK_EMPTY": "Vous n'avez enregistré aucun signet.",
+  "CHECK_YOUR_DMS": "Veuillez consulter vos messages privés"
 }
