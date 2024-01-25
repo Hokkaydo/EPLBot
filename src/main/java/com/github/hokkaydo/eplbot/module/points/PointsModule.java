@@ -5,6 +5,7 @@ import com.github.hokkaydo.eplbot.module.Module;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 public class PointsModule extends Module{
 
@@ -56,7 +57,7 @@ public class PointsModule extends Module{
         }
 
         public List<Command> getGlobalCommands() {
-            return List.of(pointsCommand);
+            return Collections.emptyList();
         }
 
 

@@ -24,7 +24,7 @@ public class ResetAllCommand implements Command {
            if(context.interaction().getGuild() == null) return;
               String confirmation = context.options().getFirst().getAsString().toLowerCase(Locale.ROOT);
               if (!confirmation.equals("oui")) {
-                  context.replyCallbackAction().setContent(Strings.getString("RESET_ALL_POINTS_COMMAND_FAILURE")).queue();
+                  context.replyCallbackAction().setContent(Strings.getString("RESET_ALL_POINTS_COMMAND_CANCELLED")).queue();
                   return;}
                 this.processor.resetAllPoints();
                 context.replyCallbackAction().setContent(Strings.getString("RESET_ALL_POINTS_COMMAND_SUCCESSFUL")).queue();
@@ -43,7 +43,7 @@ public class ResetAllCommand implements Command {
     @Override
     public List<OptionData> getOptions() {
 
-            return List.of(new OptionData(OptionType.STRING, "Vérification", Strings.getString("RESET_ALL_POINTS_COMMAND_OPTION_CONFIRM_DESCRIPTION"), true));
+            return List.of(new OptionData(OptionType.STRING, "confirmation", Strings.getString("RESET_ALL_POINTS_COMMAND_OPTION_CONFIRM_DESCRIPTION"), true));
     }
 
     @Override

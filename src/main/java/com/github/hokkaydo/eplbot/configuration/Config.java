@@ -128,7 +128,8 @@ public class Config {
                 "earlybird", MODULE_DISABLED.get(),
                 "christmas", MODULE_DISABLED.get(),
                 "bookmark", MODULE_DISABLED.get(),
-                "points", MODULE_DISABLED.get()
+                "points", MODULE_DISABLED.get(),
+                "shop", MODULE_DISABLED.get()
         ));
     }
     private static final Map<Long, Map<String, Object>> GUILD_CONFIGURATION = new HashMap<>();
