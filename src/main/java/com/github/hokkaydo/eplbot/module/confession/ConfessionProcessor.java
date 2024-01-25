@@ -5,6 +5,7 @@ import com.github.hokkaydo.eplbot.MessageUtil;
 import com.github.hokkaydo.eplbot.Strings;
 import com.github.hokkaydo.eplbot.command.CommandContext;
 import com.github.hokkaydo.eplbot.configuration.Config;
+
 import com.github.hokkaydo.eplbot.module.confession.model.WarnedConfession;
 import com.github.hokkaydo.eplbot.module.confession.repository.WarnedConfessionRepository;
 import net.dv8tion.jda.api.EmbedBuilder;

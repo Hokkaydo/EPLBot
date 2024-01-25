@@ -122,5 +122,18 @@
   "BOOKMARK_COMMAND_DESCRIPTION": "Permet de consulter vos signets en message privés",
   "BOOKMARK_COMMAND_HELP": "Permet de consulter vos signets en messages privés",
   "BOOKMARK_EMPTY": "Vous n'avez enregistré aucun signet.",
-  "CHECK_YOUR_DMS": "Veuillez consulter vos messages privés"
+  "CHECK_YOUR_DMS": "Veuillez consulter vos messages privés",
+  "POINTS_COMMAND_DESCRIPTION": "Permet de consulter le nombre de points d'un utilisateur",
+  "POINTS_COMMAND_HELP": "Permet de consulter le nombre de points d'un utilisateur",
+  "POINTS_COMMAND_OPTION_USER_DESCRIPTION": "Utilisateur (vous-même par défaut)",
+  "ADD_POINTS_COMMAND_DESCRIPTION": "Permet d'ajouter des points à un utilisateur",
+  "ADD_POINTS_COMMAND_HELP": "Permet d'ajouter des points à un utilisateur \nLe premier argument est le nom d'utilisateur, le deuxième est un entier qui peut être négatif",
+  "ADD_POINTS_COMMAND_OPTION_USER_DESCRIPTION": "Utilisateur",
+  "ADD_POINTS_COMMAND_OPTION_POINTS_DESCRIPTION": "Nombre de points à ajouter (peut être négatif)",
+  "ADD_POINTS_COMMAND_SUCCESSFUL": "Points ajoutés",
+  "DAILY_COMMAND_DESCRIPTION": "Permet de réclamer ses points quotidiens",
+  "DAILY_COMMAND_HELP": "Permet de réclamer ses points quotidiens \n Donne 25 points par jour",
+  "DAILY_COMMAND_ALREADY_CLAIMED": "Vous avez déjà réclamé vos points quotidiens"
+
+
 }
