@@ -10,6 +10,8 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import javax.sql.DataSource;
 import java.util.List;
 
+import static java.lang.Math.max;
+
 public class PointsProcessor extends ListenerAdapter {
 
 
@@ -20,7 +22,7 @@ public class PointsProcessor extends ListenerAdapter {
         private List<String> roles = List.of("Shrendrickx love, Shrendrickx life","geruitiste","Rockiste","StoffelKing");
         private PointsRepositorySQLite pointsRepo;
 
-        PointsProcessor (long guildId) {
+        public PointsProcessor (long guildId) {
             super();
             Main.getJDA().addEventListener(this);
             DataSource datasource = DatabaseManager.getDataSource();
@@ -35,13 +37,10 @@ public class PointsProcessor extends ListenerAdapter {
 
         public void addPoints(String username, int points) {
             int currentPoints = getPoints(username);
-            this.pointsRepo.update(username, currentPoints + points);
+            this.pointsRepo.update(username, max(currentPoints + points, 0));
         }
 
-        public void removePoints(String username, int points) {
-            int currentPoints = getPoints(username);
-            this.pointsRepo.update(username, currentPoints - points);
-        }
+
 
         public void setPoints(String username, int points) {
             this.pointsRepo.update(username, points);
@@ -101,6 +100,12 @@ public class PointsProcessor extends ListenerAdapter {
             this.pointsRepo.create(new Points(author.getUser().getName(), 0, "membre", 0, 0));
         }
 
+    }
+
+    public List<Points> getLeaderboard() {
+        List <Points> all = this.pointsRepo.readAll();
+        all.sort((p1, p2) -> p2.points() - p1.points());
+        return all.subList(0, Math.min(10, all.size()));
     }
 
 

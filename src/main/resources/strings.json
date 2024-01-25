@@ -133,7 +133,17 @@
   "ADD_POINTS_COMMAND_SUCCESSFUL": "Points ajoutés",
   "DAILY_COMMAND_DESCRIPTION": "Permet de réclamer ses points quotidiens",
   "DAILY_COMMAND_HELP": "Permet de réclamer ses points quotidiens \n Donne 25 points par jour",
-  "DAILY_COMMAND_ALREADY_CLAIMED": "Vous avez déjà réclamé vos points quotidiens"
-
+  "DAILY_COMMAND_ALREADY_CLAIMED": "Vous avez déjà réclamé vos points quotidiens",
+  "LEADERBOARD_COMMAND_DESCRIPTION": "Permet de consulter le classement des points",
+    "LEADERBOARD_COMMAND_HELP": "Permet de consulter le classement des points",
+  "RESET_POINTS_COMMAND_DESCRIPTION": "Permet de réinitialiser les points d'un utilisateur",
+  "RESET_POINTS_COMMAND_HELP": "Permet de réinitialiser les points d'un utilisateur \n Le nom d'utilisateur est à fournir en argument",
+    "RESET_POINTS_COMMAND_OPTION_USER_DESCRIPTION": "Utilisateur",
+    "RESET_POINTS_COMMAND_SUCCESSFUL": "Points réinitialisés",
+    "RESET_POINTS_COMMAND_FAILURE": "Echec de la réinitialisation des points",
+  "RESET_ALL_POINTS_COMMAND_DESCRIPTION": "Permet de réinitialiser les points de tous les utilisateurs",
+    "RESET_ALL_POINTS_COMMAND_HELP": "Permet de réinitialiser les points de tous les utilisateurs",
+    "RESET_ALL_POINTS_COMMAND_SUCCESSFUL": "Tous les points ont été réinitialisés",
+  "RESET_ALL_POINTS_COMMAND_FAILURE": "Echec de la réinitialisation totale des points"
 
 }

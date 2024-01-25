@@ -3,49 +3,42 @@ package com.github.hokkaydo.eplbot.module.points;
 import com.github.hokkaydo.eplbot.Strings;
 import com.github.hokkaydo.eplbot.command.Command;
 import com.github.hokkaydo.eplbot.command.CommandContext;
+import com.github.hokkaydo.eplbot.module.points.model.Points;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
-public class DailyCommand implements Command {
+public class LeaderboardCommand implements Command {
 
 
         private final PointsProcessor processor;
 
-        public DailyCommand(PointsProcessor processor) {
+        public LeaderboardCommand(PointsProcessor processor) {
             this.processor = processor;
         }
         @Override
         public void executeCommand(CommandContext context) {
             if (context.interaction().getGuild() == null) return;
-            this.processor.activateAuthor(context.author());
-            String username = context.user().getName();
-            Calendar calendar = Calendar.getInstance();
-            int day = calendar.get(Calendar.DAY_OF_MONTH);
-            int month = calendar.get(Calendar.MONTH);
-
-
-            if (this.processor.hasClaimedDaily(username, day, month)) {
-                context.replyCallbackAction().setContent(Strings.getString("DAILY_COMMAND_ALREADY_CLAIMED").formatted(username)).queue();
-                return;
+            List<Points> leaderboard = this.processor.getLeaderboard();
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < leaderboard.size(); i++) {
+                Points point = leaderboard.get(i);
+                sb.append(i + 1).append(". ").append(point.username()).append(" - ").append(point.points()).append("\n");
             }
-            this.processor.daily(username, day, month);
-            String newPoints = String.valueOf(this.processor.getPoints(username));
-            context.replyCallbackAction().setContent(STR."Vous avez maintenant \{newPoints} points.").queue();
+            context.replyCallbackAction().setContent(sb.toString()).queue();
         }
 
         @Override
         public String getName() {
-            return "daily";
+            return "leaderboard";
         }
 
     @Override
     public Supplier<String> getDescription() {
-        return () -> Strings.getString( "DAILY_COMMAND_DESCRIPTION");
+        return () -> Strings.getString( "LEADERBOARD_COMMAND_DESCRIPTION");
     }
 
     @Override
@@ -56,7 +49,7 @@ public class DailyCommand implements Command {
 
     @Override
         public boolean ephemeralReply() {
-            return true;
+            return false;
         }
 
         @Override
@@ -71,7 +64,7 @@ public class DailyCommand implements Command {
 
     @Override
     public Supplier<String> help() {
-        return () -> Strings.getString("DAILY_COMMAND_HELP");
+        return () -> Strings.getString("LEADERBOARD_COMMAND_HELP");
     }
 
 

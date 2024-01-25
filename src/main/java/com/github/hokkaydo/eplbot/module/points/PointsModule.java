@@ -12,6 +12,10 @@ public class PointsModule extends Module{
         private final PointsCommand pointsCommand;
         private final AddPointsCommand addPointsCommand;
         private final DailyCommand dailyCommand;
+        private final LeaderboardCommand leaderboardCommand;
+        private final ResetCommand resetCommand;
+        private final ResetAllCommand resetAllCommand;
+
 
 
         public PointsModule(@NotNull Long guildId) {
@@ -21,6 +25,11 @@ public class PointsModule extends Module{
             this.pointsCommand = new PointsCommand(this.processor);
             this.addPointsCommand = new AddPointsCommand(this.processor);
             this.dailyCommand = new DailyCommand(this.processor);
+            this.leaderboardCommand = new LeaderboardCommand(this.processor);
+            this.resetCommand = new ResetCommand(this.processor);
+            this.resetAllCommand = new ResetAllCommand(this.processor);
+
+
         }
 
         @Override
@@ -30,7 +39,14 @@ public class PointsModule extends Module{
 
         @Override
         public List<Command> getCommands() {
-            return List.of(pointsCommand,addPointsCommand,dailyCommand);
+            return List.of(
+                    pointsCommand,
+                    addPointsCommand,
+                    dailyCommand,
+                    leaderboardCommand,
+                    resetCommand,
+                    resetAllCommand
+            );
         }
 
 
