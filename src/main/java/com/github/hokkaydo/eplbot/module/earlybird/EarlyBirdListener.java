@@ -3,6 +3,7 @@ package com.github.hokkaydo.eplbot.module.earlybird;
 import com.github.hokkaydo.eplbot.Main;
 import com.github.hokkaydo.eplbot.MessageUtil;
 import com.github.hokkaydo.eplbot.configuration.Config;
+import com.github.hokkaydo.eplbot.module.points.PointsProcessor;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -44,6 +45,7 @@ public class EarlyBirdListener extends ListenerAdapter {
     private final List<ScheduledFuture<?>> dayLoops = new ArrayList<>();
     private final List<ScheduledFuture<?>> perfectTimeLoops = new ArrayList<>();
     private boolean waitingForAnswer;
+    private final PointsProcessor pointsProcessor;
     private static final String[][] LOG_MESSAGES = {
             {"No message today", "<"},
             {"Message today!", ">="}
@@ -51,6 +53,7 @@ public class EarlyBirdListener extends ListenerAdapter {
 
     public EarlyBirdListener(Long guildId) {
         this.guildId = guildId;
+        this.pointsProcessor = new PointsProcessor(guildId);
     }
 
     public void launchRandomSender() {
@@ -121,6 +124,8 @@ public class EarlyBirdListener extends ListenerAdapter {
             role.getGuild().findMembersWithRoles(role).onSuccess(members -> members.stream().filter(m -> m.getUser().getIdLong() != event.getAuthor().getIdLong()).map(m -> role.getGuild().removeRoleFromMember(m.getUser(), role)).forEach(RestAction::queue));
             role.getGuild().addRoleToMember(event.getAuthor(), role).queue();
             event.getMessage().addReaction(Emoji.fromUnicode("❤")).queue();
+            this.pointsProcessor.addPoints(event.getAuthor().getName(), 100);
+
         });
 
     }

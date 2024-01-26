@@ -16,9 +16,11 @@ import com.github.hokkaydo.eplbot.module.globalcommand.GlobalCommandModule;
 import com.github.hokkaydo.eplbot.module.graderetrieve.ExamsRetrieveModule;
 import com.github.hokkaydo.eplbot.module.mirror.MirrorModule;
 import com.github.hokkaydo.eplbot.module.notice.NoticeModule;
+import com.github.hokkaydo.eplbot.module.points.PointsModule;
 import com.github.hokkaydo.eplbot.module.quote.QuoteModule;
 import com.github.hokkaydo.eplbot.module.ratio.RatioModule;
 import com.github.hokkaydo.eplbot.module.rss.RssModule;
+import com.github.hokkaydo.eplbot.module.shop.ShopModule;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
@@ -149,6 +151,7 @@ public class Main {
                 AutoPinModule.class,
                 RssModule.class,
                 NoticeModule.class,
+                PointsModule.class,
                 BookMarkModule.class
         );
         List<Class<? extends Module>> eplModules = Arrays.asList(
@@ -157,7 +160,8 @@ public class Main {
                 ExamsRetrieveModule.class,
                 RatioModule.class,
                 EarlyBirdModule.class,
-                ChristmasModule.class
+                ChristmasModule.class,
+                ShopModule.class
         );
         Map<Long, List<Command>> guildCommands = new HashMap<>();
         for (Long guildId : specialDiscordIds) {

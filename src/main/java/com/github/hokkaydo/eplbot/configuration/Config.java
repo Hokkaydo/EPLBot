@@ -122,11 +122,14 @@ public class Config {
                 "examsretrieve", MODULE_DISABLED.get(),
                 "ratio", MODULE_DISABLED.get(),
                 "notice", MODULE_DISABLED.get()
+
         ));
         DEFAULT_CONFIGURATION.putAll(Map.of(
                 "earlybird", MODULE_DISABLED.get(),
                 "christmas", MODULE_DISABLED.get(),
-                "bookmark", MODULE_DISABLED.get()
+                "bookmark", MODULE_DISABLED.get(),
+                "points", MODULE_DISABLED.get(),
+                "shop", MODULE_DISABLED.get()
         ));
     }
     private static final Map<Long, Map<String, Object>> GUILD_CONFIGURATION = new HashMap<>();

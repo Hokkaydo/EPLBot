@@ -28,6 +28,8 @@ dependencies {
     // https://mvnrepository.com/artifact/org.kohsuke/github-api
     implementation group: 'org.kohsuke', name: 'github-api', version: '1.315'
     implementation 'org.jsoup:jsoup:1.17.2'
+    implementation 'ch.qos.logback:logback-classic:1.2.6'
+
 }
 
 tasks.register('run', JavaExec) {
@@ -53,3 +55,9 @@ jar {
 flyway {
     url = "jdbc:sqlite:" + project.projectDir.toString() + "/persistence/database.sqlite"
 }
+
+run {
+    jvmArgs = ['--enable-preview']
+}
+
+
