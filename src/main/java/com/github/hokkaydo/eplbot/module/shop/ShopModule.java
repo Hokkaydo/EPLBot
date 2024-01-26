@@ -13,6 +13,7 @@ public class ShopModule extends Module{
         private final ShopProcessor processor;
         private final ShopCommand shopCommand;
         private final AddItemCommand addItemCommand;
+        private final AddRoleCommand addRoleCommand;
 
 
 
@@ -23,6 +24,7 @@ public class ShopModule extends Module{
             this.processor = new ShopProcessor(guildId);
             this.shopCommand = new ShopCommand(this.processor);
             this.addItemCommand = new AddItemCommand(this.processor);
+            this.addRoleCommand = new AddRoleCommand(this.processor);
 
 
 
@@ -38,7 +40,8 @@ public class ShopModule extends Module{
         public List<Command> getCommands() {
             return List.of(
                     shopCommand,
-                    addItemCommand
+                    addItemCommand,
+                    addRoleCommand
             );
         }
 

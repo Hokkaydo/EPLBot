@@ -157,5 +157,9 @@
   "ADD_ITEM_COMMAND_OPTION_TYPE_DESCRIPTION": "Type de l'item. -1 si mauvais, 1 si bénéfique, 0 sinon",
   "ADD_ITEM_COMMAND_OPTION_MULTIPLIER_DESCRIPTION": "Multiplicateur. Mettre 1 si ne modifie pas les gains de points",
   "ADD_ITEM_COMMAND_SUCCESSFUL": "Item ajouté",
-  "ADD_ITEM_COMMAND_FAILURE": "Echec de l'ajout de l'item"
+  "ADD_ITEM_COMMAND_FAILURE": "Echec de l'ajout de l'item",
+  "ADD_ROLE_COMMAND_DESCRIPTION": "Permet d'ajouter un rôle parmi ceux qui accumulent des points",
+  "ADD_ROLE_COMMAND_HELP": "Permet d'ajouter un rôle parmi ceux qui accumulent des points \n role : le role à rajouter",
+  "ADD_ROLE_COMMAND_OPTION_ROLE_DESCRIPTION": "Role à rajouter",
+  "ADD_ROLE_COMMAND_SUCCESSFUL": "Role ajouté"
 }

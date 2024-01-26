@@ -14,9 +14,6 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -85,13 +82,6 @@ public class ShopProcessor extends ListenerAdapter {
         }
         public void addItem(Item item) {
 
-            List<String> lines;
-            try {
-                lines = Files.readAllLines(Paths.get("shop.json"), StandardCharsets.UTF_8);
-            } catch (IOException e) {
-                e.printStackTrace();
-                return;
-            }
             InputStream stream = ShopProcessor.class.getClassLoader().getResourceAsStream("shop.json");
             assert stream != null;
             JSONArray jsonArray = new JSONArray(new JSONTokener(stream));
@@ -104,7 +94,7 @@ public class ShopProcessor extends ListenerAdapter {
             object.put("multiplier", item.multiplier());
             jsonArray.put(object);
             System.out.println(jsonArray.toString(2));
-            try (BufferedWriter writer = new BufferedWriter(new FileWriter("shop.json"))) {
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter("src/main/resources/shop.json"))) {
                 writer.write(jsonArray.toString(2));
             } catch (IOException e) {
                 e.printStackTrace();
@@ -113,10 +103,25 @@ public class ShopProcessor extends ListenerAdapter {
             shop.put(item.id(), item);
         }
 
-        public void addRoleToJSON(String role) {
-            JSONObject object = new JSONObject();
-            object.put(role, 0);
-            roles.put(role, 0);
+        public void addRole(String role) {
+            InputStream stream = ShopProcessor.class.getClassLoader().getResourceAsStream("roles.json");
+            assert stream != null;
+
+            JSONObject object = new JSONObject(new JSONTokener(stream));
+            roles.put(role, roles.size()+1);
+
+            for (String key : roles.keySet()) {
+                object.put(key, roles.get(key));
+            }
+
+            System.out.println(object.toString(2));
+
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter("src/main/resources/roles.json"))) {
+                writer.write(object.toString(2));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
 
         }
         public List<Item> getShop() {

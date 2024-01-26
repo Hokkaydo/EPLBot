@@ -1,26 +1,34 @@
 [
-      {
-        "id": 1,
-        "name": "Eau bénite",
-        "cost": 1000,
-        "description": "Permet d'annuler tous les effets néfastes",
-        "type": 0,
-        "multiplier": 1
-      },
-      {
-        "id": 101,
-        "name": "Boue du marais",
-        "cost": 300,
-        "description": "Permet de ralentir les autres joueurs",
-        "type": -1,
-        "multiplier": 0.5
-      },
-      {
-        "id": 201,
-        "name": "Poutre déformable",
-        "cost": 300,
-        "description": "Permet de ralentir les autres joueurs",
-        "type": -1,
-        "multiplier": 0.5
-      }
+  {
+    "cost": 1000,
+    "multiplier": 1,
+    "name": "Eau bénite",
+    "description": "Permet d'annuler tous les effets néfastes",
+    "id": 1,
+    "type": 0
+  },
+  {
+    "cost": 300,
+    "multiplier": 0.5,
+    "name": "Boue du marais",
+    "description": "Permet de ralentir les autres joueurs",
+    "id": 101,
+    "type": -1
+  },
+  {
+    "cost": 300,
+    "multiplier": 0.5,
+    "name": "Poutre déformable",
+    "description": "Permet de ralentir les autres joueurs",
+    "id": 201,
+    "type": -1
+  },
+  {
+    "cost": 150,
+    "multiplier": 4,
+    "name": "lol",
+    "description": "lol",
+    "id": 999,
+    "type": -1
+  }
 ]
