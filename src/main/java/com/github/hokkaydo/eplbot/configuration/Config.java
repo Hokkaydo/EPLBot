@@ -127,7 +127,8 @@ public class Config {
         ));
         DEFAULT_CONFIGURATION.putAll(Map.of(
                 "earlybird", MODULE_DISABLED.get(),
-                "christmas", MODULE_DISABLED.get()
+                "christmas", MODULE_DISABLED.get(),
+                "bookmark", MODULE_DISABLED.get()
         ));
     }
     private static final Map<Long, Map<String, Object>> GUILD_CONFIGURATION = new HashMap<>();
