@@ -129,15 +129,22 @@ public class MirroredMessage {
             if (!originalMessage.getEmbeds().isEmpty()) {
                 createAction.addEmbeds(originalMessage.getEmbeds());
             }
-            List<Message.MentionType> deny = new ArrayList<>();
+            List<Message.MentionType> deny = new ArrayList<>(List.of(Message.MentionType.USER));
             Optional<Member> originalMember = members.stream().filter(m -> m.getIdLong() == originalMessage.getAuthor().getIdLong()).findFirst();
             if(originalMember.isEmpty() || !originalMember.get().hasPermission(Permission.MESSAGE_MENTION_EVERYONE)) {
                 deny.addAll(List.of(Message.MentionType.EVERYONE, Message.MentionType.HERE, Message.MentionType.ROLE));
             }
-            if(originalMember.isPresent() && mirrorMembers.containsKey(originalMessage.getAuthor().getIdLong())) {
-                deny.add(Message.MentionType.USER);
-            }
-            createAction = createAction.setAllowedMentions(EnumSet.complementOf(EnumSet.copyOf(deny)));
+            List<Long> membersId = members.stream().map(Member::getIdLong).toList();
+
+            createAction = createAction
+                                   .setAllowedMentions(EnumSet.complementOf(EnumSet.copyOf(deny)))
+                                   .mentionUsers(originalMessage.getMentions()
+                                                         .getMentions(Message.MentionType.USER)
+                                                         .stream()
+                                                         .map(m -> (User)m)
+                                                         .filter(u -> !membersId.contains(u.getIdLong()))
+                                                         .map(User::getId).toList()
+                                   );
 
             AtomicReference<WebhookMessageCreateAction<Message>> action = new AtomicReference<>(createAction);
             originalMessage.getAttachments().stream()
