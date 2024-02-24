@@ -4,6 +4,7 @@ import com.github.hokkaydo.eplbot.Main;
 import com.github.hokkaydo.eplbot.MessageUtil;
 import com.github.hokkaydo.eplbot.configuration.Config;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.EmbedType;
 import net.dv8tion.jda.api.entities.Icon;
 import net.dv8tion.jda.api.entities.Member;
@@ -27,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -118,7 +120,7 @@ public class MirroredMessage {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-        }).thenAccept(icon -> {
+        }).thenAccept(icon -> originalMessage.getGuild().loadMembers().onSuccess(members -> {
             WebhookMessageCreateAction<Message> createAction = getWebhook().sendMessage(authorNameAndNickname, icon, content, originalMessage.getAuthor().getIdLong());
             if (replyTo != null) {
                 Member replyToAuthor = mirrorMembers.get(replyTo.getAuthor().getIdLong());
@@ -127,7 +129,15 @@ public class MirroredMessage {
             if (!originalMessage.getEmbeds().isEmpty()) {
                 createAction.addEmbeds(originalMessage.getEmbeds());
             }
-
+            List<Message.MentionType> deny = new ArrayList<>();
+            Optional<Member> originalMember = members.stream().filter(m -> m.getIdLong() == originalMessage.getAuthor().getIdLong()).findFirst();
+            if(originalMember.isEmpty() || !originalMember.get().hasPermission(Permission.MESSAGE_MENTION_EVERYONE)) {
+                deny.addAll(List.of(Message.MentionType.EVERYONE, Message.MentionType.HERE, Message.MentionType.ROLE));
+            }
+            if(originalMember.isPresent() && mirrorMembers.containsKey(originalMessage.getAuthor().getIdLong())) {
+                deny.add(Message.MentionType.USER);
+            }
+            createAction = createAction.setAllowedMentions(EnumSet.complementOf(EnumSet.copyOf(deny)));
 
             AtomicReference<WebhookMessageCreateAction<Message>> action = new AtomicReference<>(createAction);
             originalMessage.getAttachments().stream()
@@ -147,7 +157,7 @@ public class MirroredMessage {
                                 sendMessage(action.get(), originalMessage);
                             },
                             () -> sendMessage(action.get(), originalMessage));
-        });
+        }));
     }
 
     /**
