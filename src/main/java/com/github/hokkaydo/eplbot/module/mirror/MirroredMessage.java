@@ -13,6 +13,7 @@ import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.MessageReaction;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.UserSnowflake;
 import net.dv8tion.jda.api.entities.Webhook;
 import net.dv8tion.jda.api.entities.channel.attribute.IWebhookContainer;
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
@@ -141,9 +142,9 @@ public class MirroredMessage {
                                    .mentionUsers(originalMessage.getMentions()
                                                          .getMentions(Message.MentionType.USER)
                                                          .stream()
-                                                         .map(m -> (User)m)
+                                                         .map(m -> (UserSnowflake)m)
                                                          .filter(u -> !membersId.contains(u.getIdLong()))
-                                                         .map(User::getId).toList()
+                                                         .map(UserSnowflake::getId).toList()
                                    );
 
             AtomicReference<WebhookMessageCreateAction<Message>> action = new AtomicReference<>(createAction);
