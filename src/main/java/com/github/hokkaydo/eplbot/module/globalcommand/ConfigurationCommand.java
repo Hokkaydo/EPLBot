@@ -1,5 +1,6 @@
 package com.github.hokkaydo.eplbot.module.globalcommand;
 
+import com.github.hokkaydo.eplbot.configuration.Config;
 import com.github.hokkaydo.eplbot.Strings;
 import com.github.hokkaydo.eplbot.command.Command;
 import com.github.hokkaydo.eplbot.command.CommandContext;

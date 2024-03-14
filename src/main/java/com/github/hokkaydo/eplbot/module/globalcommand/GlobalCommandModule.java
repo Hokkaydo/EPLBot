@@ -4,10 +4,11 @@ import com.github.hokkaydo.eplbot.command.Command;
 import com.github.hokkaydo.eplbot.module.Module;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.jetbrains.annotations.NotNull;
+import com.github.hokkaydo.eplbot.module.code.CodeCommand;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
+import java.util.Collections;
 
 public class GlobalCommandModule extends Module {
 
@@ -21,6 +22,7 @@ public class GlobalCommandModule extends Module {
     private final HelpCommand helpCommand;
     private final ContributeCommand contributeCommand;
     private final IssueCommand issueCommand;
+    private final CodeCommand codeCommand;
     private final LMGTCommand lmgtCommand;
     private final WikiCommand wikiCommand;
     public GlobalCommandModule(@NotNull Long guildId) {
@@ -35,6 +37,7 @@ public class GlobalCommandModule extends Module {
         helpCommand = new HelpCommand(guildId);
         contributeCommand = new ContributeCommand();
         issueCommand = new IssueCommand();
+        codeCommand = new CodeCommand();
         lmgtCommand = new LMGTCommand();
         wikiCommand = new WikiCommand();
     }
@@ -57,6 +60,7 @@ public class GlobalCommandModule extends Module {
                 helpCommand,
                 contributeCommand,
                 issueCommand,
+                codeCommand
                 lmgtCommand,
                 wikiCommand
         );
@@ -64,6 +68,6 @@ public class GlobalCommandModule extends Module {
 
     @Override
     public List<ListenerAdapter> getListeners() {
-        return Collections.singletonList(issueCommand);
+        return Collections.unmodifiableList(Arrays.asList(issueCommand, codeCommand));
     }
 }

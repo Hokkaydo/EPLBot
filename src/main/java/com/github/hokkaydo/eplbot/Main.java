@@ -91,7 +91,6 @@ public class Main {
         Long testDiscordId = testDiscordIdStr == null ? 1108141461498777722L : Long.parseLong(testDiscordIdStr);
         prodDiscordId = testDiscordIdStr == null ? EPL_DISCORD_ID : testDiscordId;
         specialDiscordIds = List.of(prodDiscordId, testDiscordId);
-
         if (token == null && args.length > 0) token = args[0];
         if (token == null) throw new IllegalStateException("No token specified !");
         moduleManager = new ModuleManager();

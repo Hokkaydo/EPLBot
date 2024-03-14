@@ -62,6 +62,8 @@ public class Config {
                     Color::decode,
                     "RGB sous forme hexadécimale : Ex #FFFFFF = Blanc"
             ),
+
+            "COMMAND_CODE_TIMELIMIT", INTEGER_CONFIGURATION_VALUE.apply(60),
             "DRIVE_ADMIN_CHANNEL_ID", STRING_CONFIGURATION_VALUE.get()
     ));
 
