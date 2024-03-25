@@ -73,21 +73,7 @@ public class MirrorManager extends ListenerAdapter {
             return;
         }
 
-        if(event.getMessage().isEphemeral()) return;
-        if(event.getMessage().getType().isSystem()) return;
-        if(!event.getChannel().getType().isGuild()) return;
-        if(event.isWebhookMessage() && event.getMessage().getType() != MessageType.SLASH_COMMAND) return;
-
-        // do not mirror already mirrored messages
-        if(mirroredMessages.stream().flatMap(m -> m.getMessages().entrySet().stream()).anyMatch(m -> m.getKey() == event.getMessageIdLong())) return;
-
-        // check if message is a quote (don't mirror quotes)
-        if(
-                Main.getModuleManager()
-                        .getModuleByName("quote", event.getGuild().getIdLong(), QuoteModule.class)
-                        .map(quoteModule -> quoteModule.isQuote(event.getMessageIdLong()))
-                        .orElse(false)
-        ) return;
+        if(!canBeMirrored(event)) return;
 
         // If thread starter, create mirror thread
         if(event.getMessage().getType().equals(MessageType.THREAD_STARTER_MESSAGE) || event.getMessage().getType().equals(MessageType.THREAD_CREATED)) {
@@ -111,6 +97,27 @@ public class MirrorManager extends ListenerAdapter {
             return;
         }
         sendMirror(event.getMessage());
+    }
+
+    /**
+     * Check if an event can be used as a mirror starter
+     * @param event the {@link MessageReceivedEvent}
+     * @return true if the event holds a message that can be mirrored, false otherwise
+     * */
+    private boolean canBeMirrored(MessageReceivedEvent event) {
+        if(event.getMessage().isEphemeral()) return false;
+        if(event.getMessage().getType().isSystem()) return false;
+        if(!event.getChannel().getType().isGuild()) return false;
+        if(event.isWebhookMessage() && event.getMessage().getType() != MessageType.SLASH_COMMAND) return false;
+
+        // do not mirror already mirrored messages
+        if(mirroredMessages.stream().flatMap(m -> m.getMessages().entrySet().stream()).anyMatch(m -> m.getKey() == event.getMessageIdLong())) return false;
+
+        // check if message is a quote (don't mirror quotes)
+        return !Main.getModuleManager()
+                        .getModuleByName("quote", event.getGuild().getIdLong(), QuoteModule.class)
+                        .map(quoteModule -> quoteModule.isQuote(event.getMessageIdLong()))
+                        .orElse(false);
     }
 
     /**
