@@ -44,6 +44,9 @@ public class QuoteListener extends ListenerAdapter {
     private final Map<Long, Quote> quotes = new HashMap<>();
     private final static ScheduledExecutorService executor = Executors.newScheduledThreadPool(4);
     private final Map<Long, ScheduledFuture<?>> removeDeleteButtonTasks = new HashMap<>();
+    // indicates if the map of quotes is up to date or waiting for a quote to be sent
+    // (> 0 means the map is not up to date)
+    private volatile int quotesMutex;
 
     @Override
     public void onButtonInteraction(ButtonInteractionEvent event) {
@@ -90,12 +93,26 @@ public class QuoteListener extends ListenerAdapter {
     }
 
     /**
+     * Check if a message id belongs to a quote on current server
+     * @param messageId quote's message id
+     * @return true if the message id belongs to a quote, false otherwise
+     * */
+    public boolean isQuote(Long messageId) {
+        while (quotesMutex > 0) {
+            Thread.onSpinWait();
+        }
+        return quotes.containsKey(messageId);
+    }
+
+    /**
      * Send quote embed
      * @param members guild members
      * @param quoter quoting message
      * @param quoted a message quoted in quoter
      * */
     private void sendEmbed(List<Member> members, Message quoter, Message quoted) {
+        int curr = quotesMutex;
+        quotesMutex = curr+1;
         MessageUtil.toEmbedWithAttachements(
                 quoted,
                 e -> quoter.replyEmbeds(
@@ -115,6 +132,8 @@ public class QuoteListener extends ListenerAdapter {
                     // Add 🗑 emote to delete quote if reacted with
                     quote.editMessageComponents(ActionRow.of(Button.primary("delete-quote", Emoji.fromUnicode("\uD83D\uDDD1")))).queue();
                     quotes.put(quote.getIdLong(), new Quote(quote, quoter.getAuthor().getIdLong(), quoted.getAuthor().getIdLong()));
+                    int current = quotesMutex;
+                    quotesMutex = current -1;
                     removeDeleteButtonTasks.put(quote.getIdLong(), executor.schedule(() -> this.removeDeleteButton(quote.getIdLong()), 5, TimeUnit.MINUTES));
                 }
         );

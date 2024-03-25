@@ -5,6 +5,7 @@ import com.github.hokkaydo.eplbot.database.DatabaseManager;
 import com.github.hokkaydo.eplbot.module.mirror.model.MirrorLink;
 import com.github.hokkaydo.eplbot.module.mirror.repository.MirrorLinkRepository;
 import com.github.hokkaydo.eplbot.module.mirror.repository.MirrorLinkRepositorySQLite;
+import com.github.hokkaydo.eplbot.module.quote.QuoteModule;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageType;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
@@ -80,6 +81,13 @@ public class MirrorManager extends ListenerAdapter {
         // do not mirror already mirrored messages
         if(mirroredMessages.stream().flatMap(m -> m.getMessages().entrySet().stream()).anyMatch(m -> m.getKey() == event.getMessageIdLong())) return;
 
+        // check if message is a quote (don't mirror quotes)
+        if(
+                Main.getModuleManager()
+                        .getModuleByName("quote", event.getGuild().getIdLong(), QuoteModule.class)
+                        .map(quoteModule -> quoteModule.isQuote(event.getMessageIdLong()))
+                        .orElse(false)
+        ) return;
 
         // If thread starter, create mirror thread
         if(event.getMessage().getType().equals(MessageType.THREAD_STARTER_MESSAGE) || event.getMessage().getType().equals(MessageType.THREAD_CREATED)) {

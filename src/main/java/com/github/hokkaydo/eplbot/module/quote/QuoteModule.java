@@ -31,4 +31,8 @@ public class QuoteModule extends Module {
         return Collections.singletonList(listener);
     }
 
+    public boolean isQuote(Long messageId) {
+        return listener.isQuote(messageId);
+    }
+
 }

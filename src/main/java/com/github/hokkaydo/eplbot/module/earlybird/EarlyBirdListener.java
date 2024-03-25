@@ -67,10 +67,15 @@ public class EarlyBirdListener extends ListenerAdapter {
             int rnd = RANDOM.nextInt(100);
             int proba = Config.<Integer>getGuildVariable(guildId, "EARLY_BIRD_MESSAGE_PROBABILITY");
             String[] logs = LOG_MESSAGES[rnd > proba ? 0 : 1];
-            Main.LOGGER.log(Level.WARNING, "[EarlyBird] %s (%d %s %d)".formatted(logs[0], proba, logs[1], rnd));
-            if(RANDOM.nextInt(100) > Config.<Integer>getGuildVariable(guildId, "EARLY_BIRD_MESSAGE_PROBABILITY")) return;
+            Main.LOGGER.log(Level.INFO, "[EarlyBird] %s (%d %s %d)".formatted(logs[0], proba, logs[1], rnd));
+            if(rnd > proba) {
+                perfectTimeLoops.removeIf(f -> f.isDone() || f.isCancelled());
+                dayLoops.removeIf(f -> f.isDone() || f.isCancelled());
+                launchRandomSender();
+                return;
+            }
             long waitTime = RANDOM.nextLong(endSeconds - startSeconds);
-            Main.LOGGER.log(Level.WARNING, "[EarlyBird] Wait %d seconds before sending".formatted(waitTime));
+            Main.LOGGER.log(Level.INFO, "[EarlyBird] Wait %d seconds before sending".formatted(waitTime));
             perfectTimeLoops.add(EXECUTOR.schedule(
                     () -> Optional.ofNullable(Main.getJDA().getGuildById(guildId))
                                   .map(guild -> guild.getTextChannelById(Config.getGuildVariable(guildId, "EARLY_BIRD_CHANNEL_ID")))
@@ -81,6 +86,7 @@ public class EarlyBirdListener extends ListenerAdapter {
                                                   Config.updateValue(guildId, "EARLY_BIRD_NEXT_MESSAGE", "");
                                                   this.waitingForAnswer = true;
                                                   perfectTimeLoops.removeIf(f -> f.isDone() || f.isCancelled());
+                                                  dayLoops.removeIf(f -> f.isDone() || f.isCancelled());
                                                   launchRandomSender();
                                                   return;
                                               }
