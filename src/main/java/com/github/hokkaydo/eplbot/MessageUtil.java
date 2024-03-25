@@ -59,8 +59,9 @@ public class MessageUtil {
     private MessageUtil() {}
 
     public static void sendAdminMessage(String message, Long guildId) {
-        TextChannel adminChannel = Main.getJDA().getChannelById(TextChannel.class, Config.getGuildVariable(guildId, "ADMIN_CHANNEL_ID"));
-        if(adminChannel == null) {
+        String adminChannelId = Config.getGuildVariable(guildId, "ADMIN_CHANNEL_ID");
+        TextChannel adminChannel;
+        if(adminChannelId.isBlank() || (adminChannel = Main.getJDA().getChannelById(TextChannel.class, adminChannelId)) == null) {
             Main.LOGGER.log(Level.WARNING, "Invalid admin channel");
             return;
         }

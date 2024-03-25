@@ -4,6 +4,7 @@ import com.github.hokkaydo.eplbot.Main;
 import com.github.hokkaydo.eplbot.MessageUtil;
 import com.github.hokkaydo.eplbot.Strings;
 import com.github.hokkaydo.eplbot.configuration.Config;
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.Role;
@@ -56,9 +57,9 @@ public class QuoteListener extends ListenerAdapter {
         String modRoleId = Config.getGuildVariable(guildId,"MODERATOR_ROLE_ID");
         Role modRole = modRoleId.isBlank() ? null : Main.getJDA().getRoleById(Config.getGuildVariable(guildId,"MODERATOR_ROLE_ID"));
         if(modRole == null)
-            MessageUtil.sendAdminMessage("Moderator role ID is no set !",guildId);
+            MessageUtil.sendAdminMessage("Moderator role ID of %s is no set!".formatted(event.getGuild().getName()), guildId);
         boolean mod = event.getMember().getRoles().stream().max(Comparator.comparing(Role::getPosition)).map(role -> modRole != null && role.getPosition() >= modRole.getPosition()).orElse(false);
-        if(!mod && (!quotes.containsKey(event.getMessageIdLong()) || !quotes.get(event.getMessageIdLong()).allowedToDeleteUserIds().contains(event.getUser().getIdLong()))) {
+        if(!mod && !event.getMember().hasPermission(Permission.MESSAGE_MANAGE) &&  (!quotes.containsKey(event.getMessageIdLong()) || !quotes.get(event.getMessageIdLong()).allowedToDeleteUserIds().contains(event.getUser().getIdLong()))) {
             event.getInteraction().deferReply(true).setContent(Strings.getString("QUOTE_DELETE_NOT_ALLOWED")).queue();
             return;
         }
