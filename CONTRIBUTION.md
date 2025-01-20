@@ -27,7 +27,7 @@ que vous êtes bien dans la guilde ciblée afin de ne pas exécuter le même cod
 
 #### Module de code
 
-- L'utilitaire [`build_code_docker.sh`](build_runners.sh) permet de build les dockers pour la commande [`code`](src/main/java/com/github/hokkaydo/eplbot/module/code/command/CodeCommand.java). Il n'est pas nécessaire de l'utiliser si vous ne comptez pas travailler sur le module de [`code`](src/main/java/com/github/hokkaydo/eplbot/module/code/CodeModule.java)
+- La tâche Gradle `buildRunners` permet de build les dockers pour la commande [`code`](src/main/java/com/github/hokkaydo/eplbot/module/code/command/CodeCommand.java). Il n'est pas nécessaire de l'utiliser si vous ne comptez pas travailler sur le module de [`code`](src/main/java/com/github/hokkaydo/eplbot/module/code/CodeModule.java)
 
 ###### Fonctionnement
 Pour chaque commande une classe [`Runner`](src/main/java/com/github/hokkaydo/eplbot/module/code/Runner.java) est appelée, cette classe s'occupe de formatter le code si nécessaire

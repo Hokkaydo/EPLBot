@@ -220,7 +220,8 @@ public class Main {
         long totalMemory = Runtime.getRuntime().totalMemory();
         long freeMemory = Runtime.getRuntime().freeMemory();
         long usedMemory = totalMemory - freeMemory;
-        return "Memory usage : %.4f / %.4f (%d%%)".formatted(usedMemory/1_000_000_000, totalMemory/1_000_000_000, (usedMemory * 100) / totalMemory);
+
+        return "Memory usage : %.4f / %.4f (%d%%)".formatted(usedMemory/1_000_000_000f, totalMemory/1_000_000_000f, (usedMemory * 100) / totalMemory);
     }
 
     private static <T> T instantiate(Class<T> clazz, Long guildId) {
