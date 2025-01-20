@@ -101,7 +101,7 @@ public class ConfessionProcessor extends ListenerAdapter {
         }
 
         UUID confessUUID = UUID.randomUUID();
-        event.reply(Strings.getString("command.confession.submitted")).queue();
+        event.deferReply(true).setContent(Strings.getString("command.confession.submitted").formatted(confession)).queue();
 
         MessageCreateBuilder embedBuilder = MessageCreateBuilder.from(MessageCreateData.fromEmbeds(
                 new EmbedBuilder()

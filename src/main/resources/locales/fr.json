@@ -56,7 +56,7 @@
 			"description": "Permet d'effectuer une confession de manière anonyme",
 			"help": "Permet d'effectuer une confession de manière anonyme",
 			"too_long": "Veuillez vous limiter à %d caractères. N'hésitez pas à faire une seconde confession si besoin ;)",
-			"submitted": "La confession a bien été",
+			"submitted": "La confession a bien été envoyée : \n>>> %s",
 			"warn_author": ":warning: Votre confession a été refusée pour non-respect des règles en vigueur sur le serveur. \nCela inclut, sans pour autant s'y limiter : \n- Insultes\n- Racisme, homophobie, dénigrement d'une communauté\n- Apologie du terrorisme\n- Publicité sans accord préalable. \nMerci de bien vouloir relire les règles avant de reposter une confession.",
 			"too_much_warnings": ":warning: L'utilisateur %s a dépassé la limite de %d confessions signalées.\nVoici les %d confessions signalées ainsi que les auteurs des signalements :\n\n*Pour rappel, vous pouvez supprimer les signalements de confession de cet utilisateur en tapant la commande `/clearconfesswarnings %s`",
 			"warned_by": "Signalée par %s",
@@ -262,5 +262,5 @@
 	"error_occurred": "Une erreur est survenue. Veuillez le signaler à un modérateur.",
 	"check_your_dms": "Veuillez consulter vos messages privés",
 	"category_without_courses": "Une catégorie de cours à tuteurs n'a pas de cours (id: `%s`)",
-	"drive_admin_channel_not_setup": "Le canal de communication avec les administrateurs du Drive EPL n'est pas défini.",
+	"drive_admin_channel_not_setup": "Le canal de communication avec les administrateurs du Drive EPL n'est pas défini."
 }
