@@ -63,7 +63,7 @@ public class QuoteListener extends ListenerAdapter {
             event.getInteraction().deferReply(true).setContent(Strings.getString("quote.delete_not_allowed")).queue();
             return;
         }
-        event.getInteraction().deferReply(true).setContent(Strings.getString("quote_deleted")).queue();
+        event.getInteraction().deferReply(true).setContent(Strings.getString("quote.deleted")).queue();
         event.getChannel().deleteMessageById(event.getMessageIdLong()).queue();
         quotes.remove(event.getMessageIdLong());
     }

@@ -189,6 +189,7 @@ public class ConfessionProcessor extends ListenerAdapter {
             updateValidationEmbedColor(WARNED, event.getHook(), event.getMessage());
             warn(event.getUser().getIdLong(), uuid);
         }
+        confessionsContent.remove(uuid);
     }
 
     private void warn(Long moderatorId, UUID uuid) {
@@ -196,7 +197,6 @@ public class ConfessionProcessor extends ListenerAdapter {
         confessionAuthor.remove(uuid);
         WarnedConfession warnedConfession = new WarnedConfession(moderatorId, confessionAuthorId, confessionsContent.get(uuid) , Timestamp.from(Instant.now()));
         warnedConfessionRepository.create(warnedConfession);
-        confessionsContent.remove(uuid);
         int threshold = Config.<Integer>getGuildVariable(guildId, "CONFESSION_WARN_THRESHOLD");
         Guild guild = Main.getJDA().getGuildById(guildId);
         if(guild == null) return;
