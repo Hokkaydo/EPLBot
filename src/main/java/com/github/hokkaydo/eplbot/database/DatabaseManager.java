@@ -30,7 +30,7 @@ public class DatabaseManager {
             new TableModel("mirrors", Map.of("first_id", INTEGER, "second_id", INTEGER)),
             new TableModel("notices", Map.of("author_id", TEXT, "subject_id", TEXT, "content", TEXT, "timestamp", "timestamp", "type", TEXT)),
             new TableModel("bookmarks", Map.of("user_id", INTEGER, "message_id", INTEGER, "description", TEXT, "message_link", TEXT)),
-            new TableModel("course_tutors", Map.of("channel_id", INTEGER, "tutor_id", INTEGER, "allows_ping", INTEGER))
+            new TableModel("course_helpers", Map.of("channel_id", INTEGER, "user_id", INTEGER, "allows_ping", INTEGER, "is_tutor", INTEGER))
     );
 
 
@@ -49,7 +49,6 @@ public class DatabaseManager {
             template.update(TABLES.stream().map(TableModel::name).map("DROP TABLE %s;"::formatted).reduce("", (a, b) -> a+b));
 
         for (TableModel model : TABLES) {
-
             // Create table if not exists
             template.execute(
                     "CREATE TABLE IF NOT EXISTS %s ( id INTEGER PRIMARY KEY AUTOINCREMENT %s ); %s".formatted(

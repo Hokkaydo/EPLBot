@@ -14,6 +14,7 @@ import com.github.hokkaydo.eplbot.module.confession.ConfessionModule;
 import com.github.hokkaydo.eplbot.module.eplcommand.EPLCommandModule;
 import com.github.hokkaydo.eplbot.module.globalcommand.GlobalCommandModule;
 import com.github.hokkaydo.eplbot.module.graderetrieve.ExamsRetrieveModule;
+import com.github.hokkaydo.eplbot.module.helper.HelperModule;
 import com.github.hokkaydo.eplbot.module.menu.MenuModule;
 import com.github.hokkaydo.eplbot.module.messagebird.MessageBirdModule;
 import com.github.hokkaydo.eplbot.module.mirror.MirrorModule;
@@ -21,7 +22,6 @@ import com.github.hokkaydo.eplbot.module.notice.NoticeModule;
 import com.github.hokkaydo.eplbot.module.quote.QuoteModule;
 import com.github.hokkaydo.eplbot.module.ratio.RatioModule;
 import com.github.hokkaydo.eplbot.module.rss.RssModule;
-import com.github.hokkaydo.eplbot.module.tutor.TutorModule;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
@@ -155,7 +155,7 @@ public class Main {
                 RssModule.class,
                 NoticeModule.class,
                 BookMarkModule.class,
-                TutorModule.class,
+                HelperModule.class,
                 MenuModule.class,
                 CodeModule.class,
                 MessageBirdModule.class

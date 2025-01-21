@@ -234,16 +234,18 @@
 				"subcommand.description": "Sous-commande optionnelle"
 			}
 		},
-		"tutor": {
-			"description": "Permet de consulter/gérer les tuteurs disponibles pour un cours",
-			"help": "Permet de consulter/gérer les tuteurs disponibles pour un cours",
+		"helper": {
+			"description": "Permet de consulter/gérer les helpers disponibles pour un cours",
+			"help": "Permet de consulter/gérer les helpers disponibles pour un cours",
 			"option.action.description": "Action à effectuer",
-			"list.no_tutor": "Aucun tuteur disponible pour ce cours",
-			"ping.no_course": "Vous n'avez aucun cours",
-			"manage.success": "Modifications effectuées !",
+			"list.no_helper": "Aucun helper disponible pour ce cours",
+			"list.header": "**__Liste des helpers :__**\nLégende:\n- :loudspeaker: - Accepte d'être ping\n- :star2: - Tuteur officiel\n",
+			"no_course": "Vous n'avez aucun cours",
+			"success": "Action effectuée avec succès",
+			"no_category": "Aucune catégorie de cours à helpers n'a été trouvée. Veuillez contacter un administrateur.",
 			"ping_description": "Permet gérer l'acceptation des mentions pour un cours",
 			"courses_modal_title": "Cours disponibles",
-			"category_without_course": "Une catégorie de cours à tuteurs n'a pas de cours (id: `%s`)"
+			"category_without_course": "Une catégorie de cours à helpers n'a pas de cours (id: `%s`)"
 		},
 		"wiki": {
 			"description": "Permet de chercher la définition d'un mot en ligne",

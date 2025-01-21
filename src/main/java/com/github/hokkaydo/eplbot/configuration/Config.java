@@ -142,7 +142,7 @@ public class Config {
                 "NIGHT_BIRD_MESSAGE_PROBABILITY", INTEGER_CONFIGURATION_VALUE.apply(33),
                 "ASSISTANT_ROLE_ID", STRING_CONFIGURATION_VALUE.get(),
                 "MODERATOR_ROLE_ID", STRING_CONFIGURATION_VALUE.get(),
-                "TUTOR_CATEGORY_IDS", new ConfigurationParser(
+                "HELPER_CATEGORY_IDS", new ConfigurationParser(
                         List::of,
                         l -> ((List<String>)l).stream().reduce("", "%s;%s"::formatted),
                         s -> Stream.of(s.split(";")).filter(str -> !str.isBlank()).toList(),
@@ -174,7 +174,7 @@ public class Config {
                 "christmas", MODULE_DISABLED.get(),
                 "bookmark", MODULE_DISABLED.get(),
                 "code", MODULE_DISABLED.get(),
-                "tutor", MODULE_DISABLED.get(),
+                "helper", MODULE_DISABLED.get(),
                 "menu", MODULE_DISABLED.get()
         ));
     }

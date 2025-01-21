@@ -1,4 +1,4 @@
-package com.github.hokkaydo.eplbot.module.tutor;
+package com.github.hokkaydo.eplbot.module.helper;
 
 import com.github.hokkaydo.eplbot.Main;
 import com.github.hokkaydo.eplbot.MessageUtil;
@@ -6,8 +6,8 @@ import com.github.hokkaydo.eplbot.Strings;
 import com.github.hokkaydo.eplbot.command.Command;
 import com.github.hokkaydo.eplbot.command.CommandContext;
 import com.github.hokkaydo.eplbot.configuration.Config;
-import com.github.hokkaydo.eplbot.module.tutor.model.CourseTutor;
-import com.github.hokkaydo.eplbot.module.tutor.repository.CourseTutorRepository;
+import com.github.hokkaydo.eplbot.module.helper.model.CourseHelper;
+import com.github.hokkaydo.eplbot.module.helper.repository.CourseHelperRepository;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.User;
@@ -29,14 +29,15 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-public class TutorCommand extends ListenerAdapter implements Command {
+public class HelperCommand extends ListenerAdapter implements Command {
 
     private final long guildId;
-    private final CourseTutorRepository courseTutorRepository;
+    private static final String TUTOR = "tutor";
+    private final CourseHelperRepository courseHelperRepository;
 
-    public TutorCommand(Long guildId, CourseTutorRepository courseTutorRepository) {
+    public HelperCommand(Long guildId, CourseHelperRepository courseHelperRepository) {
         this.guildId = guildId;
-        this.courseTutorRepository = courseTutorRepository;
+        this.courseHelperRepository = courseHelperRepository;
     }
 
     @Override
@@ -45,7 +46,8 @@ public class TutorCommand extends ListenerAdapter implements Command {
         switch (action) {
             case "manage" -> manage(context);
             case "list" -> list(context);
-            case "ping" -> ping(context);
+            case "allow_ping" -> ping(context);
+            case TUTOR -> tutor(context);
             default -> throw new IllegalStateException("Unexpected value: " + action);
         }
     }
@@ -53,7 +55,7 @@ public class TutorCommand extends ListenerAdapter implements Command {
     private void manage(CommandContext context) {
         StringSelectMenu.Builder menu = StringSelectMenu.create("category");
         List<String> toRemove = new ArrayList<>();
-        List<SelectOption> options = Config.<List<String>>getGuildVariable(guildId, "TUTOR_CATEGORY_IDS")
+        List<SelectOption> options = Config.<List<String>>getGuildVariable(guildId, "HELPER_CATEGORY_IDS")
                                              .stream()
                                              .map(c -> {
                                                  Category cat = Main.getJDA().getCategoryById(c);
@@ -65,42 +67,45 @@ public class TutorCommand extends ListenerAdapter implements Command {
                                              })
                                              .filter(Objects::nonNull)
                                              .toList();
-
+        if (options.isEmpty()) {
+            context.replyCallbackAction().setContent(Strings.getString("command.helper.no_category")).queue();
+            return;
+        }
         menu.addOptions(options);
         menu.setRequiredRange(1, 1);
         context.replyCallbackAction().setActionRow(menu.build()).queue();
         if (toRemove.isEmpty()) return;
-        List<String> newIds = new ArrayList<>(Config.getGuildState(guildId, "TUTOR_CATEGORY_IDS"));
+        List<String> newIds = new ArrayList<>(Config.getGuildState(guildId, "HELPER_CATEGORY_IDS"));
         newIds.removeAll(toRemove);
-        Config.updateValue(guildId, "TUTOR_CATEGORY_IDS", newIds);
+        Config.updateValue(guildId, "HELPER_CATEGORY_IDS", newIds);
 
     }
 
     private void list(CommandContext context) {
-        List<TutorPing> tutors = courseTutorRepository.readByChannelId(context.channel().getIdLong())
+        List<HelperPing> helpers = courseHelperRepository.readByChannelId(context.channel().getIdLong())
                                          .stream()
                                          .map(c -> Main.getJDA()
-                                                           .retrieveUserById(c.tutorId())
-                                                           .map(u -> new TutorPing(u, c.allowsPing()))
+                                                           .retrieveUserById(c.userId())
+                                                           .map(u -> new HelperPing(u, c.allowsPing(), c.isTutor()))
                                                            .complete())
                                          .filter(Objects::nonNull)
-                                         .sorted((t1, t2) -> t1.allowsPing ? t2.allowsPing ? 0 : 1 : -1)
+                                         .sorted(this::helpersComparator)
                                          .toList();
         context.replyCallbackAction()
                 .setContent(
-                        tutors.isEmpty() ?
-                                Strings.getString("command.tutor.list.no_tutor") :
-                                tutors.stream()
-                                        .map(r -> r.user.getAsMention() + (r.allowsPing ? ":loudspeaker:" : ""))
-                                        .reduce("__Liste des tuteurs :__\n", "%s%n%s"::formatted)
+                        helpers.isEmpty() ?
+                                Strings.getString("command.helper.list.no_helper") :
+                                helpers.stream()
+                                        .map(this::formatHelper)
+                                        .reduce(Strings.getString("command.helper.list.header"), "%s%n%s"::formatted)
                 )
                 .queue();
     }
 
     private void ping(CommandContext context) {
-        List<CourseTutor> courses = courseTutorRepository.readByTutorId(context.user().getIdLong());
+        List<CourseHelper> courses = courseHelperRepository.readByUserId(context.user().getIdLong());
         if(courses.isEmpty()) {
-            context.replyCallbackAction().setContent(Strings.getString("command.tutor.ping.no_course")).queue();
+            context.replyCallbackAction().setContent(Strings.getString("command.helper.no_course")).queue();
             return;
         }
 
@@ -110,17 +115,85 @@ public class TutorCommand extends ListenerAdapter implements Command {
                                              .map(c -> {
                                                  TextChannel channel = Main.getJDA().getTextChannelById(c.channelId());
                                                  if (channel == null) {
-                                                     courseTutorRepository.deleteByChannelId(c.channelId());
+                                                     courseHelperRepository.deleteByChannelId(c.channelId());
                                                      return null;
                                                  }
                                                  return SelectOption.of(channel.getName(), channel.getId()).withDefault(c.allowsPing());
                                              })
                                              .filter(Objects::nonNull)
                                              .toList();
-
+        if (options.isEmpty()) {
+            context.replyCallbackAction().setContent(Strings.getString("command.helper.no_category")).queue();
+            return;
+        }
         pingMenu.addOptions(options);
         pingMenu.setRequiredRange(0, options.size());
         context.replyCallbackAction().setActionRow(pingMenu.build()).queue();
+    }
+
+    private void tutor(CommandContext context) {
+        List<CourseHelper> courses = courseHelperRepository.readByUserId(context.user().getIdLong());
+        if(courses.isEmpty()) {
+            context.replyCallbackAction().setContent(Strings.getString("command.helper.no_course")).queue();
+            return;
+        }
+
+        StringSelectMenu.Builder tutorMenu = StringSelectMenu.create(TUTOR);
+
+        List<SelectOption> options = courses.stream()
+                                             .map(c -> {
+                                                 TextChannel channel = Main.getJDA().getTextChannelById(c.channelId());
+                                                 if (channel == null) {
+                                                     courseHelperRepository.deleteByChannelId(c.channelId());
+                                                     return null;
+                                                 }
+                                                 return SelectOption.of(channel.getName(), channel.getId()).withDefault(c.isTutor());
+                                             })
+                                             .filter(Objects::nonNull)
+                                             .toList();
+
+        tutorMenu.addOptions(options);
+        tutorMenu.setRequiredRange(0, options.size());
+        context.replyCallbackAction().setActionRow(tutorMenu.build()).queue();
+    }
+
+    private int helpersComparator(HelperPing t1, HelperPing t2) {
+        if(t1.isTutor() != t2.isTutor())
+            return t1.isTutor() ? 1 : -1;
+        if (t1.allowsPing() != t2.allowsPing())
+            return t1.allowsPing() ? 1 : -1;
+        return 0;
+    }
+
+    private String formatHelper(HelperPing helper) {
+        return helper.user.getAsMention() + " " + (helper.allowsPing ? ":loudspeaker:" : "") + (helper.isTutor ? ":star2:" : "");
+    }
+
+    @Override
+    public String getName() {
+        return "helper";
+    }
+
+    @Override
+    public Supplier<String> getDescription() {
+        return () -> Strings.getString("command.helper.description");
+    }
+
+    @NotNull
+    @Override
+    public List<OptionData> getOptions() {
+        return List.of(
+                new OptionData(OptionType.STRING,"action", Strings.getString("command.helper.option.action.description"),true)
+                        .addChoice("manage", "manage")
+                        .addChoice("list", "list")
+                        .addChoice("allow_ping", "allow_ping")
+                        .addChoice(TUTOR, TUTOR)
+        );
+    }
+
+    @Override
+    public Supplier<String> help() {
+        return () -> Strings.getString("command.helper.help");
     }
 
     @Override
@@ -129,7 +202,8 @@ public class TutorCommand extends ListenerAdapter implements Command {
         switch (event.getComponentId().split("-")[0]) {
             case "category" -> handleCategoryMenu(event);
             case "courses" -> handleCourseMenu(event);
-            case "ping" -> handlePingMenu(event);
+            case "allow_ping" -> handlePingMenu(event);
+            case TUTOR -> handleTutorMenu(event);
             default -> event.reply(Strings.getString("error_occurred")).setEphemeral(true).queue();
         }
     }
@@ -142,7 +216,7 @@ public class TutorCommand extends ListenerAdapter implements Command {
         String category = event.getSelectedOptions().getFirst().getValue();
         StringSelectMenu.Builder menu = StringSelectMenu.create("courses");
 
-        List<Long> selectedCourses = courseTutorRepository.readByTutorId(event.getUser().getIdLong()).stream().map(CourseTutor::channelId).toList();
+        List<Long> selectedCourses = courseHelperRepository.readByUserId(event.getUser().getIdLong()).stream().map(CourseHelper::channelId).toList();
 
         List<SelectOption> availableCourses = new ArrayList<>(Optional.ofNullable(Main.getJDA().getCategoryById(Long.parseLong(category)))
                                                                       .orElseThrow(() -> new IllegalStateException("Category doesn't exist !"))
@@ -153,7 +227,7 @@ public class TutorCommand extends ListenerAdapter implements Command {
                                                                       .toList());
 
         if(availableCourses.isEmpty()) {
-            MessageUtil.sendAdminMessage(Strings.getString("command.tutor.category_without_course").formatted(category), guildId);
+            MessageUtil.sendAdminMessage(Strings.getString("command.helper.category_without_course").formatted(category), guildId);
             event.getInteraction().reply(Strings.getString("error_occurred")).setEphemeral(true).queue();
             return;
         }
@@ -177,12 +251,12 @@ public class TutorCommand extends ListenerAdapter implements Command {
                 .map(o -> Main.getJDA().getTextChannelById(o.getValue()))
                 .filter(Objects::nonNull)
                 .forEach(channel -> {
-                    channel.getManager().removePermissionOverride(event.getUser().getIdLong()).reason("Tutor deletion").queue();
-                    courseTutorRepository.delete(new CourseTutor(channel.getIdLong(), event.getUser().getIdLong(), false));
+                    channel.getManager().removePermissionOverride(event.getUser().getIdLong()).reason("Helper deletion").queue();
+                    courseHelperRepository.delete(new CourseHelper(channel.getIdLong(), event.getUser().getIdLong(), false, false));
                 });
 
         // Avoid already selected courses
-        List<String> oldIds = courseTutorRepository.readByTutorId(event.getUser().getIdLong())
+        List<String> oldIds = courseHelperRepository.readByUserId(event.getUser().getIdLong())
                                       .stream()
                                       .map(c -> String.valueOf(c.channelId()))
                                       .toList();
@@ -199,42 +273,21 @@ public class TutorCommand extends ListenerAdapter implements Command {
                                     Permission.VIEW_CHANNEL.getRawValue() | Permission.MESSAGE_SEND.getRawValue(),
                                     0
                             )
-                            .reason("Tutor permission")
+                            .reason("Helper permission")
                             .queue();
-                    courseTutorRepository.create(new CourseTutor(channel.getIdLong(), event.getUser().getIdLong(), false));
+                    courseHelperRepository.create(new CourseHelper(channel.getIdLong(), event.getUser().getIdLong(), false, false));
                 });
-        event.reply(Strings.getString("command.tutor.manage.success")).setEphemeral(true).queue();
+        event.reply(Strings.getString("command.helper.success")).setEphemeral(true).queue();
     }
 
     private void handlePingMenu(StringSelectInteractionEvent event) {
-        event.getSelectedOptions().forEach(o -> courseTutorRepository.updatePing(Long.parseLong(o.getValue()), event.getUser().getIdLong(), true));
+        event.getSelectedOptions().forEach(o -> courseHelperRepository.updatePing(Long.parseLong(o.getValue()), event.getUser().getIdLong(), true));
 
         event.getSelectMenu().getOptions()
                 .stream()
                 .filter(o -> !event.getSelectedOptions().contains(o))
-                .forEach(o -> courseTutorRepository.updatePing(Long.parseLong(o.getValue()), event.getUser().getIdLong(), false));
-        event.reply(Strings.getString("command.tutor.manage.success")).setEphemeral(true).queue();
-    }
-
-    @Override
-    public String getName() {
-        return "tutor";
-    }
-
-    @Override
-    public Supplier<String> getDescription() {
-        return () -> Strings.getString("command.tutor.description");
-    }
-
-    @NotNull
-    @Override
-    public List<OptionData> getOptions() {
-        return List.of(
-                new OptionData(OptionType.STRING,"action", Strings.getString("command.tutor.option.action.description"),true)
-                        .addChoice("manage", "manage")
-                        .addChoice("list", "list")
-                        .addChoice("ping", "ping")
-        );
+                .forEach(o -> courseHelperRepository.updatePing(Long.parseLong(o.getValue()), event.getUser().getIdLong(), false));
+        event.reply(Strings.getString("command.helper.success")).setEphemeral(true).queue();
     }
 
     @Override
@@ -252,11 +305,17 @@ public class TutorCommand extends ListenerAdapter implements Command {
         return false;
     }
 
-    @Override
-    public Supplier<String> help() {
-        return () -> Strings.getString("command.tutor.help");
+    private void handleTutorMenu(StringSelectInteractionEvent event) {
+        event.getSelectedOptions().forEach(o -> courseHelperRepository.updateTutor(Long.parseLong(o.getValue()), event.getUser().getIdLong(), true));
+
+        event.getSelectMenu().getOptions()
+                .stream()
+                .filter(o -> !event.getSelectedOptions().contains(o))
+                .forEach(o -> courseHelperRepository.updateTutor(Long.parseLong(o.getValue()), event.getUser().getIdLong(), false));
+        event.reply(Strings.getString("command.helper.success")).setEphemeral(true).queue();
     }
 
-    private record TutorPing(User user, boolean allowsPing) {}
+
+    private record HelperPing(User user, boolean allowsPing, boolean isTutor) {}
 
 }
