@@ -54,7 +54,7 @@ tasks.register("buildLocal") {
     dependsOn("shadowJar")
     doLast {
         providers.exec {
-            commandLine("docker", "build", "-t", "hokkaydo/eplbot:latest", "--target", "local-build", "./")
+            commandLine("docker", "build", "-t", "eplbot:latest", "--target", "local-build", "./")
         }.result.get()
     }
 }
@@ -64,7 +64,7 @@ tasks.register("run") {
     description = "Runs the Docker container."
     doLast {
         providers.exec {
-            commandLine("docker", "compose", "-f", "docker-compose-local.yml", "up", "eplbot", "--remove-orphans", "--force-recreate")
+            commandLine("docker", "compose", "-f", "docker-compose.yml", "up", "eplbot", "--remove-orphans", "--force-recreate")
         }.result.get()
     }
 }
@@ -82,6 +82,7 @@ tasks.register("pushMain") {
     dependsOn("buildLocal")
     doLast {
         providers.exec {
+            commandLine("docker", "image", "tag", "eplbot:latest", "hokkaydo/eplbot:latest")
             commandLine("docker", "image", "push", "hokkaydo/eplbot:latest")
         }.result.get()
     }
