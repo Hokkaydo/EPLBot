@@ -8,7 +8,6 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.jetbrains.annotations.NotNull;
 
 import javax.sql.DataSource;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,16 +35,12 @@ public class ConfessionModule extends Module {
 
     @Override
     public List<Command> getCommands() {
-        return Collections.singletonList(clearConfessWarningsCommand);
+        return List.of(confessionCommand, confessionFollowCommand, clearConfessWarningsCommand);
     }
 
     @Override
     public List<ListenerAdapter> getListeners() {
         return List.of(processor);
-    }
-
-    public List<Command> getGlobalCommands() {
-        return List.of(confessionCommand, confessionFollowCommand);
     }
 
 }
