@@ -53,7 +53,6 @@ public class Main {
     private static CommandManager commandManager;
     public static final Long EPL_DISCORD_ID = 517720163223601153L;
     private static Long bossId = 0L;
-    private static Long prodDiscordId = 0L;
     public static final String PERSISTENCE_DIR_PATH = "./persistence";
     private static final Random RANDOM = new Random();
     public static final Logger LOGGER = JDALogger.getLog(Main.class);
@@ -92,7 +91,7 @@ public class Main {
         String token = System.getenv("DISCORD_BOT_TOKEN");
         String testDiscordIdStr = System.getenv("TEST_DISCORD_ID");
         Long testDiscordId = testDiscordIdStr == null ? 1108141461498777722L : Long.parseLong(testDiscordIdStr);
-        prodDiscordId = testDiscordIdStr == null ? EPL_DISCORD_ID : testDiscordId;
+        Long prodDiscordId = testDiscordIdStr == null ? EPL_DISCORD_ID : testDiscordId;
         specialDiscordIds = List.of(prodDiscordId, testDiscordId);
         String bossIdStr = System.getenv("BOSS_ID");
         if (bossIdStr != null) bossId = Long.parseLong(bossIdStr);
