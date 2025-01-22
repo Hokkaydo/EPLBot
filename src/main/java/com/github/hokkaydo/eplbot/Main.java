@@ -45,7 +45,6 @@ import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 public class Main {
 
@@ -204,10 +203,6 @@ public class Main {
             if (guild == null) continue;
             Main.getCommandManager().addCommands(guild, guildListEntry.getValue());
         }
-        getModuleManager().getModuleByName("confession", prodDiscordId, ConfessionModule.class).ifPresent(m -> {
-            commandManager.addGlobalCommands(m.getGlobalCommands());
-            commandManager.enableGlobalCommands((m.getGlobalCommands().stream().map(Command::getClass).collect(Collectors.toList())));
-        });
         memoryLogger();
     }
 
@@ -221,7 +216,7 @@ public class Main {
         long freeMemory = Runtime.getRuntime().freeMemory();
         long usedMemory = totalMemory - freeMemory;
 
-        return "Memory usage : %.4f / %.4f (%d%%)".formatted(usedMemory/1_000_000_000f, totalMemory/1_000_000_000f, (usedMemory * 100) / totalMemory);
+        return "Memory usage : %.4f / %.4f (%d%%)".formatted(usedMemory/1_000_000f, totalMemory/1_000_000f, (usedMemory * 100) / totalMemory);
     }
 
     private static <T> T instantiate(Class<T> clazz, Long guildId) {
