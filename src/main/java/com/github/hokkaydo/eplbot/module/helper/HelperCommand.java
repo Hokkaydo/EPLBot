@@ -33,6 +33,7 @@ public class HelperCommand extends ListenerAdapter implements Command {
 
     private final long guildId;
     private static final String TUTOR = "tutor";
+    private static final String ALLOW_PING = "allow_ping";
     private final CourseHelperRepository courseHelperRepository;
 
     public HelperCommand(Long guildId, CourseHelperRepository courseHelperRepository) {
@@ -46,7 +47,7 @@ public class HelperCommand extends ListenerAdapter implements Command {
         switch (action) {
             case "manage" -> manage(context);
             case "list" -> list(context);
-            case "allow_ping" -> ping(context);
+            case ALLOW_PING -> ping(context);
             case TUTOR -> tutor(context);
             default -> throw new IllegalStateException("Unexpected value: " + action);
         }
@@ -109,7 +110,7 @@ public class HelperCommand extends ListenerAdapter implements Command {
             return;
         }
 
-        StringSelectMenu.Builder pingMenu = StringSelectMenu.create("ping");
+        StringSelectMenu.Builder pingMenu = StringSelectMenu.create(ALLOW_PING);
 
         List<SelectOption> options = courses.stream()
                                              .map(c -> {
@@ -186,7 +187,7 @@ public class HelperCommand extends ListenerAdapter implements Command {
                 new OptionData(OptionType.STRING,"action", Strings.getString("command.helper.option.action.description"),true)
                         .addChoice("manage", "manage")
                         .addChoice("list", "list")
-                        .addChoice("allow_ping", "allow_ping")
+                        .addChoice(ALLOW_PING, ALLOW_PING)
                         .addChoice(TUTOR, TUTOR)
         );
     }
@@ -202,7 +203,7 @@ public class HelperCommand extends ListenerAdapter implements Command {
         switch (event.getComponentId().split("-")[0]) {
             case "category" -> handleCategoryMenu(event);
             case "courses" -> handleCourseMenu(event);
-            case "allow_ping" -> handlePingMenu(event);
+            case ALLOW_PING -> handlePingMenu(event);
             case TUTOR -> handleTutorMenu(event);
             default -> event.reply(Strings.getString("error_occurred")).setEphemeral(true).queue();
         }
