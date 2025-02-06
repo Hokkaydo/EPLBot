@@ -17,6 +17,7 @@ var sqliteJdbcVersion = "3.42.0.0"
 var githubApiVersion = "1.315"
 var logbackClassicVersion = "1.5.6"
 var romeVersion = "1.0"
+var mockitoVersion = "5.15.2"
 
 repositories {
     mavenCentral()
@@ -24,6 +25,7 @@ repositories {
 
 dependencies {
     testImplementation(platform("org.junit:junit-bom:5.9.1"))
+    testImplementation("org.mockito:mockito-core:${mockitoVersion}")
     testImplementation("org.junit.jupiter:junit-jupiter")
     implementation("net.dv8tion:JDA:${JDAVersion}")
     // RSS helper
@@ -39,6 +41,7 @@ dependencies {
     implementation ("org.kohsuke:github-api:${githubApiVersion}")
     implementation("org.jsoup:jsoup:${jsoupVersion}")
     implementation("ch.qos.logback:logback-classic:${logbackClassicVersion}")
+
 }
 
 jar {
