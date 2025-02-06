@@ -21,7 +21,7 @@ public class EPLCommandModule extends Module {
 
     @Override
     public String getName() {
-        return "basiccommands";
+        return "eplmodule";
     }
 
     @Override

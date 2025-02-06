@@ -8,35 +8,37 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
+import net.dv8tion.jda.api.requests.RestAction;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * This class handles command registration and execution.
  * */
 public class CommandManager extends ListenerAdapter {
 
-    private final Map<Long, Map<Class<? extends Command>, Boolean>> commandStatus = new HashMap<>();
     private final Map<Long, Map<String, Command>> commands = new HashMap<>();
     private final Map<String, Command> globalCommands = new HashMap<>();
-    private final Map<Class<? extends Command>, Boolean> globalCommandStatus = new HashMap<>();
 
     /**
      * Disables the given commands for the given guild.
      * @param guildId the id of the guild
      * @param commands a {@link List<Command>} of {@link Command} to disable
      */
-    public void disableCommands(Long guildId, List<Class<? extends Command>> commands) {
-        if(!this.commandStatus.containsKey(guildId)) return;
-        Map<Class<? extends Command>, Boolean> status = this.commandStatus.get(guildId);
-        for (Class<? extends Command> command : commands) {
-            status.put(command, false);
-        }
-        this.commandStatus.put(guildId, status);
+    public void disableCommands(Long guildId, List<Command> commands) {
+        Guild guild = Main.getJDA().getGuildById(guildId);
+        assert guild != null;
+        List<String> names = commands.stream().map(Command::getName).toList();
+        guild.retrieveCommands()
+                .queue(list -> list.stream()
+                                       .filter(command -> names.stream().anyMatch(name -> Objects.equals(name, command.getName())))
+                                       .forEach(command -> command.delete().queue())
+                );
     }
 
     /**
@@ -44,38 +46,10 @@ public class CommandManager extends ListenerAdapter {
      * @param guildId the id of the guild
      * @param commands a {@link List<Command>} of {@link Command} to enable
      */
-    public void enableCommands(Long guildId, List<Class<? extends Command>> commands) {
-        Map<Class<? extends Command>, Boolean> status = this.commandStatus.getOrDefault(guildId, new HashMap<>());
-        for (Class<? extends Command> command : commands) {
-            status.put(command, true);
-        }
-        this.commandStatus.put(guildId, status);
-    }
-
-    /**
-     * Enables the given commands globally.
-     * @param commands a {@link List<Command>} of {@link Command} to disable
-     */
-    public void enableGlobalCommands(List<Class<? extends Command>> commands) {
-        for (Class<? extends Command> command : commands) {
-            this.globalCommandStatus.put(command, true);
-        }
-    }
-
-    /**
-     * Adds the given commands to the given guild.
-     * @param commands a {@link List<Command>} of {@link Command} to enable
-     */
-    public void addCommands(Guild guild, List<Command> commands) {
-        Map<String, Command> guildCommands = this.commands.getOrDefault(guild.getIdLong(), new HashMap<>());
-        for (Command command : commands) {
-            guildCommands.put(command.getName(), command);
-        }
-        guild.retrieveCommands().queue(s -> {
-            if(s.size() == commands.size()) return;
-            guild.updateCommands().addCommands(guildCommands.values().stream().map(this::mapToCommandData).toList()).queue();
-        });
-        this.commands.put(guild.getIdLong(), guildCommands);
+    public void enableCommands(Long guildId, List<Command> commands) {
+        Guild guild = Main.getJDA().getGuildById(guildId);
+        assert guild != null;
+        commands.stream().map(this::mapToCommandData).forEach(commandData -> guild.upsertCommand(commandData).queue());
     }
 
     /**
@@ -86,19 +60,42 @@ public class CommandManager extends ListenerAdapter {
      * */
     private CommandData mapToCommandData(Command cmd) {
         return Commands.slash(cmd.getName(), cmd.getDescription().get())
-                .addOptions(cmd.getOptions())
-                .setDefaultPermissions(cmd.adminOnly() ? DefaultMemberPermissions.DISABLED : DefaultMemberPermissions.ENABLED);
+                       .addOptions(cmd.getOptions())
+                       .setDefaultPermissions(cmd.adminOnly() ? DefaultMemberPermissions.DISABLED : DefaultMemberPermissions.ENABLED);
+    }
+
+    /**
+     * Enables the given commands globally.
+     * @param commands a {@link List<Command>} of {@link Command} to disable
+     */
+    public void enableGlobalCommands(List<Command> commands) {
+        List<String> names = commands.stream().map(Command::getName).toList();
+        Main.getJDA().retrieveCommands().queue(cmds -> cmds.stream().filter(command -> names.stream().anyMatch(name -> Objects.equals(name, command.getName())))
+                .map(net.dv8tion.jda.api.interactions.commands.Command::delete)
+                .forEach(RestAction::queue));
+    }
+
+    /**
+     * Adds the given commands to the given guildId.
+     * @param commands a {@link List<Command>} of {@link Command} to enable
+     */
+    public void addCommands(Long guildId, List<Command> commands) {
+        Map<String, Command> guildCommands = this.commands.getOrDefault(guildId, new HashMap<>());
+        for (Command command : commands) {
+            guildCommands.put(command.getName(), command);
+        }
+        this.commands.put(guildId, guildCommands);
     }
 
     /**
      * Command handler for slash commands.
      * This method is called whenever a slash command is executed.
      * It checks
-      <ul>
-        <li>if the command exists in the system</li>
-        <li>if the owning module is enabled</li>
-        <li>if the command is in the right channel</li>
-        <li>if the user has the permission to execute the command</li>
+     <ul>
+     <li>if the command exists in the system</li>
+     <li>if the owning module is enabled</li>
+     <li>if the command is in the right channel</li>
+     <li>if the user has the permission to execute the command</li>
      </ul>
      * Then it forwards the execution to the command executor.
      * @param event the {@link SlashCommandInteractionEvent} to handle
@@ -108,25 +105,13 @@ public class CommandManager extends ListenerAdapter {
         Command command;
         if(!event.isGuildCommand() || event.getGuild() == null) {
             command = globalCommands.get(event.getFullCommandName());
-            if(command == null) {
-                event.reply(Strings.getString("command.not_found")).setEphemeral(true).queue();
-                return;
-            }
-            if(Boolean.FALSE.equals(globalCommandStatus.getOrDefault(command.getClass(), false))) {
-                event.reply(Strings.getString("command.disabled")).setEphemeral(true).queue();
-                return;
-            }
         }else {
             if(event.getGuild() == null) return;
             command = commands.getOrDefault(event.getGuild().getIdLong(), new HashMap<>()).getOrDefault(event.getFullCommandName(), null);
-            if(command == null) {
-                event.reply(Strings.getString("command.not_found")).setEphemeral(true).queue();
-                return;
-            }
-            if(Boolean.FALSE.equals(commandStatus.getOrDefault(event.getGuild().getIdLong(), new HashMap<>()).getOrDefault(command.getClass(), false))) {
-                event.reply(Strings.getString("command.disabled")).setEphemeral(true).queue();
-                return;
-            }
+        }
+        if(command == null) {
+            event.reply(Strings.getString("command.not_found")).setEphemeral(true).queue();
+            return;
         }
 
         if(!command.validateChannel(event.getMessageChannel())) {
@@ -150,16 +135,6 @@ public class CommandManager extends ListenerAdapter {
      * */
     public List<Command> getCommands(Long guildId) {
         return new ArrayList<>(commands.getOrDefault(guildId, new HashMap<>()).values());
-    }
-
-    /**
-     * Checks if a given module is enabled in the given guild.
-     * @param guild the id of the guild
-     * @param commandClazz the class of the command
-     * @return true if the command is enabled, false otherwise
-     */
-    public boolean isEnabled(Long guild, Class<? extends Command> commandClazz) {
-        return commandStatus.getOrDefault(guild, new HashMap<>()).getOrDefault(commandClazz, false);
     }
 
     /**

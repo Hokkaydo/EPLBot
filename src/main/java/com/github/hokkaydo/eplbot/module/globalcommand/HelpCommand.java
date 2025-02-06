@@ -4,7 +4,6 @@ import com.github.hokkaydo.eplbot.Main;
 import com.github.hokkaydo.eplbot.Strings;
 import com.github.hokkaydo.eplbot.command.Command;
 import com.github.hokkaydo.eplbot.command.CommandContext;
-import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +22,6 @@ public class HelpCommand implements Command {
     @Override
     public void executeCommand(CommandContext context) {
         List<String> helps = Main.getCommandManager().getCommands(guildId).stream()
-                                     .filter(c -> Main.getCommandManager().isEnabled(guildId, c.getClass()) || context.author().hasPermission(Permission.ADMINISTRATOR))
                                      .map(c -> "__%s__: %n%s".formatted(c.getName(), c.help().get()))
                                      .toList();
         StringBuilder stringBuilder = new StringBuilder("__AIDE :__");
@@ -69,7 +67,7 @@ public class HelpCommand implements Command {
 
     @Override
     public boolean ephemeralReply() {
-        return true;
+        return false;
     }
 
     @Override

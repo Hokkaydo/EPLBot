@@ -38,7 +38,7 @@ public class MirrorModule extends Module {
             Main.getJDA().addEventListener(getListeners().toArray());
         }
         instanceCount++;
-        Main.getCommandManager().enableCommands(getGuildId(), getCommandAsClass());
+        Main.getCommandManager().enableCommands(getGuildId(), getCommands());
     }
 
     @Override
@@ -48,7 +48,7 @@ public class MirrorModule extends Module {
         if(current == 1)
             Main.getJDA().removeEventListener(getListeners().toArray());
         instanceCount--;
-        Main.getCommandManager().disableCommands(getGuildId(), getCommandAsClass());
+        Main.getCommandManager().disableCommands(getGuildId(), getCommands());
     }
 
     @Override

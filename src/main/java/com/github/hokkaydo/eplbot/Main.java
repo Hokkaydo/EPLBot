@@ -1,6 +1,5 @@
 package com.github.hokkaydo.eplbot;
 
-import com.github.hokkaydo.eplbot.command.Command;
 import com.github.hokkaydo.eplbot.command.CommandManager;
 import com.github.hokkaydo.eplbot.configuration.Config;
 import com.github.hokkaydo.eplbot.database.DatabaseManager;
@@ -35,12 +34,11 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -51,12 +49,10 @@ public class Main {
     private static JDA jda;
     private static ModuleManager moduleManager;
     private static CommandManager commandManager;
-    public static final Long EPL_DISCORD_ID = 517720163223601153L;
     private static Long bossId = 0L;
     public static final String PERSISTENCE_DIR_PATH = "./persistence";
     private static final Random RANDOM = new Random();
     public static final Logger LOGGER = JDALogger.getLog(Main.class);
-    private static List<Long> specialDiscordIds;
 
     private static final List<Activity> status = List.of(
             Activity.playing("bâtir des ponts (solides) entre nous et le ciel"),
@@ -82,6 +78,26 @@ public class Main {
             Activity.of(Activity.ActivityType.STREAMING, "Radio Gazou", "https://www.youtube.com/watch?v=rj_kEDituic")
     );
 
+    private static final List<Class<? extends Module>> MODULES = Arrays.asList(
+            MirrorModule.class,
+            GlobalCommandModule.class,
+            QuoteModule.class,
+            RssModule.class,
+            AutoPinModule.class,
+            RssModule.class,
+            NoticeModule.class,
+            BookMarkModule.class,
+            HelperModule.class,
+            MenuModule.class,
+            CodeModule.class,
+            MessageBirdModule.class,
+            ConfessionModule.class,
+            ExamsRetrieveModule.class,
+            RatioModule.class,
+            ChristmasModule.class,
+            EPLCommandModule.class
+    );
+
     public static void main(String[] args) throws InterruptedException, IOException {
         launch(args);
     }
@@ -89,10 +105,6 @@ public class Main {
     private static void launch(String[] args) throws InterruptedException, IOException {
         LOGGER.info("--------- START ---------");
         String token = System.getenv("DISCORD_BOT_TOKEN");
-        String testDiscordIdStr = System.getenv("TEST_DISCORD_ID");
-        Long testDiscordId = testDiscordIdStr == null ? 1108141461498777722L : Long.parseLong(testDiscordIdStr);
-        Long prodDiscordId = testDiscordIdStr == null ? EPL_DISCORD_ID : testDiscordId;
-        specialDiscordIds = List.of(prodDiscordId, testDiscordId);
         String bossIdStr = System.getenv("BOSS_ID");
         if (bossIdStr != null) bossId = Long.parseLong(bossIdStr);
 
@@ -118,97 +130,44 @@ public class Main {
                       .build();
         jda.awaitReady();
 
-        registerModules();
-        jda.getGuilds().forEach(guild -> {
-                    List<String> modules = Config.getModulesStatuses(
-                                    guild.getIdLong(),
-                                    moduleManager.getModuleNames()
-                            )
-                                                   .entrySet()
-                                                   .stream()
-                                                   .filter(Map.Entry::getValue)
-                                                   .map(Map.Entry::getKey)
-                                                   .toList();
-                    StringBuilder log = new StringBuilder("Registering modules for %s :%n".formatted(guild.getName()));
-                    for (String module : modules) {
-                        log.append("\t%s%n".formatted(module));
-                    }
-                    LOGGER.info(log.toString());
-                    moduleManager.enableModules(guild.getIdLong(), modules);
-                }
-        );
+        jda.getGuilds().stream().map(Guild::getIdLong).forEach(Main::registerModules);
         launchPeriodicStatusUpdate();
+        memoryLogger();
     }
 
-    protected static final List<Long> globalModuleRegisteredGuilds = new ArrayList<>();
-    protected static final List<Long> eplModuleRegisteredGuilds = new ArrayList<>();
+    public static void registerModules(Long guildId) {
+        List<Module> instantiation = MODULES.stream()
+                                             .map(clazz -> instantiate(clazz, guildId))
+                                             .map(o -> (Module) o)
+                                             .toList();
+        instantiation.stream().map(Module::getCommands).forEach(commands -> getCommandManager().addCommands(guildId, commands));
+        moduleManager.addModules(instantiation);
 
-    public static void registerModules() {
-        List<Class<? extends Module>> globalModules = Arrays.asList(
-                MirrorModule.class,
-                GlobalCommandModule.class,
-                QuoteModule.class,
-                RssModule.class,
-                AutoPinModule.class,
-                RssModule.class,
-                NoticeModule.class,
-                BookMarkModule.class,
-                HelperModule.class,
-                MenuModule.class,
-                CodeModule.class,
-                MessageBirdModule.class
-        );
-        List<Class<? extends Module>> eplModules = Arrays.asList(
-                EPLCommandModule.class,
-                ConfessionModule.class,
-                ExamsRetrieveModule.class,
-                RatioModule.class,
-                ChristmasModule.class
-        );
-        Map<Long, List<Command>> guildCommands = new HashMap<>();
-        for (Long guildId : specialDiscordIds) {
-            if (eplModuleRegisteredGuilds.contains(guildId)) continue;
-            eplModuleRegisteredGuilds.add(guildId);
-            guildCommands.put(guildId, new ArrayList<>());
-            List<Module> modules = eplModules.stream()
-                                           .map(clazz -> instantiate(clazz, guildId))
-                                           .map(o -> (Module) o)
-                                           .toList();
 
-            modules.forEach(m -> guildCommands.get(guildId).addAll(m.getCommands()));
-            moduleManager.addModules(modules);
+        List<String> modules = Config.getModulesStatuses(
+                        guildId,
+                        moduleManager.getModuleNames()
+                )
+                                       .entrySet()
+                                       .stream()
+                                       .filter(Map.Entry::getValue)
+                                       .map(Map.Entry::getKey)
+                                       .toList();
+        moduleManager.enableModules(guildId, modules);
+
+        StringBuilder log = new StringBuilder("Registering modules for %s :%n".formatted(Optional.ofNullable(jda.getGuildById(guildId)).map(Guild::getName).orElse("Unknown")));
+        for (String module : modules) {
+            log.append("\t%s%n".formatted(module));
         }
-
-        List<Long> guildIds = new ArrayList<>(jda.getGuilds().stream().map(Guild::getIdLong).toList());
-        guildIds.addAll(specialDiscordIds);
-
-        for (Long guildId : guildIds) {
-            if (globalModuleRegisteredGuilds.contains(guildId)) continue;
-            if (!guildCommands.containsKey(guildId)) {
-                guildCommands.put(guildId, new ArrayList<>());
-            }
-            globalModuleRegisteredGuilds.add(guildId);
-            List<Module> modules = globalModules.stream()
-                                           .map(clazz -> instantiate(clazz, guildId))
-                                           .map(o -> (Module) o)
-                                           .toList();
-
-            modules.forEach(m -> guildCommands.get(guildId).addAll(m.getCommands()));
-            moduleManager.addModules(modules);
-        }
-
-        for (Map.Entry<Long, List<Command>> guildListEntry : guildCommands.entrySet()) {
-            Guild guild = jda.getGuildById(guildListEntry.getKey());
-            if (guild == null) continue;
-            Main.getCommandManager().addCommands(guild, guildListEntry.getValue());
-        }
-        memoryLogger();
+        String logStr = log.toString();
+        LOGGER.info(logStr);
     }
 
     private static void memoryLogger() {
         ScheduledExecutorService service = Executors.newScheduledThreadPool(1);
         service.scheduleAtFixedRate(() -> LOGGER.info(getMemoryUsage()), 0, 10, TimeUnit.MINUTES);
     }
+
 
     public static String getMemoryUsage() {
         long totalMemory = Runtime.getRuntime().totalMemory();

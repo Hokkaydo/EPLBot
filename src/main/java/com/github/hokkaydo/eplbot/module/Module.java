@@ -9,7 +9,6 @@ import net.dv8tion.jda.internal.utils.JDALogger;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -63,23 +62,17 @@ public abstract class Module {
     public void enable() {
         this.enabled = true;
         Main.getJDA().addEventListener(getListeners().toArray());
-        Main.getCommandManager().enableCommands(getGuildId(), getCommandAsClass());
+        Main.getCommandManager().enableCommands(getGuildId(), getCommands());
     }
 
     public void disable() {
         this.enabled = false;
         Main.getJDA().removeEventListener(getListeners().toArray());
-        Main.getCommandManager().disableCommands(getGuildId(), getCommandAsClass());
+        Main.getCommandManager().disableCommands(getGuildId(), getCommands());
     }
 
     public Logger getLogger() {
         return logger;
-    }
-
-    protected List<Class<? extends Command>> getCommandAsClass() {
-        List<Class<? extends Command>> list = new ArrayList<>();
-        getCommands().forEach(c -> list.add(c.getClass()));
-        return list;
     }
 
     @Override
