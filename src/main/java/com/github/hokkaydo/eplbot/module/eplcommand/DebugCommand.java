@@ -1,5 +1,6 @@
 package com.github.hokkaydo.eplbot.module.eplcommand;
 
+import com.github.hokkaydo.eplbot.Main;
 import com.github.hokkaydo.eplbot.MessageUtil;
 import com.github.hokkaydo.eplbot.command.Command;
 import com.github.hokkaydo.eplbot.command.CommandContext;
@@ -34,10 +35,7 @@ public class DebugCommand implements Command {
     private static final Consumer<PrivateChannel> DEFAULT = c -> c.sendMessage("Unknown subcommand").queue();
     private static final int HASTEBIN_MAX_CONTENT_LENGTH = 350_000;
     private static final Map<String, Consumer<PrivateChannel>> SUB_COMMANDS = Map.of(
-            "dump_db", DebugCommand::dumpDB,
-            "dump_errors", DebugCommand::dumpErrors,
-            "dump", DebugCommand::dump,
-            "regenerate_db", DebugCommand::regenerateDB
+            "dump_db", DebugCommand::dumpDB
     );
 
     private static final CourseRepositorySQLite courseRepo = new CourseRepositorySQLite(DatabaseManager.getDataSource());
@@ -106,23 +104,13 @@ public class DebugCommand implements Command {
 
     @Override
     public void executeCommand(CommandContext context) {
+        if (context.user().getIdLong() != Main.getBossId()) {
+            context.replyCallbackAction().setContent("You are not allowed to use this command").queue();
+            return;
+        }
         String sub = context.options().getFirst().getAsString();
         context.author().getUser().openPrivateChannel().queue(c -> SUB_COMMANDS.getOrDefault(sub, DEFAULT).accept(c));
         context.replyCallbackAction().setContent("Done !").queue();
-    }
-
-
-    private static void regenerateDB(PrivateChannel channel) {
-        DatabaseManager.regenerateDatabase(true);
-    }
-
-    private static void dumpErrors(PrivateChannel channel) {
-        // TODO when implementing better logging
-    }
-
-    private static void dump(PrivateChannel channel) {
-        dumpDB(channel);
-        dumpErrors(channel);
     }
 
     @Override
@@ -140,9 +128,6 @@ public class DebugCommand implements Command {
     public List<OptionData> getOptions() {
         return List.of(new OptionData(OptionType.STRING, "subcommand", "Subcommand to execute", true)
                                .addChoice("dump_db", "dump_db")
-                               .addChoice("dump_errors", "dump_errors")
-                               .addChoice("dump", "dump")
-                               .addChoice("regenerate_db", "regenerate_db")
         );
     }
 
