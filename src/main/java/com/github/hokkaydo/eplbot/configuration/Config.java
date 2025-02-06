@@ -163,7 +163,7 @@ public class Config {
                 "rss", MODULE_DISABLED.get(),
                 "mirror", MODULE_DISABLED.get(),
                 "confession", MODULE_DISABLED.get(),
-                "basiccommands", MODULE_DISABLED.get(),
+                "eplmodule", MODULE_DISABLED.get(),
                 "quote", MODULE_DISABLED.get(),
                 "examsretrieve", MODULE_DISABLED.get(),
                 "ratio", MODULE_DISABLED.get(),
