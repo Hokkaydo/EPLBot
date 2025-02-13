@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit;
 
 public class MenuSender implements MenuRetriever{
 
-    private static final String MENU_URL = "https://uclouvain.be/fr/decouvrir/resto-u/le-galilee-self.html";
+    private static final String MENU_URL = "https://uclouvain.be/fr/resto-u/le-galilee-self";
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private final Long guildId;
 
@@ -65,12 +65,9 @@ public class MenuSender implements MenuRetriever{
             return Jsoup.parse(url, 10000).select("img")
                     .stream()
                     .filter(element -> element.attr("src").contains("cms-editors-resto-u/"))
-                    .skip(2)
+                    .skip(1)
                     .findFirst()
-                    .map(element -> {
-                        String imageUrl = element.attr("src");
-                        return "https://" + imageUrl.replace("//", "");
-                    });
+                    .map(element -> element.attr("src"));
         } catch (IOException e) {
             Main.LOGGER.warn("[MenuCommand] An error occurred while trying to parse the URL", e);
             return Optional.empty();
