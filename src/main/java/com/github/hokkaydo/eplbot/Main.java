@@ -132,7 +132,6 @@ public class Main {
 
         jda.getGuilds().stream().map(Guild::getIdLong).forEach(Main::registerModules);
         launchPeriodicStatusUpdate();
-        memoryLogger();
     }
 
     public static void registerModules(Long guildId) {
@@ -161,20 +160,6 @@ public class Main {
         }
         String logStr = log.toString();
         LOGGER.info(logStr);
-    }
-
-    private static void memoryLogger() {
-        ScheduledExecutorService service = Executors.newScheduledThreadPool(1);
-        service.scheduleAtFixedRate(() -> LOGGER.info(getMemoryUsage()), 0, 10, TimeUnit.MINUTES);
-    }
-
-
-    public static String getMemoryUsage() {
-        long totalMemory = Runtime.getRuntime().totalMemory();
-        long freeMemory = Runtime.getRuntime().freeMemory();
-        long usedMemory = totalMemory - freeMemory;
-
-        return "Memory usage : %.4f / %.4f (%d%%)".formatted(usedMemory/1_000_000f, totalMemory/1_000_000f, (usedMemory * 100) / totalMemory);
     }
 
     private static <T> T instantiate(Class<T> clazz, Long guildId) {
