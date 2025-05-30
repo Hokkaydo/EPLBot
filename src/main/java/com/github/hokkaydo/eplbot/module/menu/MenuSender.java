@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit;
 
 public class MenuSender implements MenuRetriever{
 
-    private static final String MENU_URL = "https://uclouvain.be/fr/resto-u/le-galilee-self";
+    private static final String MENU_URL = "https://uclouvain.be/fr/resto-u/le-sablon-self";
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private final Long guildId;
 
