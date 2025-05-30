@@ -44,6 +44,16 @@ dependencies {
 
 }
 
+tasks.withType(JavaCompile).each {
+    it.options.compilerArgs.add('--enable-preview')
+}
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(24))
+    }
+}
+
 jar {
     manifest {
         attributes["Main-Class"] = "com.github.hokkaydo.eplbot.Main"

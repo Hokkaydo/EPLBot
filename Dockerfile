@@ -1,11 +1,11 @@
-FROM gradle:8.10 AS build
+FROM gradle:8.14 AS build
 
 ENV HOME=/home/gradle
 RUN mkdir -p "$HOME"/.gradle
 WORKDIR $HOME
 
 # Copy gradle files
-COPY build.gradle.kts settings.gradle gradlew ./
+COPY build.gradle settings.gradle gradlew ./
 COPY gradle/ gradle/
 
 # Download dependencies
@@ -17,7 +17,7 @@ COPY src/ src/
 # Build app
 RUN ./gradlew shadowJar
 
-FROM eclipse-temurin:23-jre AS base
+FROM eclipse-temurin:24-jre AS base
 
 LABEL authors="hokkaydo"
 RUN mkdir -p /home/eplbot/persistence && apt-get update && apt-get install -y docker.io && apt-get clean
@@ -36,12 +36,12 @@ ENTRYPOINT ["java", "-agentpath:/usr/local/YourKit-JavaProfiler-2024.9/bin/linux
 FROM base AS production
 
 WORKDIR /home/eplbot
-ENTRYPOINT ["java", "-jar", "eplbot.jar"]
+ENTRYPOINT ["java", "--enable-preview", "-jar", "eplbot.jar"]
 
-FROM eclipse-temurin:23-jre AS local-build
+FROM eclipse-temurin:24-jre AS local-build
 
 RUN mkdir -p /home/eplbot/persistence && apt-get update && apt-get install -y docker.io && apt-get clean
 COPY build/libs/EPLBot-1.0-SNAPSHOT-all.jar /home/eplbot/eplbot.jar
 
 WORKDIR /home/eplbot
-ENTRYPOINT ["java", "-jar", "eplbot.jar"]
+ENTRYPOINT ["java", "--enable-preview", "-jar", "eplbot.jar"]
