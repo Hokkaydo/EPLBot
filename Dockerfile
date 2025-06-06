@@ -1,4 +1,4 @@
-FROM gradle:8.14 AS build
+FROM gradle:8.14-jdk24 AS build
 
 ENV HOME=/home/gradle
 RUN mkdir -p "$HOME"/.gradle
@@ -36,7 +36,7 @@ ENTRYPOINT ["java", "-agentpath:/usr/local/YourKit-JavaProfiler-2024.9/bin/linux
 FROM base AS production
 
 WORKDIR /home/eplbot
-ENTRYPOINT ["java", "--enable-preview", "-jar", "eplbot.jar"]
+ENTRYPOINT ["java", "--enable-preview", "--enable-native-access=ALL-UNNAMED", "-jar", "eplbot.jar"]
 
 FROM eclipse-temurin:24-jre AS local-build
 
@@ -44,4 +44,4 @@ RUN mkdir -p /home/eplbot/persistence && apt-get update && apt-get install -y do
 COPY build/libs/EPLBot-1.0-SNAPSHOT-all.jar /home/eplbot/eplbot.jar
 
 WORKDIR /home/eplbot
-ENTRYPOINT ["java", "--enable-preview", "-jar", "eplbot.jar"]
+ENTRYPOINT ["java", "--enable-preview", "--enable-native-access=ALL-UNNAMED", "-jar", "eplbot.jar"]
