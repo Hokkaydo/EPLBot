@@ -257,6 +257,7 @@
 		"wrong_channel": "Canal invalide."
 	},
 	"warning.rss_channel_id_invalid": "Identifiant de canal d'envoi de flux RSS invalide ! Utilisez /config pour le modifier",
+	"warning.rss_feed_error": "Le flux RSS `%s` n'a pas pu être récupéré.",
 	"quote": {
 		"delete_not_allowed": "Vous n'êtes pas autorisé à supprimer ce message",
 		"deleted": "Quote supprimée"

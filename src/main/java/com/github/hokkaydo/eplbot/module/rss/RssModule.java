@@ -10,22 +10,23 @@ import java.util.List;
 
 public class RssModule extends Module {
 
-    private static final RssReader reader = new RssReader();
+    private final RssReader reader;
 
     public RssModule(@NotNull Long guildId) {
         super(guildId);
+        reader = new RssReader(guildId);
     }
 
     @Override
     public void enable() {
         super.enable();
-        reader.launch(getGuildId());
+        reader.launch();
     }
 
     @Override
     public void disable() {
         super.disable();
-        reader.stop(getGuildId());
+        reader.stop();
     }
 
     @Override

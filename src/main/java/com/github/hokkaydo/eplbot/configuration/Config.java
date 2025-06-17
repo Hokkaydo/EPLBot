@@ -119,7 +119,7 @@ public class Config {
         DEFAULT_CONFIGURATION.putAll(Map.of(
                 "RSS_FEEDS", new ConfigurationParser(
                         () -> new ArrayList<>(List.of("https://www.developpez.com/index/rss")),
-                        l -> ((List<String>)l).stream().reduce("", "%s,%s"::formatted),
+                        l -> ((List<String>)l).stream().reduce("", "%s;%s"::formatted),
                         s -> Stream.of(s.split(";")).filter(str -> !str.isBlank()).toList(),
                         "Liste de liens séparés par `;`"
                 ),
