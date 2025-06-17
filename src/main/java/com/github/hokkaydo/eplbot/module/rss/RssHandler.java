@@ -73,8 +73,8 @@ public class RssHandler {
 
             Timestamp lastDate;
 
-            // Bizarre construction, would have preferred to use containsKey or at least a ternary operator,
-            // but it just stuck the task dunno why
+            // Bizarre construction, would have preferred to use getOrDefault or 
+            // at least a ternary operator, but it just stucks the task dunno why
             if (lastDateMap.containsKey(url)) {
                 lastDate = lastDateMap.get(url);
             } else {
