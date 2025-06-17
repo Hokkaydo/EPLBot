@@ -154,11 +154,8 @@ public class Main {
                                        .toList();
         moduleManager.enableModules(guildId, modules);
 
-        StringBuilder log = new StringBuilder("Registering modules for %s :%n".formatted(Optional.ofNullable(jda.getGuildById(guildId)).map(Guild::getName).orElse("Unknown")));
-        for (String module : modules) {
-            log.append("\t%s%n".formatted(module));
-        }
-        String logStr = log.toString();
+        String logStr = "Registering modules for %s: ".formatted(Optional.ofNullable(jda.getGuildById(guildId)).map(Guild::getName).orElse("Unknown")) +
+                                modules.stream().reduce("", (s, s2) -> s + ", " + s2).replaceFirst(", ", "");
         LOGGER.info(logStr);
     }
 
