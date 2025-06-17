@@ -10,11 +10,11 @@ import java.util.List;
 
 public class RssModule extends Module {
 
-    private final RssReader reader;
+    private final RssHandler reader;
 
     public RssModule(@NotNull Long guildId) {
         super(guildId);
-        reader = new RssReader(guildId);
+        reader = new RssHandler(guildId);
     }
 
     @Override

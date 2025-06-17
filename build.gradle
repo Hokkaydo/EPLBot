@@ -16,7 +16,7 @@ var springJdbcVersion = "6.0.11"
 var sqliteJdbcVersion = "3.42.0.0"
 var githubApiVersion = "1.315"
 var logbackClassicVersion = "1.5.6"
-var romeVersion = "1.0"
+var rssReaderVersion = "3.9.3"
 var mockitoVersion = "5.15.2"
 
 repositories {
@@ -29,7 +29,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter")
     implementation("net.dv8tion:JDA:${JDAVersion}")
     // RSS helper
-    implementation("rome:rome:${romeVersion}")
+    implementation("com.apptasticsoftware:rssreader:${rssReaderVersion}")
     // https://mvnrepository.com/artifact/org.json/json
     implementation("org.json:json:${jsonVersion}")
     implementation("io.github.cdimascio:dotenv-java:${dotenvVersion}")

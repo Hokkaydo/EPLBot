@@ -1,27 +1,23 @@
 package com.github.hokkaydo.eplbot.module.rss;
 
+import com.apptasticsoftware.rssreader.Enclosure;
+import com.apptasticsoftware.rssreader.RssReader;
 import com.github.hokkaydo.eplbot.Main;
 import com.github.hokkaydo.eplbot.MessageUtil;
 import com.github.hokkaydo.eplbot.Strings;
 import com.github.hokkaydo.eplbot.configuration.Config;
-import com.sun.syndication.feed.synd.SyndEnclosure;
-import com.sun.syndication.feed.synd.SyndEntry;
-import com.sun.syndication.feed.synd.SyndFeed;
-import com.sun.syndication.io.FeedException;
-import com.sun.syndication.io.SyndFeedInput;
-import com.sun.syndication.io.XmlReader;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URL;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -36,14 +32,15 @@ import java.util.concurrent.TimeUnit;
 /**
  * Will probably be removed sonner or later
  * */
-public class RssReader {
+public class RssHandler {
 
     private final Set<Integer> articles = new HashSet<>();
     private final ScheduledExecutorService service = Executors.newScheduledThreadPool(4);
     private final Long guildId;
     private ScheduledFuture<?> task;
+    private final RssReader rssReader = new RssReader();
 
-    RssReader(Long guild) {
+    RssHandler(Long guild) {
         this.guildId = guild;
     }
 
@@ -59,34 +56,13 @@ public class RssReader {
         }
     }
 
-    private SortedSet<Article> read(String feedUrl) throws IOException, FeedException {
-        URL feedSource = URI.create(feedUrl).toURL();
-        SyndFeedInput input = new SyndFeedInput();
-        SyndFeed feed = input.build(new XmlReader(feedSource));
-        Iterator<SyndEntry> itr = feed.getEntries().iterator();
-        SortedSet<Article> results = new TreeSet<>(Comparator.comparing(Article::publishedDate));
-        while (itr.hasNext()) {
-            SyndEntry syndEntry = itr.next();
-            results.add(
-                    new Article(
-                            syndEntry.getTitle(),
-                            syndEntry.getDescription().getValue(),
-                            syndEntry.getLink(),
-                            ((SyndEnclosure)syndEntry.getEnclosures().getFirst()).getUrl(),
-                            syndEntry.getPublishedDate()
-                    )
-            );
-        }
-        return results;
-    }
-
     private void run() {
         Map<String, Timestamp> lastDateMap = Config.getGuildState(guildId, "LAST_RSS_ARTICLE_DATE");
         for(String url : Config.<List<String>>getGuildVariable(guildId, "RSS_FEEDS")) {
             SortedSet<Article> results;
             try {
                 results = read(url);
-            } catch (IOException | FeedException e) {
+            } catch (IOException e) {
                 Optional.ofNullable(Main.getJDA().getGuildById(guildId)).ifPresent(guild -> {
                     String log = "[%s] Error reading RSS feed %s: %s".formatted(guild.getName(), url, e.getMessage());
                     Main.LOGGER.error(log, e);
@@ -95,13 +71,38 @@ public class RssReader {
                 throw new IllegalStateException(e);
             }
 
-            Timestamp lastDate = lastDateMap.containsKey(url) ? lastDateMap.get(url) : Timestamp.from(Instant.MIN);
+            Timestamp lastDate;
+
+            // Bizarre construction, would have preferred to use containsKey or at least a ternary operator,
+            // but it just stuck the task dunno why
+            if (lastDateMap.containsKey(url)) {
+                lastDate = lastDateMap.get(url);
+            } else {
+                lastDate = Timestamp.from(results.first().publishedDate().toInstant());
+            }
+
             if(results.last().publishedDate().toInstant().isBefore(lastDate.toInstant()) || results.last().publishedDate().toInstant().equals(lastDate.toInstant())) return;
 
             results.forEach(this::sendArticle);
             lastDateMap.put(url, Timestamp.from(results.last().publishedDate().toInstant()));
             Config.updateValue(guildId, "LAST_RSS_ARTICLE_DATE", lastDateMap);
         }
+    }
+
+    private SortedSet<Article> read(String feedUrl) throws IOException {
+        SortedSet<Article> items = new TreeSet<>(Comparator.comparing(Article::publishedDate));
+        rssReader.read(feedUrl)
+                .map(item -> new Article(
+                                item.getTitle().orElse(""),
+                                item.getDescription().orElse(""),
+                                item.getLink().orElse(""),
+                                item.getEnclosure().map(Enclosure::getUrl).orElse(""),
+                                item.getPubDateZonedDateTime().map(ZonedDateTime::toInstant).map(Date::from).orElse(Date.from(Instant.now()))
+                        )
+                )
+                .sorted(Comparator.comparing(Article::publishedDate))
+                .forEach(items::add);
+        return items;
     }
 
     private void sendArticle(Article article) {
