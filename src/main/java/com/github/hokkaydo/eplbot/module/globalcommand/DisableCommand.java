@@ -28,8 +28,11 @@ public class DisableCommand implements Command {
             context.replyCallbackAction().setContent("Mais t'es complètement zinzin ma parole").queue();
             return;
         }
-        Main.getModuleManager().disableModule(featureOption.getAsString(), guildId);
-        context.replyCallbackAction().setContent("Disabled `%s` :x:".formatted(featureOption.getAsString())).queue();
+        if(Main.getModuleManager().disableModule(featureOption.getAsString(), guildId)) {
+            context.replyCallbackAction().setContent("Disabled `%s` :white_check_mark:".formatted(featureOption.getAsString())).queue();
+        } else {
+            context.replyCallbackAction().setContent("Failed to disable `%s` :x:. Maybe wasn't it enabled?".formatted(featureOption.getAsString())).queue();
+        }
     }
 
     @Override

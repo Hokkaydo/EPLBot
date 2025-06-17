@@ -1,5 +1,6 @@
 package com.github.hokkaydo.eplbot.module;
 
+import com.github.hokkaydo.eplbot.Main;
 import com.github.hokkaydo.eplbot.configuration.Config;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,19 +52,38 @@ public class ModuleManager {
      * Disable a module by its name and guildId.
      * @param name the name of the module
      * @param guildId the id of the guild
+     * @return true if the module was disabled, false if it was already disabled or not found
      * */
-    public void disableModule(String name, Long guildId) {
+    public boolean disableModule(String name, Long guildId) {
+        Optional<Module> module = getModuleByName(name, guildId, Module.class);
+        if (module.isEmpty()) return false;
+        if (!module.get().isEnabled()) return false;
         getModuleByName(name, guildId, Module.class).ifPresent(Module::disable);
         Config.disableModule(guildId, name);
+        Optional.ofNullable(Main.getJDA().getGuildById(guildId)).ifPresent(g -> {
+            String log = "[%s] Module '%s' disabled".formatted(g.getName(), name);
+            Main.LOGGER.info(log);
+        });
+        return true;
     }
 
     /**
      * Enable a module by its name and guildId.
+     * @param name the name of the module
      * @param guildId the id of the guild
+     * @return true if the module was enabled, false if it was already enabled or not found
      * */
-    public void enableModule(String name, Long guildId) {
-        getModuleByName(name, guildId, Module.class).ifPresent(Module::enable);
+    public boolean enableModule(String name, Long guildId) {
+        Optional<Module> module = getModuleByName(name, guildId, Module.class);
+        if(module.isEmpty()) return false;
+        if(module.get().isEnabled()) return false;
+        module.ifPresent(Module::enable);
         Config.enableModule(guildId, name);
+        Optional.ofNullable(Main.getJDA().getGuildById(guildId)).ifPresent(g -> {
+            String log = "[%s] Module '%s' enabled".formatted(g.getName(), name);
+            Main.LOGGER.info(log);
+        });
+        return true;
     }
 
     /**

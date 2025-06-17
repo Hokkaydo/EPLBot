@@ -24,8 +24,12 @@ public class EnableCommand implements Command {
     public void executeCommand(CommandContext context) {
         OptionMapping featureOption = context.options().getFirst();
         if(featureOption == null) return;
-        Main.getModuleManager().enableModule(featureOption.getAsString(), guildId);
-        context.replyCallbackAction().setContent("Enabled `%s` :white_check_mark:".formatted(featureOption.getAsString())).queue();
+        if(Main.getModuleManager().enableModule(featureOption.getAsString(), guildId)) {
+            context.replyCallbackAction().setContent("Enabled `%s` :white_check_mark:".formatted(featureOption.getAsString())).queue();
+        }
+        else {
+            context.replyCallbackAction().setContent("Failed to enable `%s` :x:. Maybe was it already enabled?".formatted(featureOption.getAsString())).queue();
+        }
     }
 
     @Override
