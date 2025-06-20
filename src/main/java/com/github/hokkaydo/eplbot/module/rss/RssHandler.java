@@ -106,13 +106,7 @@ public class RssHandler {
     }
 
     private void sendArticle(Article article) {
-        if(articles.contains(article.hashCode())) {
-            Optional.ofNullable(Main.getJDA().getGuildById(guildId)).ifPresent(guild -> {
-                String log = "[%s] Article already sent: %s".formatted(guild.getName(), article.title());
-                Main.LOGGER.info(log);
-            });
-            return;
-        }
+        if(articles.contains(article.hashCode())) return;
         articles.add(article.hashCode());
         MessageEmbed embed = new EmbedBuilder()
                                      .setTitle(article.title())
