@@ -65,8 +65,7 @@ public class MenuSender implements MenuRetriever{
             return Jsoup.parse(url, 10000).select("img")
                     .stream()
                     .filter(element -> element.attr("src").contains("cms-editors-resto-u/"))
-                    .skip(1)
-                    .findFirst()
+                   .findFirst()
                     .map(element -> element.attr("src"));
         } catch (IOException e) {
             Main.LOGGER.warn("[MenuCommand] An error occurred while trying to parse the URL", e);
