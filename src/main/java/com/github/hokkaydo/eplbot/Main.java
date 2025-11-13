@@ -26,6 +26,7 @@ import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.requests.GatewayIntent;
+import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
 import net.dv8tion.jda.internal.utils.JDALogger;
 import org.slf4j.Logger;
@@ -123,7 +124,9 @@ public class Main {
         Strings.load();
         jda = JDABuilder.createDefault(token)
                       .enableIntents(EnumSet.allOf(GatewayIntent.class))
-                      .disableCache(CacheFlag.MEMBER_OVERRIDES, CacheFlag.VOICE_STATE)
+                      .enableCache(CacheFlag.MEMBER_OVERRIDES,CacheFlag.ROLE_TAGS)
+                      .setMemberCachePolicy(MemberCachePolicy.ALL)
+                      .disableCache(CacheFlag.VOICE_STATE)
                       .setBulkDeleteSplittingEnabled(false)
                       .setActivity(Activity.playing("compter les moutons"))
                       .addEventListeners(commandManager, guildStateListener)
