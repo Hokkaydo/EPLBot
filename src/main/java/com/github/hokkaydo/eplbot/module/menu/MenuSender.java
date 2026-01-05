@@ -4,8 +4,11 @@ import com.github.hokkaydo.eplbot.Main;
 import com.github.hokkaydo.eplbot.MessageUtil;
 import com.github.hokkaydo.eplbot.configuration.Config;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.utils.FileUpload;
+import org.apache.commons.io.FileUtils;
 import org.jsoup.Jsoup;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
@@ -51,7 +54,7 @@ public class MenuSender implements MenuRetriever{
         }
         retrieveMenu().ifPresent(menu -> {
             try {
-                channel.sendMessage(menu).queue();
+                channel.sendFiles(FileUpload.fromData(menu)).queue();
             } catch (ConcurrentModificationException e) {
                 Main.LOGGER.warn("[MenuCommand] An error occurred while trying to send the menu", e);
             }
@@ -59,9 +62,7 @@ public class MenuSender implements MenuRetriever{
     }
 
     @Override
-    public Optional<String> retrieveMenu() {
-        // Note: The website provides a PNG image of the menu, but the URL ends with .jpeg.
-        // Fixing the extension to .png to get the correct image format (s.t. Discord handles it properly).
+    public Optional<File> retrieveMenu() {
         try {
             URL url = URI.create(MENU_URL).toURL();
             return Jsoup.parse(url, 10000).select("img")
@@ -69,9 +70,20 @@ public class MenuSender implements MenuRetriever{
                            .filter(element -> element.attr("src").contains("cms-editors-resto-u/"))
                            .findFirst()
                            .map(element -> element.attr("src"))
-                           .map(element -> element.replace(".jpeg", ".png"));
+                           .flatMap(this::downloadImage);
         } catch (IOException e) {
             Main.LOGGER.warn("[MenuCommand] An error occurred while trying to parse the URL", e);
+            return Optional.empty();
+        }
+    }
+
+    private Optional<File> downloadImage(String imageUrl) {
+        try {
+            File tempFile = File.createTempFile("resto_u_menu", ".png");
+            FileUtils.writeByteArrayToFile(tempFile, Jsoup.connect(imageUrl).ignoreContentType(true).execute().bodyAsBytes());
+            return Optional.of(tempFile);
+        } catch (IOException e) {
+            Main.LOGGER.warn("[MenuCommand] An error occurred while trying to download the image", e);
             return Optional.empty();
         }
     }

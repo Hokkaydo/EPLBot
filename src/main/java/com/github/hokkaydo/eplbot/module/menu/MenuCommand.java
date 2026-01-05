@@ -5,6 +5,7 @@ import com.github.hokkaydo.eplbot.command.Command;
 import com.github.hokkaydo.eplbot.command.CommandContext;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
+import net.dv8tion.jda.api.utils.FileUpload;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -22,7 +23,7 @@ public class MenuCommand implements Command {
     @Override
     public void executeCommand(CommandContext context) {
         menuRetriever.retrieveMenu().ifPresentOrElse(
-                menu -> context.replyCallbackAction().setContent(menu).queue(),
+                menu -> context.replyCallbackAction().addFiles(FileUpload.fromData(menu)).queue(),
                 () -> context.replyCallbackAction().setContent(Strings.getString("command.menu.not_found")).queue()
         );
     }
