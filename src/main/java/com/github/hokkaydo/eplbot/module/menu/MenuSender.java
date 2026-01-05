@@ -60,13 +60,16 @@ public class MenuSender implements MenuRetriever{
 
     @Override
     public Optional<String> retrieveMenu() {
+        // Note: The website provides a PNG image of the menu, but the URL ends with .jpeg.
+        // Fixing the extension to .png to get the correct image format (s.t. Discord handles it properly).
         try {
             URL url = URI.create(MENU_URL).toURL();
             return Jsoup.parse(url, 10000).select("img")
-                    .stream()
-                    .filter(element -> element.attr("src").contains("cms-editors-resto-u/"))
-                   .findFirst()
-                    .map(element -> element.attr("src"));
+                           .stream()
+                           .filter(element -> element.attr("src").contains("cms-editors-resto-u/"))
+                           .findFirst()
+                           .map(element -> element.attr("src"))
+                           .map(element -> element.replace(".jpeg", ".png"));
         } catch (IOException e) {
             Main.LOGGER.warn("[MenuCommand] An error occurred while trying to parse the URL", e);
             return Optional.empty();
