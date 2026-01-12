@@ -18,6 +18,7 @@ import net.dv8tion.jda.api.utils.AttachedFile;
 import net.dv8tion.jda.api.utils.FileUpload;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
@@ -54,7 +55,23 @@ public class ExamsRetrieveListener extends ListenerAdapter {
     void setGradeRetrieveChannelId(Long examsRetrieveChannelId, int quarter) {
         this.examsRetrieveChannelId = examsRetrieveChannelId;
         this.selectedQuarterToRetrieve = quarter;
+        resetState();
         sendMessages();
+    }
+
+    private void resetState() {
+        File zip = new File(ZIP_PATH.toUri());
+        boolean deleted = false;
+        if(zip.exists()) {
+            deleted = zip.delete();
+            if (deleted) {
+                zipMessageId = "";
+                Config.updateValue(guildId, "EXAM_ZIP_MESSAGE_ID", "");
+            } else {
+                Main.LOGGER.warn("Could not delete existing exams zip file for guild {}", guildId);
+            }
+        }
+        repository.readAll().forEach(repository::delete);
     }
 
     @Override
@@ -65,7 +82,7 @@ public class ExamsRetrieveListener extends ListenerAdapter {
         repository.readByMessageId(event.getChannel().asThreadChannel().getIdLong()).ifPresent(model -> {
             try {
                 addFiles(model.path(), event.getMessage().getAttachments());
-            } catch (IOException ignored) {
+            } catch (IOException _) {
                 throw new IllegalStateException("Could not update exams zip file");
             }
         });
@@ -96,7 +113,7 @@ public class ExamsRetrieveListener extends ListenerAdapter {
                         }
                         Path nf = fs.getPath(path, t.a);
                         Files.write(nf, Files.readAllBytes(tempPath), StandardOpenOption.CREATE);
-                    } catch (IOException e) {
+                    } catch (IOException _) {
                         Main.LOGGER.warn("Could not update exams zip file");
                     }
                 }).join());
@@ -106,7 +123,7 @@ public class ExamsRetrieveListener extends ListenerAdapter {
     private void createDirectoryInZip(FileSystem fs, String current) {
         try {
             fs.provider().createDirectory(fs.getPath(current));
-        } catch (IOException ignored) {
+        } catch (IOException _) {
             //Ignored
         }
     }
@@ -127,7 +144,7 @@ public class ExamsRetrieveListener extends ListenerAdapter {
                         }
                         zipOut.closeEntry();
                         fis.close();
-                    } catch (IOException ignored) {
+                    } catch (IOException _) {
                         //Ignored
                     }
                 }).join());
@@ -166,7 +183,6 @@ public class ExamsRetrieveListener extends ListenerAdapter {
             List<List<Course>> courses = group.courses();
             for (List<Course> quadrimestreCourses : courses) {
                 for (Course course : quadrimestreCourses) {
-
                     channel.sendMessage(
                                     THREAD_MESSAGE_FORMAT.formatted(course.code(), course.name(), quarterToYear(course.quarter()), group.groupCode().toUpperCase())
                             )
