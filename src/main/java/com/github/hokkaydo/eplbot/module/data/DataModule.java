@@ -73,7 +73,7 @@ public class DataModule extends Module {
 
     @Override
     public String getName() {
-        return "datamodule";
+        return "data";
     }
 
     @Override

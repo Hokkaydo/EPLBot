@@ -3,6 +3,7 @@ package com.github.hokkaydo.eplbot.module.data;
 import com.github.hokkaydo.eplbot.Strings;
 import com.github.hokkaydo.eplbot.command.Command;
 import com.github.hokkaydo.eplbot.command.CommandContext;
+import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.Channel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
@@ -111,7 +112,7 @@ public class DataCommand implements Command {
         
         Map<String, Long> namedUserData = new LinkedHashMap<>();
         for (Map.Entry<Long, Long> entry : userData.entrySet()) {
-            net.dv8tion.jda.api.entities.User user = context.author().getJDA().getUserById(entry.getKey());
+            User user = context.author().getJDA().getUserById(entry.getKey());
             String userName = user != null ? user.getName() : "Unknown (" + entry.getKey() + ")";
             namedUserData.put(userName, entry.getValue());
         }
