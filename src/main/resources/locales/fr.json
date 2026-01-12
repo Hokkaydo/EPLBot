@@ -261,7 +261,8 @@
 
 				"type.choice.top_reactions": "Réactions Populaires",
 				"type.choice.active_users": "Utilisateurs Actifs",				
-				"type.choice.active_hours": "Heures Actives",				
+				"type.choice.active_hours": "Heures Actives",
+				"type.choice.status": "Statut du Jour",
 				"duration.description": "Durée en jours (par défaut: 1)"
 			},
 			"no_data": "Aucune donnée disponible pour la durée spécifiée",
@@ -273,10 +274,6 @@
 			"chart_title.active_channels": "Top 10 Canaux les Plus Actifs (%d jours)",
 			"chart_title.active_users": "Top 10 Utilisateurs les Plus Actifs (%d jours)",			
 			"chart_title.active_hours": "Heures les Plus Actives (%d jour(s))"
-		},
-		"status": {
-			"description": "Afficher le résumé d'activité du jour",
-			"help": "Affiche le nombre de joins/leaves, messages, canal actif et réaction du jour"
 		},
 		"disabled": "Commande désactivée",
 		"not_found": "Commande introuvable",

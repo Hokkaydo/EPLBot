@@ -27,6 +27,7 @@ public class DataCommand implements Command {
     private static final String TYPE_TOP_REACTIONS = "top_reactions";
     private static final String TYPE_ACTIVE_USERS = "active_users";
     private static final String TYPE_ACTIVE_HOURS = "active_hours";
+    private static final String TYPE_STATUS = "status";
     
     private final DataRepository repository;
 
@@ -50,6 +51,7 @@ public class DataCommand implements Command {
                 case TYPE_TOP_REACTIONS -> generateTopReactionsReport(context, duration);
                 case TYPE_ACTIVE_USERS -> generateActiveUsersReport(context, duration);
                 case TYPE_ACTIVE_HOURS -> generateActiveHoursReport(context, duration);
+                case TYPE_STATUS -> generateStatusReport(context);
                 default -> context.replyCallbackAction().setContent(Strings.getString("command.data.unknown_report_type")).queue();
             }
         } catch (IOException e) {
@@ -152,6 +154,66 @@ public class DataCommand implements Command {
             .queue();
     }
 
+    private void generateStatusReport(CommandContext context) {
+        Map<String, List<Long>> memberEvents = repository.getMemberEventsOverTime(1);
+        int joins = memberEvents.get("joins").size();
+        int leaves = memberEvents.get("leaves").size();
+        
+        Map<Long, Long> channelData = repository.getMostActiveChannels(1, 1);
+        String mostActiveChannel = "N/A";
+        long channelMessages = 0;
+        if (!channelData.isEmpty()) {
+            Long channelId = channelData.keySet().iterator().next();
+            channelMessages = channelData.get(channelId);
+            Channel channel = context.author().getGuild().getGuildChannelById(channelId);
+            mostActiveChannel = channel != null ? "#" + channel.getName() : "Unknown";
+        }
+        
+        Map<String, Long> reactionData = repository.getTopReactions(1, 1);
+        String mostUsedReaction = "N/A";
+        long reactionCount = 0;
+        if (!reactionData.isEmpty()) {
+            mostUsedReaction = reactionData.keySet().iterator().next();
+            reactionCount = reactionData.get(mostUsedReaction);
+        }
+        
+        Map<Long, Long> allChannels = repository.getMostActiveChannels(1, 1000);
+        long totalMessages = allChannels.values().stream().mapToLong(Long::longValue).sum();
+        
+        int net = joins - leaves;
+        String netSymbol = net >= 0 ? "+" : "-";
+        
+        String status = String.format("""
+            ```diff
+            Server Status
+            -------------
+            Membres:
+            + Arrivées: %d
+            - Départs: %d
+            %s Net: %+d
+
+            Messages:
+              Total: %d
+              Canal le plus actif: %s (%d messages)
+            
+            Réactions:
+              Plus utilisée: %s (%d fois)
+            ```
+            """,
+            joins,
+            leaves,
+            netSymbol,
+            net,
+            totalMessages,
+            mostActiveChannel,
+            channelMessages,
+            mostUsedReaction,
+            reactionCount
+        );
+        
+        context.replyCallbackAction().setContent(status).queue();
+    }
+
     @Override
     public String getName() {
         return "data";
@@ -171,7 +233,8 @@ public class DataCommand implements Command {
             .addChoice(Strings.getString("command.data.option.type.choice.active_channels"), TYPE_ACTIVE_CHANNELS)
             .addChoice(Strings.getString("command.data.option.type.choice.top_reactions"), TYPE_TOP_REACTIONS)
             .addChoice(Strings.getString("command.data.option.type.choice.active_users"), TYPE_ACTIVE_USERS)
-            .addChoice(Strings.getString("command.data.option.type.choice.active_hours"), TYPE_ACTIVE_HOURS);
+            .addChoice(Strings.getString("command.data.option.type.choice.active_hours"), TYPE_ACTIVE_HOURS)
+            .addChoice(Strings.getString("command.data.option.type.choice.status"), TYPE_STATUS);
         
         OptionData durationOption = new OptionData(OptionType.INTEGER, OPTION_DURATION, Strings.getString("command.data.option.duration.description"), false)
             .setMinValue(1)
