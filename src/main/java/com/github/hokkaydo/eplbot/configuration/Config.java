@@ -175,7 +175,8 @@ public class Config {
                 "bookmark", MODULE_DISABLED.get(),
                 "code", MODULE_DISABLED.get(),
                 "helper", MODULE_DISABLED.get(),
-                "menu", MODULE_DISABLED.get()
+                "menu", MODULE_DISABLED.get(),
+                "data", MODULE_DISABLED.get()
         ));
     }
     private static final Map<Long, Map<String, Object>> GUILD_CONFIGURATION = new HashMap<>();

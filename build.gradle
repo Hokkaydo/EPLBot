@@ -18,6 +18,8 @@ var githubApiVersion = "1.315"
 var logbackClassicVersion = '1.5.13'
 var rssReaderVersion = "3.9.3"
 var mockitoVersion = "5.15.2"
+var postgresqlVersion = "42.7.1"
+var jfreeChartVersion = "1.5.5"
 
 repositories {
     mavenCentral()
@@ -41,6 +43,8 @@ dependencies {
     implementation ("org.kohsuke:github-api:${githubApiVersion}")
     implementation("org.jsoup:jsoup:${jsoupVersion}")
     implementation("ch.qos.logback:logback-classic:${logbackClassicVersion}")
+    // JFreeChart for graph generation
+    implementation("org.jfree:jfreechart:${jfreeChartVersion}")
 
 }
 

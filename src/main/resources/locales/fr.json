@@ -252,6 +252,29 @@
 			"help": "Permet de chercher la définition d'un mot en ligne",
 			"not_found": "Définition introuvable.\n:warning: La recherche peut échouer rapidement si vous utilisez plusieurs mots, pensez à n'en utiliser qu'un seul."
 		},
+		"data": {
+			"description": "Voir les statistiques et graphiques d'activité du serveur",
+			"help": "Affiche les statistiques d'activité du serveur avec des graphes",
+			"option": {
+				"type.description": "Type de rapport à générer",
+				"type.choice.active_channels": "Canaux Actifs",
+
+				"type.choice.top_reactions": "Réactions Populaires",
+				"type.choice.active_users": "Utilisateurs Actifs",				
+				"type.choice.active_hours": "Heures Actives",
+				"type.choice.status": "Statut du Jour",
+				"duration.description": "Durée en jours (par défaut: 1)"
+			},
+			"no_data": "Aucune donnée disponible pour la durée spécifiée",
+
+			"no_reaction_data": "Aucune donnée de réaction disponible pour la durée spécifiée",
+			"unknown_report_type": "Type de rapport inconnu !",
+			"error_generating_chart": "Erreur lors de la génération du graphique : %s",
+			"top_reactions_title": "Top 10 Réactions les Plus Utilisées (%d jours)",
+			"chart_title.active_channels": "Top 10 Canaux les Plus Actifs (%d jours)",
+			"chart_title.active_users": "Top 10 Utilisateurs les Plus Actifs (%d jours)",			
+			"chart_title.active_hours": "Heures les Plus Actives (%d jour(s))"
+		},
 		"disabled": "Commande désactivée",
 		"not_found": "Commande introuvable",
 		"wrong_channel": "Canal invalide."
