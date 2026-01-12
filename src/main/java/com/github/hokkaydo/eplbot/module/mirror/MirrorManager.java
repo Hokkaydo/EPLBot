@@ -171,10 +171,7 @@ public class MirrorManager extends ListenerAdapter {
     private void createThread(Long mirrorStarterMessageId, Long mirrorChannelId, ThreadChannel firstThread) {
         TextChannel channel = Main.getJDA().getChannelById(TextChannel.class, mirrorChannelId);
         if(channel == null) return;
-        channel.retrieveMessageById(mirrorStarterMessageId).queue(m -> {
-            if(m.getStartedThread() != null) return;
-            m.createThreadChannel(firstThread.getName()).queue(t -> createLink(firstThread, t));
-        });
+        channel.createThreadChannel(firstThread.getName()).queue(t -> createLink(firstThread, t));
     }
 
     @Override
