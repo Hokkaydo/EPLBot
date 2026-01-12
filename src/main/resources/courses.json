@@ -173,12 +173,12 @@
 				["LGBIO1112", "Introduction au génie biomédical"]
 			],
 			[
-				["LGBIO1113", "Anatomie et physiologie des systèmes"],
-				["LGBIO1115", "Introduction aux neurosciences"]
-			],
-			[
 				["LBIR1250", "Biochimie I : biochimie structurale, enzymologie et métabolisme énergétique"],
 				["LINMA1510", "Linear Control"]
+			],
+			[
+				["LGBIO1113", "Anatomie et physiologie des systèmes"],
+				["LGBIO1115", "Introduction aux neurosciences"]
 			]
 		]
 	}
