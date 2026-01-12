@@ -50,7 +50,7 @@ public class DataGrapher {
         customizeChart(chart);
         
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        ChartUtils.writeChartAsPNG(outputStream, chart, 800, 600);
+        ChartUtils.writeChartAsPNG(outputStream, chart, 1200, 600);
         return outputStream.toByteArray();
     }
 
@@ -81,7 +81,7 @@ public class DataGrapher {
         customizeChart(chart);
         
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        ChartUtils.writeChartAsPNG(outputStream, chart, 800, 600);
+        ChartUtils.writeChartAsPNG(outputStream, chart, 1200, 600);
         return outputStream.toByteArray();
     }
 
@@ -126,7 +126,7 @@ public class DataGrapher {
         customizeChart(chart);
         
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        ChartUtils.writeChartAsPNG(outputStream, chart, 800, 600);
+        ChartUtils.writeChartAsPNG(outputStream, chart, 1600, 600);
         return outputStream.toByteArray();
     }
 
