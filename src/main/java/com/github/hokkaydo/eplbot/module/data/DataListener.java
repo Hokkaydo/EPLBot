@@ -43,7 +43,7 @@ public class DataListener extends ListenerAdapter {
 
         String emoji;
         if (event.getEmoji().getType().equals(net.dv8tion.jda.api.entities.emoji.Emoji.Type.CUSTOM)) {
-            emoji = ":" + event.getEmoji().getName() + ":";
+            emoji = event.getEmoji().getName();
         } else {
             String name = event.getEmoji().getName();
             emoji = name != null ? ":" + name + ":" : event.getEmoji().getAsReactionCode();
