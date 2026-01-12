@@ -258,21 +258,21 @@
 			"option": {
 				"type.description": "Type de rapport à générer",
 				"type.choice.active_channels": "Canaux Actifs",
-				"type.choice.member_events": "Membres Rejoignants",
+
 				"type.choice.top_reactions": "Réactions Populaires",
-				"type.choice.active_users": "Utilisateurs Actifs",
+				"type.choice.active_users": "Utilisateurs Actifs",				
+				"type.choice.active_hours": "Heures Actives",				
 				"duration.description": "Durée en jours (par défaut: 1)"
 			},
 			"no_data": "Aucune donnée disponible pour la durée spécifiée",
-			"no_member_events": "Aucun événement de membre (arrivée/départ) dans la durée spécifiée",
+
 			"no_reaction_data": "Aucune donnée de réaction disponible pour la durée spécifiée",
 			"unknown_report_type": "Type de rapport inconnu !",
 			"error_generating_chart": "Erreur lors de la génération du graphique : %s",
 			"top_reactions_title": "Top 10 Réactions les Plus Utilisées (%d jours)",
-			"member_activity_summary": "Activité des Membres (%d jours)\nTotal Arrivées: %d\nTotal Départs: %d\nChangement Net: %+d",
 			"chart_title.active_channels": "Top 10 Canaux les Plus Actifs (%d jours)",
-			"chart_title.active_users": "Top 10 Utilisateurs les Plus Actifs (%d jours)",
-			"chart_title.member_events": "Arrivées/Départs de Membres (%d jours)"
+			"chart_title.active_users": "Top 10 Utilisateurs les Plus Actifs (%d jours)",			
+			"chart_title.active_hours": "Heures les Plus Actives (%d jour(s))"
 		},
 		"disabled": "Commande désactivée",
 		"not_found": "Commande introuvable",

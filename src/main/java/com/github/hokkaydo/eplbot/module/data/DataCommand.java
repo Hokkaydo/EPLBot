@@ -23,9 +23,9 @@ public class DataCommand implements Command {
     private static final String OPTION_TYPE = "type";
     private static final String OPTION_DURATION = "duration";
     private static final String TYPE_ACTIVE_CHANNELS = "active_channels";
-    private static final String TYPE_MEMBER_EVENTS = "member_events";
     private static final String TYPE_TOP_REACTIONS = "top_reactions";
     private static final String TYPE_ACTIVE_USERS = "active_users";
+    private static final String TYPE_ACTIVE_HOURS = "active_hours";
     
     private final DataRepository repository;
 
@@ -46,9 +46,9 @@ public class DataCommand implements Command {
         try {
             switch (type) {
                 case TYPE_ACTIVE_CHANNELS -> generateActiveChannelsReport(context, duration);
-                case TYPE_MEMBER_EVENTS -> generateMemberEventsReport(context, duration);
                 case TYPE_TOP_REACTIONS -> generateTopReactionsReport(context, duration);
                 case TYPE_ACTIVE_USERS -> generateActiveUsersReport(context, duration);
+                case TYPE_ACTIVE_HOURS -> generateActiveHoursReport(context, duration);
                 default -> context.replyCallbackAction().setContent(Strings.getString("command.data.unknown_report_type")).queue();
             }
         } catch (IOException e) {
@@ -79,33 +79,6 @@ public class DataCommand implements Command {
         context.replyCallbackAction()
             .setContent(String.format(Strings.getString("command.data.chart_title.active_channels"), durationDays))
             .addFiles(FileUpload.fromData(chartImage, "active_channels.png"))
-            .queue();
-    }
-
-    private void generateMemberEventsReport(CommandContext context, int durationDays) throws IOException {
-        Map<String, List<Long>> memberEvents = repository.getMemberEventsOverTime(durationDays);
-        List<Long> joins = memberEvents.get("joins");
-        List<Long> leaves = memberEvents.get("leaves");
-        
-        if (joins.isEmpty() && leaves.isEmpty()) {
-            context.replyCallbackAction().setContent(Strings.getString("command.data.no_member_events")).queue();
-            return;
-        }
-        
-        byte[] chartImage = DataGrapher.generateMemberEventsChart(
-            joins, 
-            leaves, 
-            String.format(Strings.getString("command.data.chart_title.member_events"), durationDays)
-        );
-        
-        String summary = String.format(
-            Strings.getString("command.data.member_activity_summary"),
-            durationDays, joins.size(), leaves.size(), joins.size() - leaves.size()
-        );
-        
-        context.replyCallbackAction()
-            .setContent(summary)
-            .addFiles(FileUpload.fromData(chartImage, "member_events.png"))
             .queue();
     }
 
@@ -154,6 +127,30 @@ public class DataCommand implements Command {
             .queue();
     }
 
+    private void generateActiveHoursReport(CommandContext context, int durationDays) throws IOException {
+        Map<Integer, Long> hourData = repository.getMostActiveHours(durationDays);
+        
+        if (hourData.values().stream().allMatch(v -> v == 0)) {
+            context.replyCallbackAction().setContent(Strings.getString("command.data.no_data")).queue();
+            return;
+        }
+        
+        Map<String, Long> namedHourData = new LinkedHashMap<>();
+        for (Map.Entry<Integer, Long> entry : hourData.entrySet()) {
+            namedHourData.put(String.format("%02d:00", entry.getKey()), entry.getValue());
+        }
+        
+        byte[] chartImage = DataGrapher.generateHourlyActivityChart(
+            namedHourData, 
+            String.format(Strings.getString("command.data.chart_title.active_hours"), durationDays)
+        );
+        
+        context.replyCallbackAction()
+            .setContent(String.format(Strings.getString("command.data.chart_title.active_hours"), durationDays))
+            .addFiles(FileUpload.fromData(chartImage, "active_hours.png"))
+            .queue();
+    }
+
     @Override
     public String getName() {
         return "data";
@@ -171,9 +168,9 @@ public class DataCommand implements Command {
         
         OptionData typeOption = new OptionData(OptionType.STRING, OPTION_TYPE, Strings.getString("command.data.option.type.description"), true)
             .addChoice(Strings.getString("command.data.option.type.choice.active_channels"), TYPE_ACTIVE_CHANNELS)
-            .addChoice(Strings.getString("command.data.option.type.choice.member_events"), TYPE_MEMBER_EVENTS)
             .addChoice(Strings.getString("command.data.option.type.choice.top_reactions"), TYPE_TOP_REACTIONS)
-            .addChoice(Strings.getString("command.data.option.type.choice.active_users"), TYPE_ACTIVE_USERS);
+            .addChoice(Strings.getString("command.data.option.type.choice.active_users"), TYPE_ACTIVE_USERS)
+            .addChoice(Strings.getString("command.data.option.type.choice.active_hours"), TYPE_ACTIVE_HOURS);
         
         OptionData durationOption = new OptionData(OptionType.INTEGER, OPTION_DURATION, Strings.getString("command.data.option.duration.description"), false)
             .setMinValue(1)

@@ -24,6 +24,37 @@ import java.util.Map;
 public class DataGrapher {
 
     /**
+     * Generates a line chart for hourly activity
+     * @param hourData map of hours (formatted as "HH:00") to message counts
+     * @param title the title of the chart
+     * @return byte array of the PNG image
+     */
+    public static byte[] generateHourlyActivityChart(Map<String, Long> hourData, String title) throws IOException {
+        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+        
+        for (Map.Entry<String, Long> entry : hourData.entrySet()) {
+            dataset.addValue(entry.getValue(), "Messages", entry.getKey());
+        }
+        
+        JFreeChart chart = ChartFactory.createLineChart(
+            title,
+            "Hour",
+            "Message Count",
+            dataset,
+            PlotOrientation.VERTICAL,
+            false,
+            true,
+            false
+        );
+        
+        customizeChart(chart);
+        
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        ChartUtils.writeChartAsPNG(outputStream, chart, 1200, 600);
+        return outputStream.toByteArray();
+    }
+
+    /**
      * Generates a line chart for user activity
      * @param userData map of user names to message counts
      * @param title the title of the chart
@@ -126,7 +157,7 @@ public class DataGrapher {
         customizeChart(chart);
         
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        ChartUtils.writeChartAsPNG(outputStream, chart, 1600, 600);
+        ChartUtils.writeChartAsPNG(outputStream, chart, 1600, 800);
         return outputStream.toByteArray();
     }
 
@@ -153,6 +184,9 @@ public class DataGrapher {
             
             plot.getDomainAxis().setLabelPaint(textColor);
             plot.getDomainAxis().setTickLabelPaint(textColor);
+            plot.getDomainAxis().setCategoryLabelPositions(
+                org.jfree.chart.axis.CategoryLabelPositions.UP_45
+            );
             plot.getRangeAxis().setLabelPaint(textColor);
             plot.getRangeAxis().setTickLabelPaint(textColor);
             

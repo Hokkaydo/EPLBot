@@ -42,6 +42,37 @@ public class DataRepository {
     }
 
     /**
+     * Get the most active hours based on message count
+     * @param durationDays the duration in days to look back
+     * @return a map of hours (0-23) to message counts
+     */
+    public Map<Integer, Long> getMostActiveHours(int durationDays) {
+        long cutoffTimestamp = Instant.now().getEpochSecond() - (durationDays * 86400L);
+        
+        List<Map<String, Object>> results = jdbcTemplate.queryForList(
+            "SELECT timestamp FROM events " +
+            "WHERE event_type = 'MESSAGE_RECEIVED' AND timestamp > ?",
+            cutoffTimestamp
+        );
+
+        Map<Integer, Long> hourCounts = new HashMap<>();
+        for (int i = 0; i < 24; i++) {
+            hourCounts.put(i, 0L);
+        }
+        
+        for (Map<String, Object> row : results) {
+            Long timestamp = ((Number) row.get("timestamp")).longValue();
+            java.time.ZonedDateTime dateTime = java.time.ZonedDateTime.ofInstant(
+                Instant.ofEpochSecond(timestamp),
+                java.time.ZoneId.systemDefault()
+            );
+            int hour = dateTime.getHour();
+            hourCounts.put(hour, hourCounts.get(hour) + 1);
+        }
+        return hourCounts;
+    }
+
+    /**
      * Get member join/leave events over time
      * @param durationDays the duration in days to look back
      * @return a map with "joins" and "leaves" lists containing timestamps
