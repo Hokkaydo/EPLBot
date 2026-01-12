@@ -274,6 +274,10 @@
 			"chart_title.active_users": "Top 10 Utilisateurs les Plus Actifs (%d jours)",			
 			"chart_title.active_hours": "Heures les Plus Actives (%d jour(s))"
 		},
+		"status": {
+			"description": "Afficher le résumé d'activité du jour",
+			"help": "Affiche le nombre de joins/leaves, messages, canal actif et réaction du jour"
+		},
 		"disabled": "Commande désactivée",
 		"not_found": "Commande introuvable",
 		"wrong_channel": "Canal invalide."

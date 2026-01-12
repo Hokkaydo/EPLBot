@@ -22,6 +22,7 @@ import com.github.hokkaydo.eplbot.module.notice.NoticeModule;
 import com.github.hokkaydo.eplbot.module.quote.QuoteModule;
 import com.github.hokkaydo.eplbot.module.ratio.RatioModule;
 import com.github.hokkaydo.eplbot.module.rss.RssModule;
+import com.github.hokkaydo.eplbot.module.status.StatusModule;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
@@ -98,7 +99,8 @@ public class Main {
             RatioModule.class,
             ChristmasModule.class,
             EPLCommandModule.class,
-            DataModule.class
+            DataModule.class,
+            StatusModule.class
     );
 
     public static void main(String[] args) throws InterruptedException, IOException {
