@@ -7,9 +7,9 @@ import com.github.hokkaydo.eplbot.module.mirror.repository.MirrorLinkRepository;
 import com.github.hokkaydo.eplbot.module.mirror.repository.MirrorLinkRepositorySQLite;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageType;
+import net.dv8tion.jda.api.entities.channel.attribute.IThreadContainer;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
-import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
 import net.dv8tion.jda.api.events.channel.ChannelDeleteEvent;
 import net.dv8tion.jda.api.events.message.MessageDeleteEvent;
@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -35,79 +36,103 @@ public class MirrorManager extends ListenerAdapter {
     private final List<MirroredMessages> mirroredMessages = new ArrayList<>();
     private final MirrorLinkRepository mirrorLinkRepository;
 
-    private final List<Long> threadWaitingFirstMirror = new ArrayList<>();
+    private final List<Long> newThreadWithParentMirrors = new ArrayList<>();
 
     public MirrorManager() {
         runPeriodicCleaner();
         this.mirrorLinkRepository = new MirrorLinkRepositorySQLite(DatabaseManager.getDataSource());
     }
 
+    /**
+     * Create a mirror link between two channels
+     * @param first the first channel
+     * @param second the second channel
+     */
     void createLink(GuildMessageChannel first, GuildMessageChannel second) {
-        if(existsLink(first, second)) return;
+        if (existsLink(first, second)) return;
         mirrorLinkRepository.create(new MirrorLink(first.getIdLong(), second.getIdLong()));
     }
 
+    /**
+     * Run a periodic cleaner to remove outdated mirrored messages, to avoid memory leaks
+     */
     private void runPeriodicCleaner() {
         Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> mirroredMessages.removeIf(MirroredMessages::isOutdated), 0, 1, TimeUnit.HOURS);
     }
 
+    /**
+     * Get all mirror links for a given channel
+     * @param channel the channel
+     * @return a {@link List<MirrorLink>} of mirror links
+     */
     List<MirrorLink> getLinks(GuildMessageChannel channel) {
         return mirrorLinkRepository.readById(channel.getIdLong());
     }
 
 
+    /**
+     * Check if a mirror link exists between two channels
+     * @param first the first channel
+     * @param second the second channel
+     * @return true if the link exists, false otherwise
+     */
     boolean existsLink(GuildMessageChannel first, GuildMessageChannel second) {
         return mirrorLinkRepository.exists(first.getIdLong(), second.getIdLong());
     }
 
+    /**
+     * Destroy a mirror link between two channels
+     * @param first the first channel
+     * @param second the second channel
+     */
     void destroyLink(GuildMessageChannel first, GuildMessageChannel second) {
         mirrorLinkRepository.deleteByIds(first.getIdLong(), second.getIdLong());
     }
 
     @Override
     public void onMessageReceived(@NotNull MessageReceivedEvent event) {
-        if(threadWaitingFirstMirror.contains(event.getChannel().getIdLong())) {
-            threadWaitingFirstMirror.remove(event.getChannel().getIdLong());
-            sendMirror(event.getMessage());
-            return;
-        }
+        if (!canBeMirrored(event)) return;
 
-        if(!canBeMirrored(event)) return;
-
-        // If thread starter, create mirror thread
-        if(event.getMessage().getType().equals(MessageType.THREAD_STARTER_MESSAGE) || event.getMessage().getType().equals(MessageType.THREAD_CREATED)) {
+        // Thread started with a parent message
+        if (event.getMessage().getType().equals(MessageType.THREAD_STARTER_MESSAGE)) {
             ThreadChannel threadChannel = event.getMessage().getChannel().asThreadChannel();
             Message parentMessage = threadChannel.retrieveParentMessage().complete();
+            newThreadWithParentMirrors.add(threadChannel.getIdLong());
             mirroredMessages.stream()
                     .filter(m -> m.match(parentMessage.getIdLong()))
                     .flatMap(MirroredMessages::getMirrors)
                     .filter(m -> !m.isThreadOwner())
-                    .forEach(mirroredMessage -> {
-                        GuildChannel channel = Main.getJDA().getGuildChannelById(mirroredMessage.getChannelId());
-                        if(!(channel instanceof GuildMessageChannel)) return;
-                        createThread(
-                                mirroredMessage.isMirror() ? mirroredMessage.getMirrorMessageId() : mirroredMessage.getOriginalMessageId(),
-                                mirroredMessage.getChannelId(),
-                                threadChannel
-                        );
-                        mirroredMessage.setThreadOwner();
-                        threadWaitingFirstMirror.add(threadChannel.getIdLong());
-                    });
+                    .map(mirroredMessage ->
+                                 createThread(
+                                         mirroredMessage.isMirror() ? mirroredMessage.getMirrorMessageId() : mirroredMessage.getOriginalMessageId(),
+                                         mirroredMessage.getChannelId(),
+                                         threadChannel
+                                 ).thenAccept(_ -> {
+                                     mirroredMessage.setThreadOwner();
+                                     sendMirror(event.getMessage());
+                                 })
+                    ).reduce((a, b) -> {
+                        a.thenRun(b::join);
+                        return a;
+                    }).ifPresent(CompletableFuture::join);
             return;
         }
+        createNoParentThreadIfNeeded(event);
         sendMirror(event.getMessage());
     }
 
     /**
      * Check if an event can be used as a mirror starter
+     *
      * @param event the {@link MessageReceivedEvent}
      * @return true if the event holds a message that can be mirrored, false otherwise
-     * */
+     *
+     */
     private boolean canBeMirrored(MessageReceivedEvent event) {
-        if(event.getMessage().isEphemeral()) return false;
-        if(event.getMessage().getType().isSystem()) return false;
-        if(!event.getChannel().getType().isGuild()) return false;
-        if(event.isWebhookMessage() && event.getMessage().getType() != MessageType.SLASH_COMMAND) return false;
+        if (event.getMessage().isEphemeral()) return false;
+        if (event.getMessage().getType().isSystem()) return false;
+        if (!event.getChannel().getType().isGuild()) return false;
+        if (event.isWebhookMessage() && event.getMessage().getType() != MessageType.SLASH_COMMAND) return false;
 
         // do not mirror already mirrored messages
         return mirroredMessages.stream()
@@ -116,9 +141,42 @@ public class MirrorManager extends ListenerAdapter {
     }
 
     /**
+     * Create a mirror thread if needed (when a message is sent in a thread without parent channel)
+     *
+     * @param event the {@link MessageReceivedEvent}
+     */
+    private void createNoParentThreadIfNeeded(MessageReceivedEvent event) {
+        if (!event.getChannel().getType().isThread()) return;
+        ThreadChannel threadChannel = event.getChannel().asThreadChannel();
+
+        // If already linked as mirror thread, do nothing
+        if (!mirrorLinkRepository.readById(threadChannel.getIdLong()).isEmpty()) return;
+
+        // Thread created on a parent messages send two events, we want to ignore the second one
+        if (newThreadWithParentMirrors.contains(threadChannel.getIdLong())) {
+            newThreadWithParentMirrors.remove(threadChannel.getIdLong());
+            return;
+        }
+        if (!(threadChannel.getParentChannel() instanceof GuildMessageChannel guildChannel)) return;
+
+        mirrorLinkRepository.readById(threadChannel.getParentChannel().getIdLong())
+                .stream()
+                .map(link -> link.other(guildChannel))
+                .filter(IThreadContainer.class::isInstance)
+                .map(container -> ((IThreadContainer) container).createThreadChannel(threadChannel.getName(), !threadChannel.isPublic()).submit())
+                .map(a -> a.thenAccept(t -> createLink(threadChannel, t)))
+                .reduce((a, b) -> {
+                    a.thenRun(b::join);
+                    return a;
+                })
+                .ifPresent(CompletableFuture::join);
+    }
+
+    /**
      * Mirror a given message
+     *
      * @param originalMessage the message to mirror
-     * */
+     */
     private void sendMirror(Message originalMessage) {
         GuildMessageChannel originalChannel = originalMessage.getGuildChannel();
         boolean reply = originalMessage.getType().equals(MessageType.INLINE_REPLY) && originalMessage.getReferencedMessage() != null;
@@ -128,8 +186,9 @@ public class MirrorManager extends ListenerAdapter {
             List<MirrorLink> toDelete = new ArrayList<>();
             mirrorLinkRepository.readAll()
                     .stream()
+                    // Clean invalid links
                     .map(link -> {
-                        if(link.first() == null || link.second() == null) {
+                        if (link.first() == null || link.second() == null) {
                             toDelete.add(link);
                             return null;
                         }
@@ -142,7 +201,7 @@ public class MirrorManager extends ListenerAdapter {
                         other.getGuild().loadMembers().onSuccess(mirrorMembers -> {
                             MirroredMessage mirroredMessage = new MirroredMessage(originalMessage, other, mirrorMembers);
                             Consumer<Message> sentMessage = m -> messages.mirrored.put(m.getIdLong(), mirroredMessage);
-                            if(reply) {
+                            if (reply) {
                                 mirroredMessages.stream()
                                         // Get a stream of message's group related
                                         // (original or mirror ==) to the referenced message
@@ -168,12 +227,19 @@ public class MirrorManager extends ListenerAdapter {
 
     private record Tuple2<A, B>(A a, B b){}
 
-    private void createThread(Long mirrorStarterMessageId, Long mirrorChannelId, ThreadChannel firstThread) {
+    /**
+     * Create a thread with parent message in the mirror channel based on a message in the original channel
+     * @param mirrorStarterMessageId the id of the message that started the thread in the mirror channel
+     * @param mirrorChannelId the id of the mirror channel
+     * @param firstThread the thread channel created in the original channel
+     * @return a {@link CompletableFuture<Void>} completed when the thread is created, allowing to chain actions after
+     */
+    private CompletableFuture<Void> createThread(Long mirrorStarterMessageId, Long mirrorChannelId, ThreadChannel firstThread) {
         TextChannel channel = Main.getJDA().getChannelById(TextChannel.class, mirrorChannelId);
-        if(channel == null) return;
-        channel.retrieveMessageById(mirrorStarterMessageId).queue(m -> {
-            if(m.getStartedThread() != null) return;
-            m.createThreadChannel(firstThread.getName()).queue(t -> createLink(firstThread, t));
+        if(channel == null) return CompletableFuture.completedFuture(null);
+        return channel.retrieveMessageById(mirrorStarterMessageId).submit().thenCompose(m -> {
+            if(m.getStartedThread() != null) return CompletableFuture.completedFuture(null);
+            return m.createThreadChannel(firstThread.getName()).submit().thenAccept(t -> createLink(firstThread, t));
         });
     }
 
@@ -203,15 +269,25 @@ public class MirrorManager extends ListenerAdapter {
 
     private static class MirroredMessages {
 
-        // Original message (sent by real user)
+        /** Original message (sent by real user) */
         private final MirroredMessage initial;
-        // Key: messageId of MirroredMessage, value: a mirror of "initial"
+        /**
+         * @key: messageId of original {@link MirroredMessage}
+         * @value: {@link MirroredMessages} containing mirrors of the original message
+        */
         private final Map<Long, MirroredMessage> mirrored;
-        // Temp list used to avoid cycling update in "update" function
+        /** Temp list used to avoid cycling update in "update" function */
         private final List<Long> updatedIds = new ArrayList<>();
-        // TTL to avoid too much memory consumption
+        /** TTL to avoid too much memory consumption */
         private final Instant outdatedTime;
 
+        /**
+         * Constructor
+         *
+         * @param initial the initial message
+         * @param mirrored the mirrored messages
+         *
+         */
         private MirroredMessages(MirroredMessage initial, Map<Long, MirroredMessage> mirrored) {
             this.initial = initial;
             this.mirrored = mirrored;
@@ -220,9 +296,10 @@ public class MirrorManager extends ListenerAdapter {
 
         /**
          * Check if given messageId is associated to this group
+         *
          * @param messageId message's id to check belonging
          * @return true if messageId is initial' id or an initial's mirror's id
-         * */
+         */
         boolean match(Long messageId) {
             return initial.getOriginalMessageId().equals(messageId) || mirrored.containsKey(messageId);
         }
@@ -230,12 +307,12 @@ public class MirrorManager extends ListenerAdapter {
         /**
          * Update all mirrored messages based on given one
          * @param message the message to update on
-         * */
+         */
         void update(Message message) {
-            if(updatedIds.contains(message.getIdLong())) return;
+            if (updatedIds.contains(message.getIdLong())) return;
             for (Map.Entry<Long, MirroredMessage> mirroredMessage : getMessages().entrySet()) {
-                if(mirroredMessage.getKey() == message.getIdLong()) continue;
-                if(mirroredMessage.getValue().isMirror())
+                if (mirroredMessage.getKey() == message.getIdLong()) continue;
+                if (mirroredMessage.getValue().isMirror())
                     updatedIds.add(mirroredMessage.getValue().getMirrorMessageId());
                 mirroredMessage.getValue().update(message);
             }
@@ -245,7 +322,7 @@ public class MirrorManager extends ListenerAdapter {
         /**
          * Get all messages
          * @return a {@link Map} containing messages ids mapped with messages (initial and mirrors)
-         * */
+         */
         Map<Long, MirroredMessage> getMessages() {
             Map<Long, MirroredMessage> map = new HashMap<>(mirrored);
             map.put(initial.getOriginalMessageId(), initial);
@@ -255,7 +332,7 @@ public class MirrorManager extends ListenerAdapter {
         /**
          * Check if the TTL is outdated
          * @return true if the TTL is outdated, false otherwise
-         * */
+         */
         boolean isOutdated() {
             return Instant.now().isAfter(outdatedTime);
         }
@@ -263,7 +340,7 @@ public class MirrorManager extends ListenerAdapter {
         /**
          * Get all mirrored messages of this group
          * @return a {@link Stream<MirroredMessage>} of mirrored messages
-         * */
+         */
         public Stream<MirroredMessage> getMirrors() {
             return getMessages().values().stream();
         }
