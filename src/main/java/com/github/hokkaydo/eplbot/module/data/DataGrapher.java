@@ -13,8 +13,7 @@ import org.jfree.data.time.Day;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
+import java.awt.*;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.Instant;
@@ -23,6 +22,9 @@ import java.util.List;
 import java.util.Map;
 
 public class DataGrapher {
+
+    // Private constructor to prevent instantiation
+    private DataGrapher() {}
 
     /**
      * Generates a line chart for hourly activity
@@ -125,26 +127,13 @@ public class DataGrapher {
      * @return byte array of the PNG image
      */
     public static byte[] generateMemberEventsChart(List<Long> joins, List<Long> leaves, String title) throws IOException {
-        TimeSeries joinSeries = new TimeSeries("Joins");
-        TimeSeries leaveSeries = new TimeSeries("Leaves");
-        
-        // Count joins and leaves by day
-        for (Long timestamp : joins) {
-            Date date = Date.from(Instant.ofEpochSecond(timestamp));
-            Day day = new Day(date);
-            joinSeries.addOrUpdate(day, joinSeries.getValue(day) == null ? 1 : joinSeries.getValue(day).intValue() + 1);
-        }
-        
-        for (Long timestamp : leaves) {
-            Date date = Date.from(Instant.ofEpochSecond(timestamp));
-            Day day = new Day(date);
-            leaveSeries.addOrUpdate(day, leaveSeries.getValue(day) == null ? 1 : leaveSeries.getValue(day).intValue() + 1);
-        }
-        
+        TimeSeries joinSeries = buildTimeSerie("Joins", joins);
+        TimeSeries leaveSeries = buildTimeSerie("Leaves", leaves);
+
         TimeSeriesCollection dataset = new TimeSeriesCollection();
         dataset.addSeries(joinSeries);
         dataset.addSeries(leaveSeries);
-        
+
         JFreeChart chart = ChartFactory.createTimeSeriesChart(
             title,
             "Date",
@@ -154,14 +143,23 @@ public class DataGrapher {
             true,
             false
         );
-        
+
         customizeChart(chart);
-        
+
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         ChartUtils.writeChartAsPNG(outputStream, chart, 1600, 800);
         return outputStream.toByteArray();
     }
 
+    private static TimeSeries buildTimeSerie(String name, List<Long> timestamps) {
+        TimeSeries series = new TimeSeries(name);
+        for (Long timestamp : timestamps) {
+            Date date = Date.from(Instant.ofEpochSecond(timestamp));
+            Day day = new Day(date);
+            series.addOrUpdate(day, series.getValue(day) == null ? 1 : series.getValue(day).intValue() + 1);
+        }
+        return series;
+    }
 
     private static void customizeChart(JFreeChart chart) {
         Color darkBackground = new Color(45, 45, 48);
@@ -176,8 +174,7 @@ public class DataGrapher {
             chart.getTitle().setPaint(textColor);
         }
         
-        if (chart.getPlot() instanceof CategoryPlot) {
-            CategoryPlot plot = (CategoryPlot) chart.getPlot();
+        if (chart.getPlot() instanceof CategoryPlot plot) {
             plot.setBackgroundPaint(plotBackground);
             plot.setDomainGridlinePaint(gridColor);
             plot.setRangeGridlinePaint(gridColor);
@@ -195,8 +192,7 @@ public class DataGrapher {
             renderer.setSeriesPaint(0, barColor);
             renderer.setSeriesStroke(0, new BasicStroke(2.0f));
             renderer.setSeriesShapesVisible(0, true);
-        } else if (chart.getPlot() instanceof XYPlot) {
-            XYPlot plot = (XYPlot) chart.getPlot();
+        } else if (chart.getPlot() instanceof XYPlot plot) {
             plot.setBackgroundPaint(plotBackground);
             plot.setDomainGridlinePaint(gridColor);
             plot.setRangeGridlinePaint(gridColor);
@@ -219,5 +215,4 @@ public class DataGrapher {
             chart.getLegend().setItemPaint(textColor);
         }
     }
-
 }

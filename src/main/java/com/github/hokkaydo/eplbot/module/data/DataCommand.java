@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Supplier;
 
 public class DataCommand implements Command {
@@ -60,7 +61,7 @@ public class DataCommand implements Command {
     }
 
     private void generateActiveChannelsReport(CommandContext context, int durationDays) throws IOException {
-        Map<Long, Long> channelData = repository.getMostActiveChannels(durationDays, 10);
+        Set<DataRepository.ActiveChannel> channelData = repository.getMostActiveChannels(durationDays, 10);
         
         if (channelData.isEmpty()) {
             context.replyCallbackAction().setContent(Strings.getString("command.data.no_data")).queue();
@@ -68,10 +69,10 @@ public class DataCommand implements Command {
         }
         
         Map<String, Long> namedChannelData = new LinkedHashMap<>();
-        for (Map.Entry<Long, Long> entry : channelData.entrySet()) {
-            Channel channel = context.author().getGuild().getGuildChannelById(entry.getKey());
-            String channelName = channel != null ? channel.getName() : "Unknown (" + entry.getKey() + ")";
-            namedChannelData.put(channelName, entry.getValue());
+        for (DataRepository.ActiveChannel activeChannel : channelData) {
+            Channel channel = context.author().getGuild().getGuildChannelById(activeChannel.channelId());
+            String channelName = channel != null ? channel.getName() : "Unknown (" + activeChannel.channelId() + ")";
+            namedChannelData.put(channelName, activeChannel.messageCount());
         }
         
         byte[] chartImage = DataGrapher.generateChannelActivityChart(
@@ -86,7 +87,7 @@ public class DataCommand implements Command {
     }
 
     private void generateTopReactionsReport(CommandContext context, int durationDays) throws IOException {
-        Map<String, Long> reactionData = repository.getTopReactions(durationDays, 10);
+        Set<DataRepository.ReactionCount> reactionData = repository.getTopReactions(durationDays, 10);
         
         if (reactionData.isEmpty()) {
             context.replyCallbackAction().setContent(Strings.getString("command.data.no_reaction_data")).queue();
@@ -95,8 +96,8 @@ public class DataCommand implements Command {
         
         StringBuilder summary = new StringBuilder(String.format(Strings.getString("command.data.top_reactions_title"), durationDays) + "\n\n");
         int rank = 1;
-        for (Map.Entry<String, Long> entry : reactionData.entrySet()) {
-            summary.append(String.format("%d. %s - %d uses\n", rank++, entry.getKey(), entry.getValue()));
+        for (DataRepository.ReactionCount reactionCount : reactionData) {
+            summary.append(String.format("%d. %s - %d uses\n", rank++, reactionCount.reactionEmoji(), reactionCount.count()));
         }
         
         context.replyCallbackAction()
@@ -105,7 +106,7 @@ public class DataCommand implements Command {
     }
 
     private void generateActiveUsersReport(CommandContext context, int durationDays) throws IOException {
-        Map<Long, Long> userData = repository.getMostActiveUsers(durationDays, 10);
+        Set<DataRepository.ActiveUser> userData = repository.getMostActiveUsers(durationDays, 10);
         
         if (userData.isEmpty()) {
             context.replyCallbackAction().setContent(Strings.getString("command.data.no_data")).queue();
@@ -113,10 +114,10 @@ public class DataCommand implements Command {
         }
         
         Map<String, Long> namedUserData = new LinkedHashMap<>();
-        for (Map.Entry<Long, Long> entry : userData.entrySet()) {
-            User user = context.author().getJDA().getUserById(entry.getKey());
-            String userName = user != null ? user.getName() : "Unknown (" + entry.getKey() + ")";
-            namedUserData.put(userName, entry.getValue());
+        for (DataRepository.ActiveUser activeUser: userData) {
+            User user = context.author().getJDA().getUserById(activeUser.userId());
+            String userName = user != null ? user.getName() : "Unknown (" + activeUser.userId() + ")";
+            namedUserData.put(userName, activeUser.messageCount());
         }
         
         byte[] chartImage = DataGrapher.generateUserActivityChart(
@@ -131,16 +132,16 @@ public class DataCommand implements Command {
     }
 
     private void generateActiveHoursReport(CommandContext context, int durationDays) throws IOException {
-        Map<Integer, Long> hourData = repository.getMostActiveHours(durationDays);
+        Set<DataRepository.ActiveHour> hourData = repository.getMostActiveHours(durationDays);
         
-        if (hourData.values().stream().allMatch(v -> v == 0)) {
+        if (hourData.stream().allMatch(h -> h.messageCount() == 0)) {
             context.replyCallbackAction().setContent(Strings.getString("command.data.no_data")).queue();
             return;
         }
         
         Map<String, Long> namedHourData = new LinkedHashMap<>();
-        for (Map.Entry<Integer, Long> entry : hourData.entrySet()) {
-            namedHourData.put(String.format("%02d:00", entry.getKey()), entry.getValue());
+        for (DataRepository.ActiveHour activeHour : hourData) {
+            namedHourData.put(String.format("%02d:00", activeHour.hour()), activeHour.messageCount());
         }
         
         byte[] chartImage = DataGrapher.generateHourlyActivityChart(
@@ -159,26 +160,27 @@ public class DataCommand implements Command {
         int joins = memberEvents.get("joins").size();
         int leaves = memberEvents.get("leaves").size();
         
-        Map<Long, Long> channelData = repository.getMostActiveChannels(1, 1);
+        Set<DataRepository.ActiveChannel> channelData = repository.getMostActiveChannels(1, 1);
         String mostActiveChannel = "N/A";
         long channelMessages = 0;
         if (!channelData.isEmpty()) {
-            Long channelId = channelData.keySet().iterator().next();
-            channelMessages = channelData.get(channelId);
-            Channel channel = context.author().getGuild().getGuildChannelById(channelId);
+            DataRepository.ActiveChannel activeChannel = channelData.stream().findFirst().orElseThrow();
+            channelMessages = activeChannel.messageCount();
+            Channel channel = context.author().getGuild().getGuildChannelById(activeChannel.channelId());
             mostActiveChannel = channel != null ? "#" + channel.getName() : "Unknown";
         }
         
-        Map<String, Long> reactionData = repository.getTopReactions(1, 1);
+        Set<DataRepository.ReactionCount> reactionData = repository.getTopReactions(1, 1);
         String mostUsedReaction = "N/A";
         long reactionCount = 0;
         if (!reactionData.isEmpty()) {
-            mostUsedReaction = reactionData.keySet().iterator().next();
-            reactionCount = reactionData.get(mostUsedReaction);
+            DataRepository.ReactionCount reaction = reactionData.stream().findFirst().orElseThrow();
+            mostUsedReaction = reaction.reactionEmoji();
+            reactionCount = reaction.count();
         }
         
-        Map<Long, Long> allChannels = repository.getMostActiveChannels(1, 1000);
-        long totalMessages = allChannels.values().stream().mapToLong(Long::longValue).sum();
+        Set<DataRepository.ActiveChannel> allChannels = repository.getMostActiveChannels(1, 1000);
+        long totalMessages = allChannels.stream().mapToLong(DataRepository.ActiveChannel::messageCount).sum();
         
         int net = joins - leaves;
         String netSymbol = net >= 0 ? "+" : "-";

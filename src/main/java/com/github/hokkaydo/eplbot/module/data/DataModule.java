@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 
 public class DataModule extends Module {
 
-    private static final boolean AUTO_CLEANUP_ENABLED = true;
+    private static boolean autoCleanUpStarted = false;
     private static final int DATA_RETENTION_DAYS = 365; // Keep data for 1 year
     private static final int CLEANUP_INTERVAL_HOURS = 24; // Run cleanup daily
     
@@ -32,19 +32,31 @@ public class DataModule extends Module {
         dataRepository = new DataRepository(DatabaseManager.getDataSource());
         listener = new DataListener(getGuildId(), dataWriter);
         dataCommand = new DataCommand(dataRepository);
-        
-        if (AUTO_CLEANUP_ENABLED) {
-            startCleanupTask();
-        }
     }
 
-    private void startCleanupTask() {
-        cleanupTask = cleanupScheduler.scheduleAtFixedRate(
-            this::performCleanup,
-            24,
-            CLEANUP_INTERVAL_HOURS,
-            TimeUnit.HOURS
-        );
+    @Override
+    public void enable() {
+        super.enable();
+        startCleanupTask();
+    }
+
+    @Override
+    public void disable() {
+        super.disable();
+        stopCleanupTask();
+    }
+
+    /**
+     * Stop the cleanup task when module is disabled
+     */
+    public void stopCleanupTask() {
+        if (!autoCleanUpStarted) return;
+
+        if (cleanupTask != null && !cleanupTask.isCancelled()) {
+            cleanupTask.cancel(true);
+        }
+        cleanupScheduler.shutdown();
+        autoCleanUpStarted = false;
     }
 
     private void performCleanup() {
@@ -60,14 +72,16 @@ public class DataModule extends Module {
         }
     }
 
-    /**
-     * Stop the cleanup task when module is disabled
-     */
-    public void stopCleanupTask() {
-        if (cleanupTask != null && !cleanupTask.isCancelled()) {
-            cleanupTask.cancel(true);
-        }
-        cleanupScheduler.shutdown();
+    private void startCleanupTask() {
+        if (DataModule.autoCleanUpStarted) return;
+
+        DataModule.autoCleanUpStarted = true;
+        cleanupTask = cleanupScheduler.scheduleAtFixedRate(
+            this::performCleanup,
+            24,
+            CLEANUP_INTERVAL_HOURS,
+            TimeUnit.HOURS
+        );
     }
 
 
