@@ -6,6 +6,7 @@ import javax.sql.DataSource;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -77,9 +78,7 @@ public class DataRepository {
         }
         return hourCountMap.entrySet().stream()
             .map(e -> new ActiveHour(e.getKey(), e.getValue()))
-            .collect(Collectors.toCollection(() -> new TreeSet<>(
-                (a, b) -> Long.compare(b.messageCount(), a.messageCount())
-            )));
+            .collect(Collectors.toCollection(() -> new TreeSet<>(Comparator.comparingLong(ActiveHour::hour))));
     }
 
     /**
