@@ -2,7 +2,6 @@ package com.github.hokkaydo.eplbot.module.data;
 
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.Channel;
-import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
@@ -40,12 +39,7 @@ public class DataListener extends ListenerAdapter {
         if (user == null || user.isBot()) return;
         
         Channel channel = event.getChannel();
-
-        String emoji = event.getEmoji().getName();
-        if (event.getEmoji().getType().equals(Emoji.Type.CUSTOM)) {
-            emoji = ":%s:".formatted(emoji);
-        }
-        
+        String emoji = event.getReaction().getEmoji().getFormatted();
         dataWriter.logReactionAdded(user.getIdLong(), channel.getIdLong(), emoji);
     }
 
