@@ -1,8 +1,8 @@
 package com.github.hokkaydo.eplbot.module.data;
 
-import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.Channel;
+import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
@@ -37,16 +37,13 @@ public class DataListener extends ListenerAdapter {
         if (event.getGuild().getIdLong() != guildId) return;
         
         User user = event.getUser();
-        if (user != null && user.isBot()) return;
+        if (user == null || user.isBot()) return;
         
         Channel channel = event.getChannel();
 
-        String emoji;
-        if (event.getEmoji().getType().equals(net.dv8tion.jda.api.entities.emoji.Emoji.Type.CUSTOM)) {
-            emoji = event.getEmoji().getName();
-        } else {
-            String name = event.getEmoji().getName();
-            emoji = name != null ? ":" + name + ":" : event.getEmoji().getAsReactionCode();
+        String emoji = event.getEmoji().getName();
+        if (event.getEmoji().getType().equals(Emoji.Type.CUSTOM)) {
+            emoji = ":%s:".formatted(emoji);
         }
         
         dataWriter.logReactionAdded(user.getIdLong(), channel.getIdLong(), emoji);

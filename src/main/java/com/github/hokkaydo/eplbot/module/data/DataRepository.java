@@ -4,9 +4,14 @@ import org.springframework.jdbc.core.JdbcTemplate;
 
 import javax.sql.DataSource;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 public class DataRepository {
 
@@ -20,11 +25,11 @@ public class DataRepository {
      * Get the most active channels based on message count
      * @param durationDays the duration in days to look back
      * @param limit the maximum number of channels to return
-     * @return a map of channel IDs to message counts
+     * @return a {@link Set} of {@link ActiveChannel} sorted by message count descending
      */
-    public Map<Long, Long> getMostActiveChannels(int durationDays, int limit) {
+    public Set<ActiveChannel> getMostActiveChannels(int durationDays, int limit) {
         long cutoffTimestamp = Instant.now().getEpochSecond() - (durationDays * 86400L);
-        
+
         List<Map<String, Object>> results = jdbcTemplate.queryForList(
             "SELECT channel_id, COUNT(*) as count FROM events " +
             "WHERE event_type = 'MESSAGE_RECEIVED' AND timestamp > ? AND channel_id IS NOT NULL " +
@@ -32,11 +37,11 @@ public class DataRepository {
             cutoffTimestamp, limit
         );
 
-        Map<Long, Long> channelCounts = new HashMap<>();
+        Set<ActiveChannel> channelCounts = new TreeSet<>((a, b) -> Long.compare(b.messageCount(), a.messageCount()));
         for (Map<String, Object> row : results) {
-            Long channelId = ((Number) row.get("channel_id")).longValue();
-            Long count = ((Number) row.get("count")).longValue();
-            channelCounts.put(channelId, count);
+            long count = ((Number) row.get("count")).longValue();
+            long channelId = ((Number) row.get("channel_id")).longValue();
+            channelCounts.add(new ActiveChannel(channelId, count));
         }
         return channelCounts;
     }
@@ -44,33 +49,94 @@ public class DataRepository {
     /**
      * Get the most active hours based on message count
      * @param durationDays the duration in days to look back
-     * @return a map of hours (0-23) to message counts
+     * @return a {@link Set} of {@link ActiveHour} sorted by message count descending
      */
-    public Map<Integer, Long> getMostActiveHours(int durationDays) {
+    public Set<ActiveHour> getMostActiveHours(int durationDays) {
         long cutoffTimestamp = Instant.now().getEpochSecond() - (durationDays * 86400L);
-        
+
         List<Map<String, Object>> results = jdbcTemplate.queryForList(
             "SELECT timestamp FROM events " +
             "WHERE event_type = 'MESSAGE_RECEIVED' AND timestamp > ?",
             cutoffTimestamp
         );
 
-        Map<Integer, Long> hourCounts = new HashMap<>();
+        // hour to count map
+        Map<Integer, Long> hourCountMap = new HashMap<>();
         for (int i = 0; i < 24; i++) {
-            hourCounts.put(i, 0L);
+            hourCountMap.put(i, 0L);
         }
-        
+
         for (Map<String, Object> row : results) {
-            Long timestamp = ((Number) row.get("timestamp")).longValue();
-            java.time.ZonedDateTime dateTime = java.time.ZonedDateTime.ofInstant(
+            long timestamp = ((Number) row.get("timestamp")).longValue();
+            ZonedDateTime dateTime = ZonedDateTime.ofInstant(
                 Instant.ofEpochSecond(timestamp),
-                java.time.ZoneId.systemDefault()
+                ZoneId.systemDefault()
             );
             int hour = dateTime.getHour();
-            hourCounts.put(hour, hourCounts.get(hour) + 1);
+            hourCountMap.put(hour, hourCountMap.get(hour) + 1);
         }
-        return hourCounts;
+        return hourCountMap.entrySet().stream()
+            .map(e -> new ActiveHour(e.getKey(), e.getValue()))
+            .collect(Collectors.toCollection(() -> new TreeSet<>(
+                (a, b) -> Long.compare(b.messageCount(), a.messageCount())
+            )));
     }
+
+    /**
+     * Get the most active users based on message count
+     * @param durationDays the duration in days to look back
+     * @param limit the maximum number of users to return
+     * @return a {@link Set} of {@link ActiveUser} sorted by message count descending
+     */
+    public Set<ActiveUser> getMostActiveUsers(int durationDays, int limit) {
+        long cutoffTimestamp = Instant.now().getEpochSecond() - (durationDays * 86400L);
+
+        List<Map<String, Object>> results = jdbcTemplate.queryForList(
+            "SELECT user_id, COUNT(*) as count FROM events " +
+            "WHERE event_type = 'MESSAGE_RECEIVED' AND timestamp > ? AND user_id IS NOT NULL " +
+            "GROUP BY user_id ORDER BY count DESC LIMIT ?",
+            cutoffTimestamp, limit
+        );
+
+        Set<ActiveUser> userCounts = new TreeSet<>((a, b) -> Long.compare(b.messageCount(), a.messageCount()));
+        for (Map<String, Object> row : results) {
+            long userId = ((Number) row.get("user_id")).longValue();
+            long count = ((Number) row.get("count")).longValue();
+            userCounts.add(new ActiveUser(userId, count));
+        }
+        return userCounts;
+    }
+
+    /**
+     * Get the top most used reactions
+     * @param durationDays the duration in days to look back
+     * @param limit the maximum number of reactions to return
+     * @return a {@link Set} of {@link ReactionCount} sorted by count descending
+     */
+    public Set<ReactionCount> getTopReactions(int durationDays, int limit) {
+        long cutoffTimestamp = Instant.now().getEpochSecond() - (durationDays * 86400L);
+
+        List<Map<String, Object>> results = jdbcTemplate.queryForList(
+            "SELECT reaction_emoji, COUNT(*) as count FROM events " +
+            "WHERE event_type = 'REACTION_ADDED' AND timestamp > ? AND reaction_emoji IS NOT NULL " +
+            "GROUP BY reaction_emoji ORDER BY count DESC LIMIT ?",
+            cutoffTimestamp, limit
+        );
+
+        Set<ReactionCount> reactionCounts = new TreeSet<>((a, b) -> Long.compare(b.count(), a.count()));
+        for (Map<String, Object> row : results) {
+            String emoji = (String) row.get("reaction_emoji");
+            long count = ((Number) row.get("count")).longValue();
+            reactionCounts.add(new ReactionCount(emoji, count));
+        }
+        return reactionCounts;
+    }
+
+
+    public record ActiveChannel(long channelId, long messageCount) {}
+
+
+    public record ActiveHour(int hour, long messageCount) {}
 
     /**
      * Get member join/leave events over time
@@ -95,83 +161,11 @@ public class DataRepository {
         return Map.of("joins", joins, "leaves", leaves);
     }
 
-    /**
-     * Get the most active users based on message count
-     * @param durationDays the duration in days to look back
-     * @param limit the maximum number of users to return
-     * @return a map of user IDs to message counts
-     */
-    public Map<Long, Long> getMostActiveUsers(int durationDays, int limit) {
-        long cutoffTimestamp = Instant.now().getEpochSecond() - (durationDays * 86400L);
-        
-        List<Map<String, Object>> results = jdbcTemplate.queryForList(
-            "SELECT user_id, COUNT(*) as count FROM events " +
-            "WHERE event_type = 'MESSAGE_RECEIVED' AND timestamp > ? AND user_id IS NOT NULL " +
-            "GROUP BY user_id ORDER BY count DESC LIMIT ?",
-            cutoffTimestamp, limit
-        );
 
-        Map<Long, Long> userCounts = new HashMap<>();
-        for (Map<String, Object> row : results) {
-            Long userId = ((Number) row.get("user_id")).longValue();
-            Long count = ((Number) row.get("count")).longValue();
-            userCounts.put(userId, count);
-        }
-        return userCounts;
-    }
+    public record ActiveUser(long userId, long messageCount) {}
 
-    /**
-     * Get the top most used reactions
-     * @param durationDays the duration in days to look back
-     * @param limit the maximum number of reactions to return
-     * @return a map of reaction emojis to counts
-     */
-    public Map<String, Long> getTopReactions(int durationDays, int limit) {
-        long cutoffTimestamp = Instant.now().getEpochSecond() - (durationDays * 86400L);
-        
-        List<Map<String, Object>> results = jdbcTemplate.queryForList(
-            "SELECT reaction_emoji, COUNT(*) as count FROM events " +
-            "WHERE event_type = 'REACTION_ADDED' AND timestamp > ? AND reaction_emoji IS NOT NULL " +
-            "GROUP BY reaction_emoji ORDER BY count DESC LIMIT ?",
-            cutoffTimestamp, limit
-        );
 
-        Map<String, Long> reactionCounts = new HashMap<>();
-        for (Map<String, Object> row : results) {
-            String emoji = (String) row.get("reaction_emoji");
-            Long count = ((Number) row.get("count")).longValue();
-            reactionCounts.put(emoji, count);
-        }
-        return reactionCounts;
-    }
-
-    /**
-     * Get message counts for specific channels
-     * @param channelIds the list of channel IDs
-     * @param durationDays the duration in days to look back
-     * @return a map of channel IDs to message counts
-     */
-    public Map<Long, Long> getMessageCountsByChannels(List<Long> channelIds, int durationDays) {
-        if (channelIds.isEmpty()) return new HashMap<>();
-        
-        long cutoffTimestamp = Instant.now().getEpochSecond() - (durationDays * 86400L);
-        
-        String inClause = String.join(",", channelIds.stream().map(String::valueOf).toList());
-        List<Map<String, Object>> results = jdbcTemplate.queryForList(
-            "SELECT channel_id, COUNT(*) as count FROM events " +
-            "WHERE event_type = 'MESSAGE_RECEIVED' AND timestamp > ? AND channel_id IN (" + inClause + ") " +
-            "GROUP BY channel_id",
-            cutoffTimestamp
-        );
-
-        Map<Long, Long> channelCounts = new HashMap<>();
-        for (Map<String, Object> row : results) {
-            Long channelId = ((Number) row.get("channel_id")).longValue();
-            Long count = ((Number) row.get("count")).longValue();
-            channelCounts.put(channelId, count);
-        }
-        return channelCounts;
-    }
+    public record ReactionCount(String reactionEmoji, long count) {}
 
     /**
      * Delete events older than the specified number of days
@@ -186,5 +180,4 @@ public class DataRepository {
             cutoffTimestamp
         );
     }
-
 }
