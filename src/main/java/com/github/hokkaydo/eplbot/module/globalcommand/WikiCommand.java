@@ -13,7 +13,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
-import java.awt.*;
+import java.awt.Color;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -137,7 +137,7 @@ public class WikiCommand implements Command {
             Document document;
             try {
                 document = Jsoup.connect(BASE_LINK.formatted(lang) + query).get();
-            } catch (IOException e) {
+            } catch (IOException _) {
                 return Optional.empty();
             }
             if(!document.body().getElementsMatchingText(NO_RESULT_FOUND).isEmpty())

@@ -27,7 +27,7 @@ import net.dv8tion.jda.api.interactions.modals.Modal;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 
-import java.awt.*;
+import java.awt.Color;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;

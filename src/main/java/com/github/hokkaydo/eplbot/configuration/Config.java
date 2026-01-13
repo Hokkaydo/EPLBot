@@ -5,7 +5,7 @@ import com.github.hokkaydo.eplbot.configuration.repository.ConfigurationReposito
 import com.github.hokkaydo.eplbot.configuration.repository.ConfigurationRepositorySQLite;
 import com.github.hokkaydo.eplbot.database.DatabaseManager;
 
-import java.awt.*;
+import java.awt.Color;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
