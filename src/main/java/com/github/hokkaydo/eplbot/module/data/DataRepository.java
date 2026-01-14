@@ -76,6 +76,9 @@ public class DataRepository {
             int hour = dateTime.getHour();
             hourCountMap.put(hour, hourCountMap.get(hour) + 1);
         }
+        for (int hour : hourCountMap.keySet()) {
+            hourCountMap.put(hour, hourCountMap.get(hour) / durationDays);
+        }
         return hourCountMap.entrySet().stream()
             .map(e -> new ActiveHour(e.getKey(), e.getValue()))
             .collect(Collectors.toCollection(() -> new TreeSet<>(Comparator.comparingLong(ActiveHour::hour))));
