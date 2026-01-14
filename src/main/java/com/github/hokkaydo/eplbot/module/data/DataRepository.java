@@ -61,10 +61,9 @@ public class DataRepository {
             cutoffTimestamp
         );
 
-        // hour to count map
-        Map<Integer, Long> hourCountMap = new HashMap<>();
+        Map<Integer, Double> hourAverageMap = new HashMap<>();
         for (int i = 0; i < 24; i++) {
-            hourCountMap.put(i, 0L);
+            hourAverageMap.put(i, 0.0);
         }
 
         for (Map<String, Object> row : results) {
@@ -74,12 +73,14 @@ public class DataRepository {
                 ZoneId.systemDefault()
             );
             int hour = dateTime.getHour();
-            hourCountMap.put(hour, hourCountMap.get(hour) + 1);
+            hourAverageMap.put(hour, hourAverageMap.get(hour) + 1.0);
         }
-        for (int hour : hourCountMap.keySet()) {
-            hourCountMap.put(hour, hourCountMap.get(hour) / durationDays);
+        
+        for (int hour : hourAverageMap.keySet()) {
+            hourAverageMap.put(hour, hourAverageMap.get(hour) / durationDays);
         }
-        return hourCountMap.entrySet().stream()
+        
+        return hourAverageMap.entrySet().stream()
             .map(e -> new ActiveHour(e.getKey(), e.getValue()))
             .collect(Collectors.toCollection(() -> new TreeSet<>(Comparator.comparingLong(ActiveHour::hour))));
     }
