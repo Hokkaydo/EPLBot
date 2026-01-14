@@ -33,10 +33,10 @@ public class DataGrapher {
      * @param title the title of the chart
      * @return byte array of the PNG image
      */
-    public static byte[] generateHourlyActivityChart(Map<String, Long> hourData, String title) throws IOException {
+    public static byte[] generateHourlyActivityChart(Map<String, Float> hourData, String title) throws IOException {
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
         
-        for (Map.Entry<String, Long> entry : hourData.entrySet()) {
+        for (Map.Entry<String, Float> entry : hourData.entrySet()) {
             dataset.addValue(entry.getValue(), "Messages", entry.getKey());
         }
         
@@ -127,6 +127,7 @@ public class DataGrapher {
      * @param title the title of the chart
      * @return byte array of the PNG image
      */
+    @SuppressWarnings("unused")
     public static byte[] generateMemberEventsChart(List<Long> joins, List<Long> leaves, String title) throws IOException {
         TimeSeries joinSeries = buildTimeSerie("Joins", joins);
         TimeSeries leaveSeries = buildTimeSerie("Leaves", leaves);

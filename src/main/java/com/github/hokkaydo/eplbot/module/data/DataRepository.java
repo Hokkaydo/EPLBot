@@ -61,9 +61,9 @@ public class DataRepository {
             cutoffTimestamp
         );
 
-        Map<Integer, Double> hourAverageMap = new HashMap<>();
+        Map<Integer, Float> hourAverageMap = new HashMap<>();
         for (int i = 0; i < 24; i++) {
-            hourAverageMap.put(i, 0.0);
+            hourAverageMap.put(i, 0.0f);
         }
 
         for (Map<String, Object> row : results) {
@@ -73,12 +73,10 @@ public class DataRepository {
                 ZoneId.systemDefault()
             );
             int hour = dateTime.getHour();
-            hourAverageMap.put(hour, hourAverageMap.get(hour) + 1.0);
+            hourAverageMap.put(hour, hourAverageMap.get(hour) + 1.0f);
         }
-        
-        for (int hour : hourAverageMap.keySet()) {
-            hourAverageMap.put(hour, hourAverageMap.get(hour) / durationDays);
-        }
+
+        hourAverageMap.replaceAll((_, v) -> v / durationDays);
         
         return hourAverageMap.entrySet().stream()
             .map(e -> new ActiveHour(e.getKey(), e.getValue()))
@@ -139,7 +137,7 @@ public class DataRepository {
     public record ActiveChannel(long channelId, long messageCount) {}
 
 
-    public record ActiveHour(int hour, long messageCount) {}
+    public record ActiveHour(int hour, float averageMessageCount) {}
 
     /**
      * Get member join/leave events over time

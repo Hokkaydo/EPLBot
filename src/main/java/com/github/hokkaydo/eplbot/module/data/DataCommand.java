@@ -86,7 +86,7 @@ public class DataCommand implements Command {
             .queue();
     }
 
-    private void generateTopReactionsReport(CommandContext context, int durationDays) throws IOException {
+    private void generateTopReactionsReport(CommandContext context, int durationDays) {
         Set<DataRepository.ReactionCount> reactionData = repository.getTopReactions(durationDays, 10);
         
         if (reactionData.isEmpty()) {
@@ -97,7 +97,7 @@ public class DataCommand implements Command {
         StringBuilder summary = new StringBuilder(String.format(Strings.getString("command.data.top_reactions_title"), durationDays) + "\n\n");
         int rank = 1;
         for (DataRepository.ReactionCount reactionCount : reactionData) {
-            summary.append(String.format("%d. %s - %d uses\n", rank++, reactionCount.reactionEmoji(), reactionCount.count()));
+            summary.append(String.format("%d. %s - %d uses%n", rank++, reactionCount.reactionEmoji(), reactionCount.count()));
         }
         
         context.replyCallbackAction()
@@ -134,14 +134,14 @@ public class DataCommand implements Command {
     private void generateActiveHoursReport(CommandContext context, int durationDays) throws IOException {
         Set<DataRepository.ActiveHour> hourData = repository.getMostActiveHours(durationDays);
         
-        if (hourData.stream().allMatch(h -> h.messageCount() == 0)) {
+        if (hourData.stream().allMatch(h -> h.averageMessageCount() == 0)) {
             context.replyCallbackAction().setContent(Strings.getString("command.data.no_data")).queue();
             return;
         }
         
-        Map<String, Long> namedHourData = new LinkedHashMap<>();
+        Map<String, Float> namedHourData = new LinkedHashMap<>();
         for (DataRepository.ActiveHour activeHour : hourData) {
-            namedHourData.put(String.format("%02d:00", activeHour.hour()), activeHour.messageCount());
+            namedHourData.put(String.format("%02d:00", activeHour.hour()), activeHour.averageMessageCount());
         }
         
         byte[] chartImage = DataGrapher.generateHourlyActivityChart(
