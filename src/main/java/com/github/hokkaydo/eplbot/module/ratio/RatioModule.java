@@ -10,10 +10,20 @@ import java.util.List;
 
 public class RatioModule extends Module {
 
+    private static final long EPL_GUILD_ID = 517720163223601153L;
     private final RatioListener ratioListener;
+    
     public RatioModule(@NotNull Long guildId) {
         super(guildId);
         this.ratioListener = new RatioListener();
+    }
+    
+    @Override
+    public void enable() {
+        if (getGuildId() != ALLOWED_GUILD_ID) {
+            return;
+        }
+        super.enable();
     }
 
     @Override
