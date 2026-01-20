@@ -26,9 +26,7 @@ public class RatioListener extends ListenerAdapter {
 
     @Override
     public void onMessageReceived(@NotNull MessageReceivedEvent event) {
-        if (!event.isFromGuild() || event.getGuild().getIdLong() != guildId || guildId != EPL_GUILD_ID) {
-            return;
-        }
+        if (!event.isFromGuild() || event.getGuild().getIdLong() != guildId) return;
         GuildChannel channel = Main.getJDA().getGuildChannelById(517720163223601155L);
         if (channel == null) return;
         /*TextChannel textChannel = (TextChannel) channel;
