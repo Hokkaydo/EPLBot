@@ -10,7 +10,6 @@ import java.util.List;
 
 public class RatioModule extends Module {
 
-    private static final long EPL_GUILD_ID = 517720163223601153L;
     private final RatioListener ratioListener;
     
     public RatioModule(@NotNull Long guildId) {
