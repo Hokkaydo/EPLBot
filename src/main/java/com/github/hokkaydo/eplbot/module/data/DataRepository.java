@@ -17,9 +17,11 @@ import java.util.stream.Collectors;
 public class DataRepository {
 
     private final JdbcTemplate jdbcTemplate;
+    private final long guildId;
 
-    public DataRepository(DataSource dataSource) {
+    public DataRepository(DataSource dataSource, long guildId) {
         this.jdbcTemplate = new JdbcTemplate(dataSource);
+        this.guildId = guildId;
     }
 
     /**
@@ -33,9 +35,9 @@ public class DataRepository {
 
         List<Map<String, Object>> results = jdbcTemplate.queryForList(
             "SELECT channel_id, COUNT(*) as count FROM events " +
-            "WHERE event_type = 'MESSAGE_RECEIVED' AND timestamp > ? AND channel_id IS NOT NULL " +
+            "WHERE event_type = 'MESSAGE_RECEIVED' AND timestamp > ? AND channel_id IS NOT NULL AND guild_id = ? " +
             "GROUP BY channel_id ORDER BY count DESC LIMIT ?",
-            cutoffTimestamp, limit
+            cutoffTimestamp, guildId, limit
         );
 
         Set<ActiveChannel> channelCounts = new TreeSet<>((a, b) -> Long.compare(b.messageCount(), a.messageCount()));
@@ -57,8 +59,8 @@ public class DataRepository {
 
         List<Map<String, Object>> results = jdbcTemplate.queryForList(
             "SELECT timestamp FROM events " +
-            "WHERE event_type = 'MESSAGE_RECEIVED' AND timestamp > ?",
-            cutoffTimestamp
+            "WHERE event_type = 'MESSAGE_RECEIVED' AND timestamp > ? AND guild_id = ?",
+            cutoffTimestamp, guildId
         );
 
         Map<Integer, Float> hourAverageMap = new HashMap<>();
@@ -94,9 +96,9 @@ public class DataRepository {
 
         List<Map<String, Object>> results = jdbcTemplate.queryForList(
             "SELECT user_id, COUNT(*) as count FROM events " +
-            "WHERE event_type = 'MESSAGE_RECEIVED' AND timestamp > ? AND user_id IS NOT NULL " +
+            "WHERE event_type = 'MESSAGE_RECEIVED' AND timestamp > ? AND user_id IS NOT NULL AND guild_id = ? " +
             "GROUP BY user_id ORDER BY count DESC LIMIT ?",
-            cutoffTimestamp, limit
+            cutoffTimestamp, guildId, limit
         );
 
         Set<ActiveUser> userCounts = new TreeSet<>((a, b) -> Long.compare(b.messageCount(), a.messageCount()));
@@ -119,9 +121,9 @@ public class DataRepository {
 
         List<Map<String, Object>> results = jdbcTemplate.queryForList(
             "SELECT reaction_emoji, COUNT(*) as count FROM events " +
-            "WHERE event_type = 'REACTION_ADDED' AND timestamp > ? AND reaction_emoji IS NOT NULL " +
+            "WHERE event_type = 'REACTION_ADDED' AND timestamp > ? AND reaction_emoji IS NOT NULL AND guild_id = ? " +
             "GROUP BY reaction_emoji ORDER BY count DESC LIMIT ?",
-            cutoffTimestamp, limit
+            cutoffTimestamp, guildId, limit
         );
 
         Set<ReactionCount> reactionCounts = new TreeSet<>((a, b) -> Long.compare(b.count(), a.count()));
@@ -148,15 +150,17 @@ public class DataRepository {
         long cutoffTimestamp = Instant.now().getEpochSecond() - (durationDays * 86400L);
         
         List<Long> joins = jdbcTemplate.queryForList(
-            "SELECT timestamp FROM events WHERE event_type = 'MEMBER_JOIN' AND timestamp > ? ORDER BY timestamp",
+            "SELECT timestamp FROM events WHERE event_type = 'MEMBER_JOIN' AND timestamp > ? AND guild_id = ? ORDER BY timestamp",
             Long.class,
-            cutoffTimestamp
+            cutoffTimestamp,
+            guildId
         );
         
         List<Long> leaves = jdbcTemplate.queryForList(
-            "SELECT timestamp FROM events WHERE event_type = 'MEMBER_REMOVE' AND timestamp > ? ORDER BY timestamp",
+            "SELECT timestamp FROM events WHERE event_type = 'MEMBER_REMOVE' AND timestamp > ? AND guild_id = ? ORDER BY timestamp",
             Long.class,
-            cutoffTimestamp
+            cutoffTimestamp,
+            guildId
         );
         
         return Map.of("joins", joins, "leaves", leaves);
@@ -177,8 +181,9 @@ public class DataRepository {
         long cutoffTimestamp = Instant.now().getEpochSecond() - (retentionDays * 86400L);
         
         return jdbcTemplate.update(
-            "DELETE FROM events WHERE timestamp < ?",
-            cutoffTimestamp
+            "DELETE FROM events WHERE timestamp < ? AND guild_id = ?",
+            cutoffTimestamp,
+            guildId
         );
     }
 }

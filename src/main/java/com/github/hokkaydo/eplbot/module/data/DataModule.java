@@ -28,8 +28,8 @@ public class DataModule extends Module {
 
     public DataModule(@NotNull Long guildId) {
         super(guildId);
-        DataWriter dataWriter = new DataWriter(DatabaseManager.getDataSource());
-        dataRepository = new DataRepository(DatabaseManager.getDataSource());
+        DataWriter dataWriter = new DataWriter(DatabaseManager.getDataSource(), guildId);
+        dataRepository = new DataRepository(DatabaseManager.getDataSource(), guildId);
         listener = new DataListener(getGuildId(), dataWriter);
         dataCommand = new DataCommand(dataRepository);
     }

@@ -8,9 +8,11 @@ import java.time.Instant;
 public class DataWriter {
 
     private final JdbcTemplate jdbcTemplate;
+    private final long guildId;
 
-    public DataWriter(DataSource dataSource) {
+    public DataWriter(DataSource dataSource, long guildId) {
         this.jdbcTemplate = new JdbcTemplate(dataSource);
+        this.guildId = guildId;
     }
 
     /**
@@ -32,8 +34,8 @@ public class DataWriter {
         long timestamp = Instant.now().getEpochSecond();
         
         jdbcTemplate.update(
-            "INSERT INTO events (timestamp, event_type, user_id, channel_id, reaction_emoji) VALUES (?, ?, ?, ?, ?)",
-            timestamp, "REACTION_ADDED", userId, channelId, emoji
+            "INSERT INTO events (timestamp, event_type, user_id, channel_id, reaction_emoji, guild_id) VALUES (?, ?, ?, ?, ?, ?)",
+            timestamp, "REACTION_ADDED", userId, channelId, emoji, guildId
         );
     }
 
@@ -64,13 +66,13 @@ public class DataWriter {
         
         if (channelId != null) {
             jdbcTemplate.update(
-                "INSERT INTO events (timestamp, event_type, user_id, channel_id) VALUES (?, ?, ?, ?)",
-                timestamp, eventType, userId, channelId
+                "INSERT INTO events (timestamp, event_type, user_id, channel_id, guild_id) VALUES (?, ?, ?, ?, ?)",
+                timestamp, eventType, userId, channelId, guildId
             );
         } else {
             jdbcTemplate.update(
-                "INSERT INTO events (timestamp, event_type, user_id, channel_id) VALUES (?, ?, ?, NULL)",
-                timestamp, eventType, userId
+                "INSERT INTO events (timestamp, event_type, user_id, channel_id, guild_id) VALUES (?, ?, ?, NULL, ?)",
+                timestamp, eventType, userId, guildId
             );
         }
     }
