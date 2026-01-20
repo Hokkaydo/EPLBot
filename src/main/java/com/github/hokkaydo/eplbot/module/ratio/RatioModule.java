@@ -11,9 +11,10 @@ import java.util.List;
 public class RatioModule extends Module {
 
     private final RatioListener ratioListener;
+    
     public RatioModule(@NotNull Long guildId) {
         super(guildId);
-        this.ratioListener = new RatioListener();
+        this.ratioListener = new RatioListener(guildId);
     }
 
     @Override
