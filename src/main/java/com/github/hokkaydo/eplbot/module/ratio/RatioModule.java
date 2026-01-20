@@ -15,15 +15,7 @@ public class RatioModule extends Module {
     
     public RatioModule(@NotNull Long guildId) {
         super(guildId);
-        this.ratioListener = new RatioListener();
-    }
-    
-    @Override
-    public void enable() {
-        if (getGuildId() != ALLOWED_GUILD_ID) {
-            return;
-        }
-        super.enable();
+        this.ratioListener = new RatioListener(guildId);
     }
 
     @Override

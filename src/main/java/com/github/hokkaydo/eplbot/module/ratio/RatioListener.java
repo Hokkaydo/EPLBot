@@ -15,10 +15,20 @@ public class RatioListener extends ListenerAdapter {
     private static final Long RATIO_REACTION_ID = 1113815294541041674L;
     private static final Long RALOF_ID = 192631146566123520L;
     private static final Long FEUR_REACTION_ID = 1305209638844891177L;
+    private static final Long EPL_GUILD_ID = 517720163223601153L;
     private static final Random random = new Random();
+    
+    private final Long guildId;
+    
+    public RatioListener(Long guildId) {
+        this.guildId = guildId;
+    }
 
     @Override
     public void onMessageReceived(@NotNull MessageReceivedEvent event) {
+        if (!event.isFromGuild() || event.getGuild().getIdLong() != guildId || guildId != EPL_GUILD_ID) {
+            return;
+        }
         GuildChannel channel = Main.getJDA().getGuildChannelById(517720163223601155L);
         if (channel == null) return;
         /*TextChannel textChannel = (TextChannel) channel;
