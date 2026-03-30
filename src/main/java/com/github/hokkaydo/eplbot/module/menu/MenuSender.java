@@ -3,7 +3,7 @@ package com.github.hokkaydo.eplbot.module.menu;
 import com.github.hokkaydo.eplbot.Main;
 import com.github.hokkaydo.eplbot.MessageUtil;
 import com.github.hokkaydo.eplbot.configuration.Config;
-import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
 import net.dv8tion.jda.api.utils.FileUpload;
 import org.apache.commons.io.FileUtils;
 import org.jsoup.Jsoup;
@@ -47,7 +47,7 @@ public class MenuSender implements MenuRetriever{
     }
 
     private void sendMenu() {
-        TextChannel channel = Main.getJDA().getTextChannelById(Config.getGuildVariable(guildId, "MENU_CHANNEL_ID"));
+        GuildMessageChannel channel = Main.getJDA().getChannelById(GuildMessageChannel.class, Config.getGuildVariable(guildId, "MENU_CHANNEL_ID"));
         if(channel == null) {
             MessageUtil.sendAdminMessage("Menu channel not found", guildId);
             return;
