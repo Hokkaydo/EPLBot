@@ -9,6 +9,7 @@ import net.dv8tion.jda.internal.utils.JDALogger;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -48,12 +49,16 @@ public abstract class Module {
     /**
      * @return the list of module's commands. They will be enabled when the module is enabled and registered in the command manager
      * */
-    public abstract List<Command> getCommands();
+    public List<Command> getCommands() {
+        return Collections.emptyList();
+    }
 
     /**
      * @return the list of module's listeners. They will be loaded and unloaded when the module is enabled and disabled
      * */
-    public abstract List<ListenerAdapter> getListeners();
+    public List<ListenerAdapter> getListeners() {
+        return Collections.emptyList();
+    }
 
     public Guild getGuild() {
         return Main.getJDA().getGuildById(guildId);

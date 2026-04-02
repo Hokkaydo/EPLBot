@@ -1,6 +1,8 @@
 package com.github.hokkaydo.eplbot.module.mirror;
 
 import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.channel.Channel;
+import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
 import net.dv8tion.jda.api.requests.Route;
 import net.dv8tion.jda.api.requests.restaction.WebhookMessageCreateAction;
 import net.dv8tion.jda.api.utils.data.DataObject;
@@ -60,7 +62,16 @@ public class WebhookWithMessage {
     }
 
     private ReceivedMessage createMessage(JDAImpl jda, DataObject json) {
-        return jda.getEntityBuilder().createMessageWithChannel(json, webhook.getChannel().asGuildMessageChannel(), false);
+        long channelId = json.getLong("channel_id");
+        Channel channel = jda.getChannelById(Channel.class, channelId);
+
+        if (channel == null)
+            throw new IllegalStateException("Unknown channel: " + channelId);
+
+        if (!(channel instanceof GuildMessageChannel messageChannel))
+            throw new IllegalStateException("Channel " + channelId + " is not message-capable (type: " + channel.getType() + ")");
+
+        return jda.getEntityBuilder().createMessageWithChannel(json, messageChannel, false);
     }
 
     private void checkToken() {

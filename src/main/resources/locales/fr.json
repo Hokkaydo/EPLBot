@@ -275,6 +275,19 @@
 			"chart_title.active_users": "Top 10 Utilisateurs les Plus Actifs (%d jours)",			
 			"chart_title.active_hours": "Heures les Plus Actives (%d jour(s))"
 		},
+		"servertranslation": {
+			"description": "Permet de traduire l'état d'un serveur en une langue donnée.",
+			"help": "Permet de traduire les noms/descriptions des rôles/canaux/catégories d'un serveur en une langue donnée\n- `store` stocke l'état actuel du serveur pour une certaine langue\n- `restore` restaure l'état d'un serveur à l'état stocké pour une certaine langue\n- `translate` traduit l'état actuel du serveur\n- `clear` supprime l'état stocké d'un serveur pour une langue donnée \n- `list` affiche la liste des langues pour lesquelles un état de serveur est stocké",
+			"restore_success": "L'état du serveur a bien été restauré à l'état stocké.",
+			"restore_no_data": "Aucun état de serveur stocké pour cette langue.",
+			"store_success": "L'état du serveur a bien été stocké pour la langue.",
+			"invalid_subcommand": "Sous-commande invalide.",
+			"missing_language": "Veuillez spécifier une langue.",
+			"list_languages": "Langues pour lesquelles un état de serveur est stocké : %s",
+			"list_no_languages": "Aucun état de serveur stocké pour aucune langue.",
+			"translating": "L'état du serveur est en cours de translation...",
+			"clear_success": "L'état du serveur stocké a bien été supprimé."
+		},
 		"disabled": "Commande désactivée",
 		"not_found": "Commande introuvable",
 		"wrong_channel": "Canal invalide."

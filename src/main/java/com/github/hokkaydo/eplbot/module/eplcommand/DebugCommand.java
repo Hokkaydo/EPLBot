@@ -15,6 +15,7 @@ import com.github.hokkaydo.eplbot.module.graderetrieve.repository.ExamRetrieveTh
 import com.github.hokkaydo.eplbot.module.helper.repository.CourseHelperRepositorySQLite;
 import com.github.hokkaydo.eplbot.module.mirror.repository.MirrorLinkRepositorySQLite;
 import com.github.hokkaydo.eplbot.module.notice.repository.NoticeRepositorySQLite;
+import com.github.hokkaydo.eplbot.module.translation.repository.NameDescriptionRepositorySQLite;
 import net.dv8tion.jda.api.entities.channel.concrete.PrivateChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
@@ -50,7 +51,8 @@ public class DebugCommand implements Command {
             new ExamRetrieveThreadRepositorySQLite(DatabaseManager.getDataSource()),
             new NoticeRepositorySQLite(courseRepo, groupRepo),
             new BookMarkRepositorySQLite(DatabaseManager.getDataSource()),
-            new CourseHelperRepositorySQLite(DatabaseManager.getDataSource())
+            new CourseHelperRepositorySQLite(DatabaseManager.getDataSource()),
+            new NameDescriptionRepositorySQLite(DatabaseManager.getDataSource())
     );
 
     private static void dumpDB(PrivateChannel channel) {

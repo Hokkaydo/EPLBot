@@ -153,7 +153,8 @@ public class Config {
 
         DEFAULT_CONFIGURATION.putAll(Map.of(
                 "NIGHT_BIRD_UNICODE_REACT_EMOJI", STRING_CONFIGURATION_VALUE_DEFAULT.apply("🌙"),
-                "EARLY_BIRD_UNICODE_REACT_EMOJI", STRING_CONFIGURATION_VALUE_DEFAULT.apply("❤")
+                "EARLY_BIRD_UNICODE_REACT_EMOJI", STRING_CONFIGURATION_VALUE_DEFAULT.apply("❤"),
+                "TRANSLATION_LANGUAGE", STRING_CONFIGURATION_VALUE_DEFAULT.apply("nl")
         ));
 
         // Modules
@@ -176,7 +177,8 @@ public class Config {
                 "code", MODULE_DISABLED.get(),
                 "helper", MODULE_DISABLED.get(),
                 "menu", MODULE_DISABLED.get(),
-                "data", MODULE_DISABLED.get()
+                "data", MODULE_DISABLED.get(),
+                "translation", MODULE_DISABLED.get()
         ));
     }
     private static final Map<Long, Map<String, Object>> GUILD_CONFIGURATION = new HashMap<>();
