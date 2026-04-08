@@ -52,7 +52,7 @@ public class Main {
     public static final String PERSISTENCE_DIR_PATH = "./persistence";
     public static final Logger LOGGER = JDALogger.getLog(Main.class);
 
-    /*private static final List<Activity> status = List.of(
+    private static final List<Activity> status = List.of(
             Activity.playing("bâtir des ponts (solides) entre nous et le ciel"),
             Activity.playing("démontrer que l²(N) est un honnête espace de fonctions"),
             Activity.playing("calculer le meilleur angle d'artillerie par Newton-Raphson"),
@@ -143,99 +143,6 @@ public class Main {
             Activity.playing("résoudre un problème mal posé (comme d'hab)"),
             Activity.playing("estimer un ordre de grandeur au doigt mouillé"),
             Activity.playing("coder vite, regretter lentement")
-    );*/
-
-    private static final List<Activity> status = List.of(
-            Activity.playing("bruggen bouwen (stevig) tussen ons en de hemel"),
-            Activity.playing("bewijzen dat l²(N) een eerlijke functieruimte is"),
-            Activity.playing("de beste artilleriehoek berekenen met Newton-Raphson"),
-            Activity.of(Activity.ActivityType.LISTENING, "@POISSON?!", "https://youtu.be/580gEIVVKe8"),
-            Activity.of(Activity.ActivityType.LISTENING, "de FEZZZZZZZ", "https://www.youtube.com/watch?v=KUDJOsaAFOs"),
-            Activity.playing("de documentatie van Oz2 proberen te begrijpen"),
-            Activity.playing("de SINFs observeren terwijl ze domme dingen doen (zoals altijd)"),
-            Activity.playing("kijken hoe het schuim in zijn bierglas zakt"),
-            Activity.playing("opamps opblazen en transistoren verbranden in zijn circuit"),
-            Activity.playing("medelijden hebben met ChatGPT voor al het werk tijdens de blok van studenten"),
-            Activity.playing("samenzweren met de mods"),
-            Activity.playing("de pedicure van de Koningen doen"),
-            Activity.playing("een DB-model zoeken om je ego in op te slaan"),
-            Activity.playing("alle bekentenissen herlezen"),
-            Activity.playing("Please wait, your messages are being sent to UCLouvain ..."),
-            Activity.playing("zin zoeken onder de Place des Sciences"),
-            Activity.of(Activity.ActivityType.LISTENING, "Apocalypse894", "https://open.spotify.com/track/0A6FdQB9XVIbjP6Kr4vsa1?si=8cbfc79518df45d1"),
-            Activity.competing("Affond 13u"),
-            Activity.competing("een beerpong"),
-            Activity.competing("Procrastinatie"),
-            Activity.of(Activity.ActivityType.STREAMING, "Radio Gazou", "https://www.youtube.com/watch?v=rj_kEDituic"),
-
-            // Competing
-            Activity.competing("de deadline"),
-            Activity.competing("de slaap"),
-            Activity.competing("de Moodle-server"),
-            Activity.competing("de prof in TD"),
-            Activity.competing("zijn eigen code"),
-            Activity.competing("de zwaartekracht (na 3 pintjes)"),
-            Activity.competing("de slechtst mogelijke timing"),
-
-            // Listening
-            Activity.of(Activity.ActivityType.LISTENING, "de ventilator van zijn overbelaste pc", null),
-            Activity.of(Activity.ActivityType.LISTENING, "het gejammer van de projectgroep", null),
-            Activity.of(Activity.ActivityType.LISTENING, "de stilte na een vraag van de prof", null),
-            Activity.of(Activity.ActivityType.LISTENING, "neuronen die doorbranden", null),
-
-            Activity.of(Activity.ActivityType.STREAMING, "Live debugging catastrofe", "https://www.youtube.com/watch?v=dQw4w9WgXcQ"),
-
-            // Activity
-            Activity.playing("matrices diagonalizeren voor het plezier"),
-            Activity.playing("bewijzen dat het convergeert (of niet)"),
-            Activity.playing("π benaderen met een beperkt bierbudget"),
-            Activity.playing("slecht geconditioneerde systemen oplossen al huilend"),
-            Activity.playing("zijn dutje optimaliseren onder beperkingen"),
-            Activity.playing("om 3u 's nachts een FEM solver coderen"),
-            Activity.playing("een existentiële segfault debuggen"),
-            Activity.playing("de sterkte van de koffie van de kring meten"),
-            Activity.playing("doen alsof je de slides begrijpt"),
-            Activity.playing("bewijzen dat \"het gaat wel\" een geldig bewijs is"),
-            Activity.playing("inspanning minimaliseren, punten maximaliseren"),
-            Activity.playing("de Fouriertransformatie van zijn motivatie berekenen"),
-            Activity.playing("een analytische oplossing zoeken (spoiler: die bestaat niet)"),
-            Activity.playing("emotionele problemen lineariseren"),
-            Activity.playing("zijn spijt factoriseren"),
-            Activity.playing("een O(n²)-algo implementeren omdat waarom niet"),
-            Activity.playing("wachten tot het compileert"),
-            Activity.playing("een paper lezen zonder de intro te begrijpen"),
-            Activity.playing("epsilon naar 0 duwen"),
-            Activity.playing("traag maar zeker divergeren"),
-            Activity.playing("een Gauss-pivot op zijn leven uitvoeren"),
-            Activity.playing("randvoorwaarden aan zijn toekomst opleggen"),
-            Activity.playing("de vrije val van zijn gemiddelde simuleren"),
-            Activity.playing("een bug vinden die alleen 's nachts bestaat"),
-            Activity.playing("Newton aanroepen om sneller te convergeren"),
-            Activity.playing("bidden dat het niet NP-compleet is"),
-            Activity.playing("een prof 20 slides zien skippen in 2 minuten"),
-            Activity.playing("begrijpen waarom het werkt (niemand weet het)"),
-            Activity.playing("een iteratieve methode toepassen op levenskeuzes"),
-            Activity.playing("een commit \"final_v7_really_final\" maken"),
-            Activity.playing("testen in prod (welke prod?)"),
-            Activity.playing("12 weken studeren in 12 uur"),
-            Activity.playing("een paniekgradient berekenen"),
-            Activity.playing("multithreading in zijn hoofd doen"),
-            Activity.playing("wachten tot de queue compileert (spoiler: deadlock)"),
-            Activity.playing("code schrijven die meteen werkt (mythe)"),
-            Activity.playing("excuses benchmarken"),
-            Activity.playing("een fout van orde 1 schatten (minstens)"),
-            Activity.playing("een solver starten en hopen"),
-            Activity.playing("zijn bier/ECTS-ratio optimaliseren"),
-            Activity.playing("debuggen zonder de fout te lezen"),
-            Activity.playing("bewijzen dat het project haalbaar was"),
-            Activity.playing("HPC doen op een laptop uit 2012"),
-            Activity.playing("een NaN onder het tapijt vegen"),
-            Activity.playing("waarden elegant zien divergeren"),
-            Activity.playing("wachten op goddelijke convergentie"),
-            Activity.playing("interpoleren tussen \"het gaat\" en \"het is fout\""),
-            Activity.playing("een slecht gesteld probleem oplossen (zoals altijd)"),
-            Activity.playing("een orde van grootte schatten op gevoel"),
-            Activity.playing("snel coderen, traag spijt hebben")
     );
 
     private static final List<Class<? extends Module>> MODULES = Arrays.asList(
