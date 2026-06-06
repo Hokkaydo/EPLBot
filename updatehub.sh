@@ -1,9 +1,6 @@
 ./gradlew shadowJar
-docker build -t eplbot:latest --target local-build ./
-#docker build -t eplbot:latest --target production ./
-# docker build -t eplbot-profiler:latest --target profiler ./
+docker build -t eplbot:latest --target runtime ./
 docker image tag eplbot:latest hokkaydo/eplbot:latest
-# docker image tag eplbot-profiler:latest hokkaydo/eplbot-profiler:latest
 # sh build_code_docker.sh
 docker image push hokkaydo/eplbot:latest
 # docker image push hokkaydo/eplbot-profiler:latest

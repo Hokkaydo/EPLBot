@@ -1,37 +1,29 @@
-FROM gradle:jdk25 AS build
+# ---------------------------
+# Build stage
+# ---------------------------
+FROM eclipse-temurin:25-jdk AS build
 
-ENV HOME=/home/gradle
-RUN mkdir -p "$HOME"/.gradle
-WORKDIR $HOME
+WORKDIR /home/gradle/app
 
-# Copy gradle files
-COPY build.gradle settings.gradle gradlew ./
 COPY gradle/ gradle/
+COPY settings.gradle build.gradle gradlew ./
 
-# Download dependencies
-RUN ./gradlew --no-daemon dependencies
+# Optional but speeds up dependency caching
+RUN ./gradlew dependencies --no-daemon || true
 
-# Copy source code
 COPY src/ src/
 
-# Build app
-RUN ./gradlew shadowJar
+RUN ./gradlew shadowJar --no-daemon
 
-FROM eclipse-temurin:25-jre AS base
-
-LABEL authors="hokkaydo"
-RUN mkdir -p /home/eplbot/persistence && apt-get update && apt-get install -y docker.io && apt-get clean
-COPY --from=build /home/gradle/build/libs/EPLBot-1.0-SNAPSHOT-all.jar /home/eplbot/eplbot.jar
-
-FROM base AS production
+# ---------------------------
+# Runtime stage
+# ---------------------------
+FROM eclipse-temurin:25-jre AS runtime
 
 WORKDIR /home/eplbot
-ENTRYPOINT ["java", "--enable-preview", "--enable-native-access=ALL-UNNAMED", "-jar", "eplbot.jar"]
 
-FROM eclipse-temurin:25-jre AS local-build
+RUN mkdir -p persistence
 
-RUN mkdir -p /home/eplbot/persistence && apt-get update && apt-get install -y docker.io && apt-get clean
-COPY build/libs/EPLBot-1.0-SNAPSHOT-all.jar /home/eplbot/eplbot.jar
+COPY --from=build /home/gradle/app/build/libs/*-all.jar app.jar
 
-WORKDIR /home/eplbot
-ENTRYPOINT ["java", "--enable-preview", "--enable-native-access=ALL-UNNAMED", "-jar", "eplbot.jar"]
+ENTRYPOINT ["java", "--enable-preview", "--enable-native-access=ALL-UNNAMED", "-jar", "app.jar"]

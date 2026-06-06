@@ -7,12 +7,14 @@ import net.dv8tion.jda.internal.utils.tuple.Pair;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
+import java.nio.file.Path;
 
 public class GlobalRunner implements Runner{
     private final String targetDocker;
@@ -69,15 +71,19 @@ public class GlobalRunner implements Runner{
     }
 
     private Process startProcessInDocker(String code) throws IOException {
+        Path tmp = Files.createTempDirectory("runner-");
         ProcessBuilder processBuilder = new ProcessBuilder(
             "docker", "run", "--rm",
-            "-v", "/tmp/logs:/usr/src/app/logs",
-            "--name", dockerName,
-            "--memory", "512m",           // 512 Mo
-            "--cpus", "1",                // 1 cpu
-            "--pids-limit", "4",        // max 4 processes
-            "--cap-drop=ALL",             // no more linux cmd like mount
-            "--network", "none",          // no network
+            "-v", tmp + ":/usr/src/app/logs",
+            "--memory", "512m",                             // 512 Mo
+            "--cpus", "1",                                  // 1 cpu
+            "--pids-limit", "4",                            // max 4 processes
+            "--cap-drop=ALL",                               // no more linux cmd like mount
+            "--network", "none",                            // no network
+            "--read-only",                                  // read only fs
+            "--tmpfs", "/tmp:rw,noexec,nosuid,size=100m",   // tmpfs for write access, but no exec
+            "--security-opt", "no-new-privileges",          // no privilege escalation
+            "--user", "nobody",                             // run as non-root user
             targetDocker,
             code
         );
