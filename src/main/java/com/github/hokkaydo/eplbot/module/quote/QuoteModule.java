@@ -31,6 +31,12 @@ public class QuoteModule extends Module {
         return Collections.singletonList(listener);
     }
 
+    @Override
+    public void disable() {
+        super.disable();
+        listener.shutdown();
+    }
+
     public boolean isQuote(Long messageId) {
         return listener.isQuote(messageId);
     }

@@ -32,19 +32,19 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
 public class ConfessionProcessor extends ListenerAdapter {
 
-    private final Map<UUID, MessageCreateBuilder> confessions = new HashMap<>();
-    private final Map<UUID, String> confessionsContent = new HashMap<>();
+    private final Map<UUID, MessageCreateBuilder> confessions = new ConcurrentHashMap<>();
+    private final Map<UUID, String> confessionsContent = new ConcurrentHashMap<>();
     private final List<UUID> confessFollowing = new ArrayList<>();
-    private final Map<UUID, Long> confessionAuthor = new HashMap<>();
+    private final Map<UUID, Long> confessionAuthor = new ConcurrentHashMap<>();
     private static final String[] VALIDATION_EMBED_TITLES = {"Confession - Validée", "Confession - Refusée", "Confession - Signalée"};
     private static final Color[] VALIDATION_EMBED_COLORS = {Color.GREEN, Color.RED, Color.YELLOW};
     private static final int VALID = 0;
@@ -62,8 +62,8 @@ public class ConfessionProcessor extends ListenerAdapter {
     ConfessionProcessor(Long guildId, Map<Long, Long> lastMainConfession, WarnedConfessionRepository warnedConfessionRepository) {
         this.guildId = guildId;
         this.lastMainConfession = lastMainConfession;
-        this.lastFollowingConfessionValidation = new HashMap<>();
-        this.lastMainConfessionValidation = new HashMap<>();
+        this.lastFollowingConfessionValidation = new ConcurrentHashMap<>();
+        this.lastMainConfessionValidation = new ConcurrentHashMap<>();
         this.warnedConfessionRepository = warnedConfessionRepository;
     }
 
@@ -121,6 +121,10 @@ public class ConfessionProcessor extends ListenerAdapter {
                                                     Button.primary("refuse-confession;" + confessUUID, Emoji.fromUnicode("❌"))
                                             );
         if(following) {
+            if(!lastMainConfessionValidation.containsKey(userId) && !lastFollowingConfessionValidation.containsKey(userId)) {
+                event.getHook().editOriginal(Strings.getString("command.confession.continue.no_last_confession_found")).queue();
+                return;
+            }
             confessFollowing.add(confessUUID);
             if(lastFollowingConfessionValidation.containsKey(userId)) {
                 validationChannel.retrieveMessageById(lastFollowingConfessionValidation.get(userId)).queue(lastValidation -> lastValidation.reply(data.build()).queue());
@@ -185,6 +189,9 @@ public class ConfessionProcessor extends ListenerAdapter {
             sendConfession(uuid, event.getGuild().getIdLong());
         } else if(id.startsWith("refuse")){
             updateValidationEmbedColor(REFUSED, event.getHook(), event.getMessage());
+            confessions.remove(uuid);
+            confessionAuthor.remove(uuid);
+            confessFollowing.remove(uuid);
         } else {
             updateValidationEmbedColor(WARNED, event.getHook(), event.getMessage());
             warn(event.getUser().getIdLong(), uuid);

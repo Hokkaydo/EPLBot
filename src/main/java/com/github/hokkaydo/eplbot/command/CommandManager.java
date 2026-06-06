@@ -2,13 +2,13 @@ package com.github.hokkaydo.eplbot.command;
 
 import com.github.hokkaydo.eplbot.Main;
 import com.github.hokkaydo.eplbot.Strings;
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
-import net.dv8tion.jda.api.requests.RestAction;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -32,7 +32,7 @@ public class CommandManager extends ListenerAdapter {
      */
     public void disableCommands(Long guildId, List<Command> commands) {
         Guild guild = Main.getJDA().getGuildById(guildId);
-        assert guild != null;
+        if(guild == null) return;
         List<String> names = commands.stream().map(Command::getName).toList();
         guild.retrieveCommands()
                 .queue(list -> list.stream()
@@ -48,7 +48,7 @@ public class CommandManager extends ListenerAdapter {
      */
     public void enableCommands(Long guildId, List<Command> commands) {
         Guild guild = Main.getJDA().getGuildById(guildId);
-        assert guild != null;
+        if(guild == null) return;
         commands.stream().map(this::mapToCommandData).forEach(commandData -> guild.upsertCommand(commandData).queue());
     }
 
@@ -62,17 +62,6 @@ public class CommandManager extends ListenerAdapter {
         return Commands.slash(cmd.getName(), cmd.getDescription().get())
                        .addOptions(cmd.getOptions())
                        .setDefaultPermissions(cmd.adminOnly() ? DefaultMemberPermissions.DISABLED : DefaultMemberPermissions.ENABLED);
-    }
-
-    /**
-     * Enables the given commands globally.
-     * @param commands a {@link List<Command>} of {@link Command} to disable
-     */
-    public void enableGlobalCommands(List<Command> commands) {
-        List<String> names = commands.stream().map(Command::getName).toList();
-        Main.getJDA().retrieveCommands().queue(cmds -> cmds.stream().filter(command -> names.stream().anyMatch(name -> Objects.equals(name, command.getName())))
-                .map(net.dv8tion.jda.api.interactions.commands.Command::delete)
-                .forEach(RestAction::queue));
     }
 
     /**
@@ -106,7 +95,6 @@ public class CommandManager extends ListenerAdapter {
         if(!event.isGuildCommand() || event.getGuild() == null) {
             command = globalCommands.get(event.getFullCommandName());
         }else {
-            if(event.getGuild() == null) return;
             command = commands.getOrDefault(event.getGuild().getIdLong(), new HashMap<>()).getOrDefault(event.getFullCommandName(), null);
         }
         if(command == null) {
@@ -116,6 +104,10 @@ public class CommandManager extends ListenerAdapter {
 
         if(!command.validateChannel(event.getMessageChannel())) {
             event.reply(Strings.getString("command.wrong_channel")).setEphemeral(true).queue();
+            return;
+        }
+        if(command.adminOnly() && (event.getMember() == null || !event.getMember().hasPermission(Permission.ADMINISTRATOR))) {
+            event.reply(Strings.getString("command.no_permission")).setEphemeral(true).queue();
             return;
         }
         command.executeCommand(new CommandContext(event.getName(),
@@ -156,7 +148,7 @@ public class CommandManager extends ListenerAdapter {
      * @param guild the guild to refresh the commands in
      * */
     public void refreshCommands(Guild guild) {
-        guild.updateCommands().addCommands(commands.get(guild.getIdLong()).values().stream().map(this::mapToCommandData).toList()).queue();
+        guild.updateCommands().addCommands(commands.getOrDefault(guild.getIdLong(), new HashMap<>()).values().stream().map(this::mapToCommandData).toList()).queue();
     }
 
 }

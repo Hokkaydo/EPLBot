@@ -118,6 +118,7 @@ public class CodeCommand extends ListenerAdapter implements Command {
      */
     private Runner instantiateRunner(String type) {
         Class<? extends Runner> runnerClass = RUNNERMAP.get(type);
+        if(runnerClass == null) throw new IllegalArgumentException("Unsupported language: " + type);
         try {
             return runnerClass.getDeclaredConstructor(String.class).newInstance(String.valueOf(ID_MANAGER.getNextNumber()));
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {

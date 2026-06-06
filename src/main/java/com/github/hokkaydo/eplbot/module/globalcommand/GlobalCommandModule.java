@@ -54,6 +54,13 @@ public class GlobalCommandModule extends Module {
     }
 
     @Override
+    public void disable() {
+        super.disable();
+        sayCommand.shutdown();
+        issueCommand.shutdown();
+    }
+
+    @Override
     public String getName() {
         return "configuration";
     }

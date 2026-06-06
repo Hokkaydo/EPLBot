@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
 
 public class MessageBirdTask {
 
-    private static final ScheduledExecutorService EXECUTOR = Executors.newScheduledThreadPool(4);
+    private ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
     private static final Random RANDOM = new Random();
     private static final String[][] LOG_MESSAGES = {
             {"No message today", "<"},
@@ -68,7 +68,7 @@ public class MessageBirdTask {
         long finalDeltaStart = deltaStart;
         String capped = Strings.capsFirstLetter(type);
         logger.info("[{}][{}] Trying to send in {} seconds", capped, guildName, finalDeltaStart);
-        dayLoops.add(EXECUTOR.schedule(() -> {
+        dayLoops.add(executor.schedule(() -> {
             int rnd = RANDOM.nextInt(100);
             int proba = Config.<Integer>getGuildVariable(guildId, type + "_BIRD_MESSAGE_PROBABILITY");
             String[] logs = LOG_MESSAGES[rnd > proba ? 0 : 1];
@@ -81,7 +81,7 @@ public class MessageBirdTask {
             }
             long waitTime = RANDOM.nextLong(endSeconds - startSeconds);
             logger.info("[{}][{}] Wait {} seconds before sending", Strings.capsFirstLetter(type), guildName, waitTime);
-            perfectTimeLoops.add(EXECUTOR.schedule(
+            perfectTimeLoops.add(executor.schedule(
                     () -> Optional.ofNullable(Main.getJDA().getGuildById(guildId))
                                   .map(guild -> guild.getTextChannelById(Config.getGuildVariable(guildId, type + "_BIRD_CHANNEL_ID")))
                                   .ifPresentOrElse(
@@ -121,6 +121,8 @@ public class MessageBirdTask {
         dayLoops.forEach(scheduledFuture -> scheduledFuture.cancel(true));
         perfectTimeLoops.clear();
         dayLoops.clear();
+        executor.shutdown();
+        executor = Executors.newSingleThreadScheduledExecutor();
     }
 
     public void restart() {

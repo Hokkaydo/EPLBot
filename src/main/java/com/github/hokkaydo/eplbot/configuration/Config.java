@@ -283,6 +283,11 @@ public class Config {
      * @param guildId the id of the guild
      * @param key the key of the module
      * */
+    public static void removeGuild(Long guildId) {
+        GUILD_CONFIGURATION.remove(guildId);
+        GUILD_STATE.remove(guildId);
+    }
+
     public static void disableModule(Long guildId, String key) {
         updateValue(guildId, key, false);
     }

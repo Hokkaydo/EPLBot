@@ -23,6 +23,10 @@ public class GlobalRunner implements Runner{
     }
     private static final ScheduledExecutorService SCHEDULER = new ScheduledThreadPoolExecutor(1);
 
+    static {
+        Runtime.getRuntime().addShutdownHook(new Thread(SCHEDULER::shutdown));
+    }
+
     @Override
     public Pair<String, Integer> run(String code, Integer timeout) {
         if (safeMentions(code)){

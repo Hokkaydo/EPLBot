@@ -51,7 +51,7 @@ public class ClearLastCommand implements Command {
     @NotNull
     @Override
     public List<OptionData> getOptions() {
-        return Collections.singletonList(new OptionData(OptionType.STRING, "amount", Strings.getString("command.clear.last.option.amount.description"), true));
+        return Collections.singletonList(new OptionData(OptionType.INTEGER, "amount", Strings.getString("command.clear.last.option.amount.description"), true));
     }
 
     @Override

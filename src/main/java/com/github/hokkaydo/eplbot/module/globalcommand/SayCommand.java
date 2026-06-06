@@ -23,7 +23,8 @@ import java.util.stream.Collectors;
 
 public class SayCommand implements Command {
 
-    private final List<SayRecord> records  = new ArrayList<>();
+    private final List<SayRecord> records = new ArrayList<>();
+    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 
     @Override
     public void executeCommand(CommandContext context) {
@@ -73,12 +74,14 @@ public class SayCommand implements Command {
     }
 
     public void periodicCleanup() {
-        try (ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor()) {
-            executor.scheduleAtFixedRate(() -> {
-                long now = System.currentTimeMillis();
-                records.removeIf(r -> now - r.timestamp > TimeUnit.DAYS.toMillis(30));
-            }, 0, 30, TimeUnit.DAYS);
-        }
+        executor.scheduleAtFixedRate(() -> {
+            long now = System.currentTimeMillis();
+            records.removeIf(r -> now - r.timestamp > TimeUnit.DAYS.toMillis(30));
+        }, 0, 30, TimeUnit.DAYS);
+    }
+
+    public void shutdown() {
+        executor.shutdown();
     }
 
     @Override

@@ -42,6 +42,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 public class IssueCommand extends ListenerAdapter implements Command {
@@ -51,10 +54,15 @@ public class IssueCommand extends ListenerAdapter implements Command {
     private static final String ERROR_OCCURRED = "error_occurred";
 
     private final Map<String, Object[]> labelsFileModalTempStore = new HashMap<>();
+    private final ScheduledExecutorService cleanup = Executors.newSingleThreadScheduledExecutor();
 
     private final long guildId;
     IssueCommand(long guildId) {
         this.guildId = guildId;
+    }
+
+    void shutdown() {
+        cleanup.shutdown();
     }
 
     @Override
@@ -67,6 +75,7 @@ public class IssueCommand extends ListenerAdapter implements Command {
         Optional<OptionMapping> file = context.options().stream().filter(o -> o.getName().equals("file")).findFirst();
         String key = context.author().getId() + "-issue-modal";
         labelsFileModalTempStore.put(key, new Object[]{labels.get().getAsString(), file.<Object>map(OptionMapping::getAsAttachment).orElse(null)});
+        cleanup.schedule(() -> labelsFileModalTempStore.remove(key), 15, TimeUnit.MINUTES);
 
         Modal modal = Modal.create(key, "Formulaire d'issue")
                               .addActionRow(TextInput.create("title", "Titre", TextInputStyle.SHORT).setPlaceholder("Titre").setRequired(true).build())

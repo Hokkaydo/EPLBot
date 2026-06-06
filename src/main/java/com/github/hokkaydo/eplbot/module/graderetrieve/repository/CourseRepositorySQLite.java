@@ -62,7 +62,9 @@ public class CourseRepositorySQLite implements CourseRepository {
         );
         List<List<Course>> ret = List.of(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
         for (Course course : list) {
-            ret.get(course.quarter() - 1).add(course);
+            int idx = course.quarter() - 1;
+            if(idx < 0 || idx >= ret.size()) continue;
+            ret.get(idx).add(course);
         }
         return ret;
     }

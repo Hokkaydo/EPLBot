@@ -21,26 +21,33 @@ import org.jetbrains.annotations.NotNull;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 public class MirrorManager extends ListenerAdapter {
 
-    private final List<MirroredMessages> mirroredMessages = new ArrayList<>();
+    private final List<MirroredMessages> mirroredMessages = Collections.synchronizedList(new ArrayList<>());
     private final MirrorLinkRepository mirrorLinkRepository;
+    private final ScheduledExecutorService cleaner;
 
-    private final List<Long> newThreadWithParentMirrors = new ArrayList<>();
+    private final List<Long> newThreadWithParentMirrors = Collections.synchronizedList(new ArrayList<>());
 
     public MirrorManager() {
-        runPeriodicCleaner();
+        this.cleaner = runPeriodicCleaner();
         this.mirrorLinkRepository = new MirrorLinkRepositorySQLite(DatabaseManager.getDataSource());
+    }
+
+    void shutdown() {
+        cleaner.shutdown();
     }
 
     /**
@@ -56,8 +63,10 @@ public class MirrorManager extends ListenerAdapter {
     /**
      * Run a periodic cleaner to remove outdated mirrored messages, to avoid memory leaks
      */
-    private void runPeriodicCleaner() {
-        Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> mirroredMessages.removeIf(MirroredMessages::isOutdated), 0, 1, TimeUnit.HOURS);
+    private ScheduledExecutorService runPeriodicCleaner() {
+        ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
+        executor.scheduleAtFixedRate(() -> mirroredMessages.removeIf(MirroredMessages::isOutdated), 0, 1, TimeUnit.HOURS);
+        return executor;
     }
 
     /**
@@ -91,9 +100,8 @@ public class MirrorManager extends ListenerAdapter {
 
     @Override
     public void onMessageReceived(@NotNull MessageReceivedEvent event) {
-        if (!canBeMirrored(event)) return;
-
-        // Thread started with a parent message
+        // Thread started with a parent message — must be checked before canBeMirrored()
+        // because THREAD_STARTER_MESSAGE.isSystem() == true, which would cause canBeMirrored() to reject it.
         if (event.getMessage().getType().equals(MessageType.THREAD_STARTER_MESSAGE)) {
             ThreadChannel threadChannel = event.getMessage().getChannel().asThreadChannel();
             Message parentMessage = threadChannel.retrieveParentMessage().complete();
@@ -111,12 +119,10 @@ public class MirrorManager extends ListenerAdapter {
                                      mirroredMessage.setThreadOwner();
                                      sendMirror(event.getMessage());
                                  })
-                    ).reduce((a, b) -> {
-                        a.thenRun(b::join);
-                        return a;
-                    }).ifPresent(CompletableFuture::join);
+                    ).reduce((a, b) -> a.thenCompose(_ -> b)).ifPresent(CompletableFuture::join);
             return;
         }
+        if (!canBeMirrored(event)) return;
         createNoParentThreadIfNeeded(event);
         sendMirror(event.getMessage());
     }
@@ -245,7 +251,9 @@ public class MirrorManager extends ListenerAdapter {
 
     @Override
     public void onChannelDelete(@NotNull ChannelDeleteEvent event) {
-        mirrorLinkRepository.readById(event.getChannel().getIdLong()).forEach(mirrorLinkRepository::delete);
+        long id = event.getChannel().getIdLong();
+        mirrorLinkRepository.readById(id).forEach(mirrorLinkRepository::delete);
+        MirroredMessage.evictChannel(id);
     }
 
     @Override

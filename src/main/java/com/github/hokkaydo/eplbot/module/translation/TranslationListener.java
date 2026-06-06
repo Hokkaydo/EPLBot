@@ -2,8 +2,10 @@ package com.github.hokkaydo.eplbot.module.translation;
 
 import com.github.hokkaydo.eplbot.configuration.Config;
 import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.events.channel.ChannelDeleteEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
 
@@ -15,7 +17,12 @@ public class TranslationListener extends ListenerAdapter {
     }
 
     @Override
-    public void onMessageReceived(MessageReceivedEvent event) {
+    public void onChannelDelete(@NotNull ChannelDeleteEvent event) {
+        TranslatedMessage.evictChannel(event.getChannel().getIdLong());
+    }
+
+    @Override
+    public void onMessageReceived(@NotNull MessageReceivedEvent event) {
         if (!event.isFromGuild()) return;
         if(event.getGuild().getIdLong() != translationModule.getGuildId()) return;
         if(event.getMessage().isWebhookMessage()) return;

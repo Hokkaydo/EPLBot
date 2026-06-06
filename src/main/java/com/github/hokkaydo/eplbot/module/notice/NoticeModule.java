@@ -26,6 +26,12 @@ public class NoticeModule extends Module {
     }
 
     @Override
+    public void disable() {
+        super.disable();
+        noticeCommand.shutdown();
+    }
+
+    @Override
     public String getName() {
         return "notice";
     }

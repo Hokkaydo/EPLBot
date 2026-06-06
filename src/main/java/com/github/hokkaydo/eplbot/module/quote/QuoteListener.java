@@ -26,7 +26,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -43,11 +45,11 @@ public class QuoteListener extends ListenerAdapter {
     private final Map<Long, List<Message>> quotesOfMessage = new HashMap<>();
     // key: quote id, value: Quote
     private final Map<Long, Quote> quotes = new HashMap<>();
-    private static final ScheduledExecutorService executor = Executors.newScheduledThreadPool(4);
+    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
     private final Map<Long, ScheduledFuture<?>> removeDeleteButtonTasks = new HashMap<>();
     // indicates if the map of quotes is up to date or waiting for a quote to be sent
     // (> 0 means the map is not up to date)
-    private volatile int quotesMutex;
+    private final AtomicInteger quotesMutex = new AtomicInteger(0);
 
     @Override
     public void onButtonInteraction(ButtonInteractionEvent event) {
@@ -88,9 +90,11 @@ public class QuoteListener extends ListenerAdapter {
                     String[] split = matchResult.group().split("/");
                     return new Tuple3<>(split[4], split[5], split[6]);
                 })
-                .map(this::toMessage)
+                .map(this::toMessageAsync)
                 .filter(Objects::nonNull)
-                .forEach(quoted -> sendEmbed(members, quoter, quoted));
+                .forEach(future -> future.thenAccept(quoted -> {
+                    if (quoted != null) sendEmbed(members, quoter, quoted);
+                }));
     }
 
     /**
@@ -99,7 +103,7 @@ public class QuoteListener extends ListenerAdapter {
      * @return true if the message id belongs to a quote, false otherwise
      * */
     public boolean isQuote(Long messageId) {
-        while (quotesMutex > 0) {
+        while (quotesMutex.get() > 0) {
             Thread.onSpinWait();
         }
         return quotes.containsKey(messageId);
@@ -112,8 +116,7 @@ public class QuoteListener extends ListenerAdapter {
      * @param quoted a message quoted in quoter
      * */
     private void sendEmbed(List<Member> members, Message quoter, Message quoted) {
-        int curr = quotesMutex;
-        quotesMutex = curr+1;
+        quotesMutex.getAndIncrement();
         MessageUtil.toEmbedWithAttachements(
                 quoted,
                 e -> quoter.replyEmbeds(
@@ -133,8 +136,7 @@ public class QuoteListener extends ListenerAdapter {
                     // Add 🗑 emote to delete quote if reacted with
                     quote.editMessageComponents(ActionRow.of(Button.primary("delete-quote", Emoji.fromUnicode("\uD83D\uDDD1")))).queue();
                     quotes.put(quote.getIdLong(), new Quote(quote, quoter.getAuthor().getIdLong(), quoted.getAuthor().getIdLong()));
-                    int current = quotesMutex;
-                    quotesMutex = current -1;
+                    quotesMutex.decrementAndGet();
                     removeDeleteButtonTasks.put(quote.getIdLong(), executor.schedule(() -> this.removeDeleteButton(quote.getIdLong()), 5, TimeUnit.MINUTES));
                 }
         );
@@ -143,7 +145,8 @@ public class QuoteListener extends ListenerAdapter {
     private void removeDeleteButton(Long quoteId) {
         if(!removeDeleteButtonTasks.containsKey(quoteId)) return;
         removeDeleteButtonTasks.remove(quoteId).cancel(true);
-        quotes.remove(quoteId).quote.editMessageComponents(Collections.emptyList()).queue();
+        Quote removed = quotes.remove(quoteId);
+        if(removed != null) removed.quote.editMessageComponents(Collections.emptyList()).queue();
     }
 
     @Override
@@ -165,10 +168,14 @@ public class QuoteListener extends ListenerAdapter {
     private record Tuple3<A, B, C>(A a, B b, C c) {}
 
 
-    private Message toMessage(Tuple3<String, String, String> tuple3) {
+    private CompletableFuture<Message> toMessageAsync(Tuple3<String, String, String> tuple3) {
         GuildChannel guildChannel = Main.getJDA().getGuildChannelById(tuple3.b);
         if(!(guildChannel instanceof MessageChannel)) return null;
-        return ((MessageChannel)guildChannel).retrieveMessageById(tuple3.c).complete();
+        return ((MessageChannel)guildChannel).retrieveMessageById(tuple3.c).submit();
+    }
+
+    void shutdown() {
+        executor.shutdown();
     }
 
     private record Quote(Message quote, Long quoterUserId, Long quotedUserId){

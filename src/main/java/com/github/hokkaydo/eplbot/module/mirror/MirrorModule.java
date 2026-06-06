@@ -45,8 +45,10 @@ public class MirrorModule extends Module {
     public synchronized void disable() {
         this.enabled = false;
         int current = instanceCount;
-        if(current == 1)
+        if(current == 1) {
             Main.getJDA().removeEventListener(getListeners().toArray());
+            mirrorManager.shutdown();
+        }
         instanceCount--;
         Main.getCommandManager().disableCommands(getGuildId(), getCommands());
     }

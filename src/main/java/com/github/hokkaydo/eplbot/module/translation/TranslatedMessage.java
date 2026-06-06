@@ -215,4 +215,8 @@ public class TranslatedMessage {
     long getChannelId() {
         return channel.getIdLong();
     }
+
+    static void evictChannel(long channelId) {
+        CHANNEL_WEBHOOK.remove(channelId);
+    }
 }

@@ -238,6 +238,10 @@ public class NoticeCommand extends ListenerAdapter implements Command {
         return noticeRepository.readByAuthorIdAndSubjectId(authorId, subjectId, isCourse);
     }
 
+    void shutdown() {
+        executor.shutdown();
+    }
+
     @Override
     public boolean ephemeralReply() {
         return true;

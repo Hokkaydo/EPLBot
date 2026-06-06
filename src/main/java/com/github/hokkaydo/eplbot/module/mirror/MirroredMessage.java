@@ -378,4 +378,8 @@ public class MirroredMessage {
     boolean isMirror() {
         return this.mirrorMessage != null;
     }
+
+    static void evictChannel(long channelId) {
+        CHANNEL_WEBHOOK.remove(channelId);
+    }
 }

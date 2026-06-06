@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit;
 public class RssHandler {
 
     private final Set<Integer> articles = new HashSet<>();
-    private final ScheduledExecutorService service = Executors.newScheduledThreadPool(4);
+    private ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
     private final Long guildId;
     private ScheduledFuture<?> task;
     private final RssReader rssReader = new RssReader();
@@ -46,6 +46,7 @@ public class RssHandler {
 
     void launch() {
         if (task != null && !task.isCancelled()) stop();
+        if (service.isShutdown()) service = Executors.newSingleThreadScheduledExecutor();
         task = service.scheduleAtFixedRate(this::run, 0, Config.<Long>getGuildVariable(guildId, "RSS_UPDATE_PERIOD"), TimeUnit.MINUTES);
     }
 
@@ -54,6 +55,7 @@ public class RssHandler {
             task.cancel(true);
             task = null;
         }
+        service.shutdown();
     }
 
     private void run() {

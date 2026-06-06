@@ -30,8 +30,7 @@ public abstract class Module {
     protected boolean enabled = false;
 
     private final Long guildId;
-
-    private final Logger logger = JDALogger.getLog(Strings.capsFirstLetter(getName()));
+    private Logger logger;
 
     public Module(@NotNull Long guildId) {
         this.guildId = guildId;
@@ -77,12 +76,14 @@ public abstract class Module {
     }
 
     public Logger getLogger() {
+        if(logger == null) logger = JDALogger.getLog(Strings.capsFirstLetter(getName()));
         return logger;
     }
 
     @Override
     public String toString() {
-        return "%s;%s".formatted(getName(), getGuild().getName());
+        Guild guild = getGuild();
+        return "%s;%s".formatted(getName(), guild != null ? guild.getName() : "unknown-" + guildId);
     }
 
 }

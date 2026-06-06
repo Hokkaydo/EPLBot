@@ -290,7 +290,8 @@
 		},
 		"disabled": "Commande désactivée",
 		"not_found": "Commande introuvable",
-		"wrong_channel": "Canal invalide."
+		"wrong_channel": "Canal invalide.",
+		"no_permission": "Vous n'avez pas la permission d'utiliser cette commande."
 	},
 	"warning.rss_channel_id_invalid": "Identifiant de canal d'envoi de flux RSS invalide ! Utilisez /config pour le modifier",
 	"warning.rss_feed_error": "Le flux RSS `%s` n'a pas pu être récupéré.",
