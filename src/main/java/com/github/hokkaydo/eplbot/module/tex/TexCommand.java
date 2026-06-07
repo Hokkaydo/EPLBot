@@ -17,12 +17,28 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 public class TexCommand extends ListenerAdapter implements Command {
 
     private static final String MODAL_ID_PREFIX = "tex-modal-";
+    private static final long SAVED_TTL_MINUTES = 5;
+
+    // Survives across guild instances (static) — keyed by globally unique Discord user IDs
+    private static final Map<Long, String>             SAVED_CONTENT = new ConcurrentHashMap<>();
+    private static final Map<Long, ScheduledFuture<?>> SAVED_TTL     = new ConcurrentHashMap<>();
+    private static final ScheduledExecutorService      TTL_SCHEDULER = new ScheduledThreadPoolExecutor(1);
+
+    static {
+        Runtime.getRuntime().addShutdownHook(new Thread(TTL_SCHEDULER::shutdown));
+    }
 
     private final long guildId;
 
@@ -30,19 +46,38 @@ public class TexCommand extends ListenerAdapter implements Command {
         this.guildId = guildId;
     }
 
+    // Store content for 5 min; cancels any existing timer for this user first
+    private static void saveContent(long userId, String content) {
+        ScheduledFuture<?> old = SAVED_TTL.remove(userId);
+        if (old != null) old.cancel(false);
+        SAVED_CONTENT.put(userId, content);
+        SAVED_TTL.put(userId, TTL_SCHEDULER.schedule(() -> {
+            SAVED_CONTENT.remove(userId);
+            SAVED_TTL.remove(userId);
+        }, SAVED_TTL_MINUTES, TimeUnit.MINUTES));
+    }
+
+    private static void clearContent(long userId) {
+        SAVED_CONTENT.remove(userId);
+        ScheduledFuture<?> ttl = SAVED_TTL.remove(userId);
+        if (ttl != null) ttl.cancel(false);
+    }
+
     @Override
     public void executeCommand(CommandContext context) {
-        String modalId = MODAL_ID_PREFIX + context.user().getId();
+        long userId  = context.user().getIdLong();
+        String modalId = MODAL_ID_PREFIX + userId;
 
-        TextInput latexInput = TextInput.create("tex_body", TextInputStyle.PARAGRAPH)
+        String saved = SAVED_CONTENT.get(userId);
+        TextInput.Builder inputBuilder = TextInput.create("tex_body", TextInputStyle.PARAGRAPH)
                 .setPlaceholder(Strings.getString("command.tex.modal.placeholder"))
                 .setRequired(true)
-                .setMaxLength(4000)
-                .build();
+                .setMaxLength(4000);
+        if (saved != null) inputBuilder.setValue(saved);
 
         context.interaction().replyModal(
                 Modal.create(modalId, Strings.getString("command.tex.modal.title"))
-                        .addComponents(Label.of(Strings.getString("command.tex.modal.label"), latexInput))
+                        .addComponents(Label.of(Strings.getString("command.tex.modal.label"), inputBuilder.build()))
                         .build()
         ).queue();
     }
@@ -63,18 +98,22 @@ public class TexCommand extends ListenerAdapter implements Command {
         if (member == null) return;
         var channel = event.getChannel().asGuildMessageChannel();
 
+        long userId  = member.getIdLong();
         String content = bodyOpt.get().getAsString();
-        boolean dark = UserPreferencesStore.isDarkTheme(member.getIdLong(), guild.getIdLong());
+        boolean dark   = UserPreferencesStore.isDarkTheme(userId, guild.getIdLong());
 
-        // Defer ephemerally so Discord doesn't time out; result arrives via webhook
         event.deferReply(true).queue(hook ->
                 LatexRenderer.renderToImage(content, dark)
-                        .thenAccept(imageBytes ->
-                                new RenderedTex(channel, member).send(imageBytes, null, null, msg ->
-                                        hook.deleteOriginal().queue(null, _ -> {})
-                                )
-                        )
+                        .thenAccept(imageBytes -> {
+                            // Success: forget saved draft
+                            clearContent(userId);
+                            new RenderedTex(channel, member).send(imageBytes, null, null, msg ->
+                                    hook.deleteOriginal().queue(null, _ -> {})
+                            );
+                        })
                         .exceptionally(t -> {
+                            // Failure: store content so next /tex pre-fills the modal
+                            saveContent(userId, content);
                             Throwable cause = t.getCause() != null ? t.getCause() : t;
                             if (cause instanceof LatexRenderer.LatexCompilationException) {
                                 String log = cause.getMessage();
