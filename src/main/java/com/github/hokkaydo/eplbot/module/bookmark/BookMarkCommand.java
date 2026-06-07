@@ -43,10 +43,14 @@ public class BookMarkCommand implements Command {
     }
 
     private String formatter(BookMark bookMark) {
+        String content = bookMark.description();
+        if (content.length() > 100) {
+            content = content.substring(0, 100) + "...";
+        }
         return """
         > %s
         %s
-        """.formatted(bookMark.messageId(), bookMark.messageLink());
+        """.formatted(content, bookMark.messageLink());
     }
 
     @Override
