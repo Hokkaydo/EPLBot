@@ -44,7 +44,7 @@
 			"modal": {
 				"title": "Rendu LaTeX",
 				"label": "Code LaTeX",
-				"placeholder": "\\frac{1}{2} + \\int_0^\\infty e^{-x}\\,dx"
+				"placeholder": "$\\frac{1}{2} + \\int_0^\\infty e^{-x}\\,dx$"
 			}
 		},
 		"preferences": {
