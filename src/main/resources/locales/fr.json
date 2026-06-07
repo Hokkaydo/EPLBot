@@ -35,6 +35,29 @@
 			"option.user.description": "Utilisateur",
 			"done": "Le compteur a bien été réinitialisé."
 		},
+		"tex": {
+			"description": "Rends du code LaTeX en image",
+			"help": "Ouvre un formulaire pour saisir du code LaTeX qui sera rendu en image",
+			"rendering": "⏳ Rendu en cours…",
+			"render_error": "Une erreur inattendue s'est produite lors du rendu. Contactez un administrateur si le problème persiste.",
+			"error_not_author": "Seul l'auteur du message peut supprimer cette erreur.",
+			"modal": {
+				"title": "Rendu LaTeX",
+				"label": "Code LaTeX",
+				"placeholder": "\\frac{1}{2} + \\int_0^\\infty e^{-x}\\,dx"
+			}
+		},
+		"preferences": {
+			"description": "Gérez vos préférences personnelles pour le bot",
+			"help": "Utilisez `/preferences theme dark|light` pour définir votre thème Discord. Ce réglage est global et affecte le rendu LaTeX.",
+			"option": {
+				"theme": {
+					"description": "Votre thème Discord (dark pour fond sombre, light pour fond clair)"
+				}
+			},
+			"current": "Vos préférences actuelles :\n- Thème : %s",
+			"theme_set": "Thème mis à jour : %s"
+		},
 		"code": {
 			"description": "Permet de compiler et exécuter du code",
 			"help": "Permet de compiler et exécuter du code",
