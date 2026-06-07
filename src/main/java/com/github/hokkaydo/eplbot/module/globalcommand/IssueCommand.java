@@ -16,9 +16,10 @@ import net.dv8tion.jda.api.interactions.InteractionType;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
-import net.dv8tion.jda.api.interactions.components.text.TextInput;
-import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
-import net.dv8tion.jda.api.interactions.modals.Modal;
+import net.dv8tion.jda.api.components.label.Label;
+import net.dv8tion.jda.api.components.textinput.TextInput;
+import net.dv8tion.jda.api.components.textinput.TextInputStyle;
+import net.dv8tion.jda.api.modals.Modal;
 import org.jetbrains.annotations.NotNull;
 import org.kohsuke.github.GHAppInstallation;
 import org.kohsuke.github.GHAppInstallationToken;
@@ -78,8 +79,10 @@ public class IssueCommand extends ListenerAdapter implements Command {
         cleanup.schedule(() -> labelsFileModalTempStore.remove(key), 15, TimeUnit.MINUTES);
 
         Modal modal = Modal.create(key, "Formulaire d'issue")
-                              .addActionRow(TextInput.create("title", "Titre", TextInputStyle.SHORT).setPlaceholder("Titre").setRequired(true).build())
-                              .addActionRow(TextInput.create("body", "Corps", TextInputStyle.PARAGRAPH).setPlaceholder("Corps").setRequired(true).build())
+                              .addComponents(
+                                      Label.of("Titre", TextInput.create("title", TextInputStyle.SHORT).setPlaceholder("Titre").setRequired(true).build()),
+                                      Label.of("Corps", TextInput.create("body", TextInputStyle.PARAGRAPH).setPlaceholder("Corps").setRequired(true).build())
+                              )
                               .build();
         context.interaction().replyModal(modal).queue();
     }

@@ -19,11 +19,13 @@ import net.dv8tion.jda.api.interactions.commands.Command.Choice;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
-import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
-import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu;
-import net.dv8tion.jda.api.interactions.components.text.TextInput;
-import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
-import net.dv8tion.jda.api.interactions.modals.Modal;
+import net.dv8tion.jda.api.components.actionrow.ActionRow;
+import net.dv8tion.jda.api.components.label.Label;
+import net.dv8tion.jda.api.components.selections.SelectOption;
+import net.dv8tion.jda.api.components.selections.StringSelectMenu;
+import net.dv8tion.jda.api.components.textinput.TextInput;
+import net.dv8tion.jda.api.components.textinput.TextInputStyle;
+import net.dv8tion.jda.api.modals.Modal;
 import net.dv8tion.jda.api.requests.restaction.interactions.ReplyCallbackAction;
 import org.jetbrains.annotations.NotNull;
 
@@ -100,7 +102,7 @@ public class NoticeCommand extends ListenerAdapter implements Command {
                                               .build();
         noticeData.put(key, new Object[]{group, action});
 
-        context.replyCallbackAction().setContent(Strings.getString("command.notice.select_message")).addActionRow(selectMenu).queue();
+        context.replyCallbackAction().setContent(Strings.getString("command.notice.select_message")).addComponents(ActionRow.of(selectMenu)).queue();
     }
 
     @Override
@@ -194,14 +196,14 @@ public class NoticeCommand extends ListenerAdapter implements Command {
 
     private Modal writeNotice(String modalKey, String selectedValue, String authorId, String subjectId) {
         noticeData.put(modalKey, new Object[]{selectedValue});
-        TextInput.Builder textBuilder = TextInput.create(NOTICE, "Avis", TextInputStyle.PARAGRAPH)
+        TextInput.Builder textBuilder = TextInput.create(NOTICE, TextInputStyle.PARAGRAPH)
                                                 .setPlaceholder("Entrez votre avis");
         getOldValue(authorId, selectedValue, courses.stream().anyMatch(c -> c.code().equals(selectedValue))).map(Notice::content).ifPresent(textBuilder::setValue);
         String name = courses.stream().anyMatch(c -> c.code().equals(subjectId)) ?
                               selectedValue + " " + courseRepository.getByCourseCode(selectedValue).map(Course::name).orElse(""):
                               selectedValue;
         return Modal.create(modalKey, String.format("Avis - %s", name))
-                       .addActionRow(textBuilder.build())
+                       .addComponents(Label.of("Avis", textBuilder.build()))
                        .build();
     }
 

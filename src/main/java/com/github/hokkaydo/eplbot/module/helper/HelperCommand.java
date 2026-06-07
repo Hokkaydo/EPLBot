@@ -19,8 +19,9 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
-import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
-import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu;
+import net.dv8tion.jda.api.components.actionrow.ActionRow;
+import net.dv8tion.jda.api.components.selections.SelectOption;
+import net.dv8tion.jda.api.components.selections.StringSelectMenu;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -74,7 +75,7 @@ public class HelperCommand extends ListenerAdapter implements Command {
         }
         menu.addOptions(options);
         menu.setRequiredRange(1, 1);
-        context.replyCallbackAction().setActionRow(menu.build()).queue();
+        context.replyCallbackAction().addComponents(ActionRow.of(menu.build())).queue();
         if (toRemove.isEmpty()) return;
         List<String> newIds = new ArrayList<>(Config.getGuildState(guildId, "HELPER_CATEGORY_IDS"));
         newIds.removeAll(toRemove);
@@ -129,7 +130,7 @@ public class HelperCommand extends ListenerAdapter implements Command {
         }
         pingMenu.addOptions(options);
         pingMenu.setRequiredRange(0, options.size());
-        context.replyCallbackAction().setActionRow(pingMenu.build()).queue();
+        context.replyCallbackAction().addComponents(ActionRow.of(pingMenu.build())).queue();
     }
 
     private void tutor(CommandContext context) {
@@ -155,7 +156,7 @@ public class HelperCommand extends ListenerAdapter implements Command {
 
         tutorMenu.addOptions(options);
         tutorMenu.setRequiredRange(0, options.size());
-        context.replyCallbackAction().setActionRow(tutorMenu.build()).queue();
+        context.replyCallbackAction().addComponents(ActionRow.of(tutorMenu.build())).queue();
     }
 
     private int helpersComparator(HelperPing t1, HelperPing t2) {

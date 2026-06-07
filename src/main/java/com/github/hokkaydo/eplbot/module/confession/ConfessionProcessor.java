@@ -20,10 +20,12 @@ import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.InteractionHook;
-import net.dv8tion.jda.api.interactions.components.buttons.Button;
-import net.dv8tion.jda.api.interactions.components.text.TextInput;
-import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
-import net.dv8tion.jda.api.interactions.modals.Modal;
+import net.dv8tion.jda.api.components.actionrow.ActionRow;
+import net.dv8tion.jda.api.components.buttons.Button;
+import net.dv8tion.jda.api.components.label.Label;
+import net.dv8tion.jda.api.components.textinput.TextInput;
+import net.dv8tion.jda.api.components.textinput.TextInputStyle;
+import net.dv8tion.jda.api.modals.Modal;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 
@@ -80,10 +82,10 @@ public class ConfessionProcessor extends ListenerAdapter {
             context.replyCallbackAction().setContent(Strings.getString("error_occurred")).queue();
             return;
         }
-        TextInput.Builder textBuilder = TextInput.create(CONFESSION, "Confession", TextInputStyle.PARAGRAPH)
+        TextInput.Builder textBuilder = TextInput.create(CONFESSION, TextInputStyle.PARAGRAPH)
                                                 .setPlaceholder("Confessez-vous ici");
         Modal confession = Modal.create(CONFESSION, "Confession")
-                                   .addActionRow(textBuilder.build())
+                                   .addComponents(Label.of("Confession", textBuilder.build()))
                                    .build();
         context.interaction().replyModal(confession).queue();
 
@@ -115,11 +117,11 @@ public class ConfessionProcessor extends ListenerAdapter {
         confessionsContent.put(confessUUID, confession);
         confessionAuthor.put(confessUUID, userId);
         MessageCreateBuilder data = MessageCreateBuilder.from(embedBuilder.build())
-                                            .addActionRow(
+                                            .addComponents(ActionRow.of(
                                                     Button.primary("validate-confession;" + confessUUID, Emoji.fromUnicode("✅")),
                                                     Button.primary("warn-confession;" + confessUUID, Emoji.fromUnicode("⚠")),
                                                     Button.primary("refuse-confession;" + confessUUID, Emoji.fromUnicode("❌"))
-                                            );
+                                            ));
         if(following) {
             if(!lastMainConfessionValidation.containsKey(userId) && !lastFollowingConfessionValidation.containsKey(userId)) {
                 event.getHook().editOriginal(Strings.getString("command.confession.continue.no_last_confession_found")).queue();
@@ -178,7 +180,7 @@ public class ConfessionProcessor extends ListenerAdapter {
 
     @Override
     public void onButtonInteraction(ButtonInteractionEvent event) {
-        String id = event.getButton().getId();
+        String id = event.getButton().getCustomId();
         if(id == null || !id.contains(CONFESSION)) return;
         if(event.getGuild() == null || event.getGuild().getIdLong() != guildId) return;
         event.getInteraction().deferEdit().queue();

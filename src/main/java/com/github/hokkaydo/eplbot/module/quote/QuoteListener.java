@@ -15,8 +15,8 @@ import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageDeleteEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import net.dv8tion.jda.api.interactions.components.ActionRow;
-import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.dv8tion.jda.api.components.actionrow.ActionRow;
+import net.dv8tion.jda.api.components.buttons.Button;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -54,7 +54,7 @@ public class QuoteListener extends ListenerAdapter {
     @Override
     public void onButtonInteraction(ButtonInteractionEvent event) {
         if(event.getGuild() == null || event.getGuild().getIdLong() != guildId || event.getMember() == null) return; // not a guild event
-        if(event.getButton().getId() == null || !event.getButton().getId().contains("delete-quote")) return;
+        if(event.getButton().getCustomId() == null || !event.getButton().getCustomId().contains("delete-quote")) return;
 
         String modRoleId = Config.getGuildVariable(guildId,"MODERATOR_ROLE_ID");
         Role modRole = modRoleId.isBlank() ? null : Main.getJDA().getRoleById(Config.getGuildVariable(guildId,"MODERATOR_ROLE_ID"));
