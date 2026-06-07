@@ -1,0 +1,98 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [dev]
+  pull_request:
+    branches: [dev]
+
+jobs:
+  # ---------------------------------------------------------------
+  # Run tests on every push and PR
+  # ---------------------------------------------------------------
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - run: ./gradlew test --no-daemon
+
+  # ---------------------------------------------------------------
+  # Build and push all Docker images — only on push to dev
+  # ---------------------------------------------------------------
+  build-push:
+    needs: test
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          username: hokkaydo
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push eplbot
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: runtime
+          push: true
+          tags: hokkaydo/eplbot:latest
+          cache-from: type=registry,ref=hokkaydo/eplbot:cache
+          cache-to:   type=registry,ref=hokkaydo/eplbot:cache,mode=max
+
+      - name: Build and push c-runner
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: src/main/java/com/github/hokkaydo/eplbot/module/code/c/Dockerfile
+          push: true
+          tags: hokkaydo/c-runner:latest
+          cache-from: type=registry,ref=hokkaydo/c-runner:cache
+          cache-to:   type=registry,ref=hokkaydo/c-runner:cache,mode=max
+
+      - name: Build and push java-runner
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: src/main/java/com/github/hokkaydo/eplbot/module/code/java/Dockerfile
+          push: true
+          tags: hokkaydo/java-runner:latest
+          cache-from: type=registry,ref=hokkaydo/java-runner:cache
+          cache-to:   type=registry,ref=hokkaydo/java-runner:cache,mode=max
+
+      - name: Build and push python-runner
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: src/main/java/com/github/hokkaydo/eplbot/module/code/python/Dockerfile
+          push: true
+          tags: hokkaydo/python-runner:latest
+          cache-from: type=registry,ref=hokkaydo/python-runner:cache
+          cache-to:   type=registry,ref=hokkaydo/python-runner:cache,mode=max
+
+  # ---------------------------------------------------------------
+  # SSH into the VPS and run the existing update.sh
+  # ---------------------------------------------------------------
+  deploy:
+    needs: build-push
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: appleboy/ssh-action@v1
+        with:
+          host:     ${{ secrets.VPS_HOST }}
+          username: hokkaydo
+          key:      ${{ secrets.VPS_SSH_KEY }}
+          script:   cd docker/EPLBot && sh update.sh

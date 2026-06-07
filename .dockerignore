@@ -1,0 +1,11 @@
+.git/
+.github/
+build/
+.gradle/
+persistence/
+data/
+*.md
+docker-compose*.yml
+variables.env
+updatehub.sh
+build.sh
