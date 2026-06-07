@@ -14,7 +14,7 @@ public class JavaRunner implements Runner {
     GlobalRunner runner;
     public JavaRunner(String processId){
         this.processId = processId;
-        this.runner = new GlobalRunner("java-runner",processId); // java-runner is linked to /build_code_docker.sh
+        this.runner = new GlobalRunner("java-runner", processId, 64); // JVM spawns many threads; 64 prevents fork bombs while allowing normal execution
     }
 
 

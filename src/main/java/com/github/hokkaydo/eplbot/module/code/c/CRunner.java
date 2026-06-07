@@ -12,7 +12,7 @@ public class CRunner implements Runner {
     GlobalRunner runner;
     public CRunner(String processId){
         this.processId = processId;
-        this.runner = new GlobalRunner("c-runner",processId); // c-runner is linked to /build_code_docker.sh
+        this.runner = new GlobalRunner("c-runner", processId, 16);
     }
     private static final String WRAPPER_TEMPLATE = """
         #include <stdlib.h>

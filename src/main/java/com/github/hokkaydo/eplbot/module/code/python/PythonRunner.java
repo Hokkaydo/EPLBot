@@ -9,7 +9,7 @@ public class PythonRunner implements Runner {
     GlobalRunner runner;
     public PythonRunner(String processId){
         this.processId = processId;
-        this.runner = new GlobalRunner("python-runner",processId); // python-runner is linked to /build_code_docker.sh
+        this.runner = new GlobalRunner("python-runner", processId, 16);
     }
     @Override
     public Pair<String, Integer> run(String code, Integer timeout) {

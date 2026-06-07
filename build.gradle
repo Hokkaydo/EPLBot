@@ -5,6 +5,7 @@ plugins {
 
 shadowJar {
     archiveClassifier.set('all')
+    mergeServiceFiles() // prevents SPI files (META-INF/services/) from being silently dropped when jars overlap
 
     manifest {
         attributes(
@@ -25,7 +26,7 @@ dependencies {
     testImplementation 'org.mockito:mockito-core:5.15.2'
     testImplementation 'org.junit.jupiter:junit-jupiter'
 
-    implementation 'net.dv8tion:JDA:5.2.1'
+    implementation 'net.dv8tion:JDA:6.4.2'
     implementation 'com.apptasticsoftware:rssreader:3.9.3'
     implementation 'org.json:json:20231013'
     implementation 'io.github.cdimascio:dotenv-java:3.0.0'
@@ -51,4 +52,5 @@ tasks.withType(JavaCompile).configureEach {
 
 tasks.withType(Test).configureEach {
     useJUnitPlatform()
+    jvmArgs '--enable-preview'
 }

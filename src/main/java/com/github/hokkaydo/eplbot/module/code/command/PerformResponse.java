@@ -25,7 +25,7 @@ public class PerformResponse {
      * @param lang the language submitted
      */
     public void sendSubmittedCode(MessageChannel textChannel, String code, String lang, boolean spoiler) {
-        if (GlobalRunner.safeMentions(code)) {
+        if (GlobalRunner.containsUnsafeMentions(code)) {
             textChannel.sendMessage(spoilMessage(Strings.getString("command.code.unsafe_mentions_submitted") + "\n", spoiler)).queue();
             return;
         }
@@ -34,7 +34,7 @@ public class PerformResponse {
             return;
         }
         if (validateHastebinLength(code)) {
-            String url = createUrlFromString(textChannel, code);
+            String url = createUrlFromString(code);
             textChannel.sendMessage(spoilMessage("`The submitted code is available at : `%n<%s>".formatted(url), spoiler)).queue();
             return;
         }
@@ -46,10 +46,7 @@ public class PerformResponse {
      * @param input a string with the data to be written in the file
      * @return a File
      */
-    private String createUrlFromString(MessageChannel textChannel, String input){
-        if (validateMessageLength(input)){
-            textChannel.sendMessage(Strings.getString("command.code.exceeded_hastebin_size")).queue();
-        }
+    private String createUrlFromString(String input){
         HttpClient client = HttpClient.newHttpClient();
         return MessageUtil.hastebinPost(client, input).join();
     }
@@ -79,7 +76,7 @@ public class PerformResponse {
             return;
         }
         if (validateHastebinLength(result)) {
-            String url = createUrlFromString(textChannel, result);
+            String url = createUrlFromString(result);
             textChannel.sendMessage(spoilMessage("`The result of the code is available at : `%n<%s>".formatted(url), spoiler)).queue();
             return;
         }

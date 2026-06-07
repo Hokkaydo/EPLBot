@@ -7,22 +7,26 @@ import net.dv8tion.jda.internal.utils.tuple.Pair;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.file.Files;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
-import java.nio.file.Path;
 
-public class GlobalRunner implements Runner{
+public class GlobalRunner implements Runner {
     private final String targetDocker;
     private final String dockerName;
-    public GlobalRunner(String targetDocker, String dockerId){
+    private final int pidsLimit;
+
+    public GlobalRunner(String targetDocker, String dockerId, int pidsLimit) {
         this.targetDocker = targetDocker;
-        this.dockerName = targetDocker + '-' +dockerId;
+        this.dockerName = targetDocker + '-' + dockerId;
+        this.pidsLimit = pidsLimit;
     }
+
     private static final ScheduledExecutorService SCHEDULER = new ScheduledThreadPoolExecutor(1);
 
     static {
@@ -31,65 +35,77 @@ public class GlobalRunner implements Runner{
 
     @Override
     public Pair<String, Integer> run(String code, Integer timeout) {
-        if (safeMentions(code)){
-            return Pair.of(Strings.getString(".code.unsafe_mentions_submitted"),0);
+        if (containsUnsafeMentions(code)) {
+            return Pair.of(Strings.getString(".code.unsafe_mentions_submitted"), 0);
         }
         StringBuilder builder = new StringBuilder();
         AtomicReference<Process> processRef = new AtomicReference<>();
         int exitCode;
 
-        ScheduledFuture<?> timer =SCHEDULER.schedule(() -> {
+        ScheduledFuture<?> timer = SCHEDULER.schedule(() -> {
             builder.append("Timeout exceeded. Terminating the process.");
             Process process = processRef.get();
             if (process != null && process.isAlive()) {
                 process.destroyForcibly();
             }
             deleteDocker();
-            }, timeout, TimeUnit.SECONDS);
+        }, timeout, TimeUnit.SECONDS);
+
         Process process;
         try {
             process = startProcessInDocker(code);
             processRef.set(process);
-        } catch (IOException e){
-            return Pair.of("Server side error with code 10%n%s".formatted(e.getMessage()), 1);
+        } catch (IOException e) {
+            timer.cancel(false);
+            return Pair.of("Server side error with code 10\n%s".formatted(e.getMessage()), 1);
         }
         try {
-            captureProcessOutput(process,builder); // raises IOException
-            exitCode = process.waitFor(); // raise InterruptedException
+            captureProcessOutput(process, builder);
+            exitCode = process.waitFor();
         } catch (IOException e) {
-            return Pair.of("Server side error with code 11%n%s".formatted(e.getMessage()), 1);
+            timer.cancel(false);
+            return Pair.of("Server side error with code 11\n%s".formatted(e.getMessage()), 1);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            return Pair.of("Server side error with code 12%n%s".formatted(e.getMessage()), 1);
+            timer.cancel(false);
+            return Pair.of("Server side error with code 12\n%s".formatted(e.getMessage()), 1);
         }
         builder.append("\nExited with code: ").append(exitCode);
         timer.cancel(false);
-        if (safeMentions(builder.toString())){
-            return Pair.of(Strings.getString(".code.unsafe_mentions_response"),0);
+        if (containsUnsafeMentions(builder.toString())) {
+            return Pair.of(Strings.getString(".code.unsafe_mentions_response"), 0);
         }
-        return Pair.of(builder.toString(),0);
+        return Pair.of(builder.toString(), 0);
     }
 
     private Process startProcessInDocker(String code) throws IOException {
-        Path tmp = Files.createTempDirectory("runner-");
         ProcessBuilder processBuilder = new ProcessBuilder(
             "docker", "run", "--rm",
-            "-v", tmp + ":/usr/src/app/logs",
-            "--memory", "512m",                             // 512 Mo
-            "--cpus", "1",                                  // 1 cpu
-            "--pids-limit", "4",                            // max 4 processes
-            "--cap-drop=ALL",                               // no more linux cmd like mount
-            "--network", "none",                            // no network
-            "--read-only",                                  // read only fs
-            "--tmpfs", "/tmp:rw,noexec,nosuid,size=100m",   // tmpfs for write access, but no exec
-            "--security-opt", "no-new-privileges",          // no privilege escalation
-            "--user", "nobody",                             // run as non-root user
-            targetDocker,
-            code
+            "--name", dockerName,
+            "-i",
+            "--memory", "512m",
+            "--cpus", "1",
+            "--pids-limit", String.valueOf(pidsLimit),
+            "--cap-drop=ALL",
+            "--network", "none",
+            "--read-only",
+            "--tmpfs", "/tmp:rw,noexec,nosuid,size=100m",
+            // Separate exec-enabled tmpfs for compilation output (C binary, Java .class files).
+            // Using tmpfs rather than a host-volume mount avoids the DinD path-resolution problem
+            // where the daemon resolves the volume path on the host, not inside the bot container.
+            "--tmpfs", "/usr/src/app/logs:rw,exec,nosuid,size=50m,mode=1777",
+            "--security-opt", "no-new-privileges",
+            "--user", "nobody",
+            targetDocker
         );
         processBuilder.redirectErrorStream(true);
-        return processBuilder.start();
+        Process p = processBuilder.start();
+        try (OutputStream os = p.getOutputStream()) {
+            os.write(code.getBytes(StandardCharsets.UTF_8));
+        }
+        return p;
     }
+
     private void captureProcessOutput(Process process, StringBuilder builder) throws IOException {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
             String line;
@@ -98,12 +114,14 @@ public class GlobalRunner implements Runner{
             }
         }
     }
-    public static boolean safeMentions(String result){
-        return result.contains("@everyone") || result.contains("@here") || Pattern.compile("<@&?\\d+>").matcher(result).find(); // <@&__ID__> corresponds to a discord role
+
+    public static boolean containsUnsafeMentions(String result) {
+        return result.contains("@everyone") || result.contains("@here") || Pattern.compile("<@&?\\d+>").matcher(result).find();
     }
-    public void deleteDocker(){
+
+    public void deleteDocker() {
         try {
-            ProcessBuilder processBuilder = new ProcessBuilder("docker", "rm","--force", dockerName);
+            ProcessBuilder processBuilder = new ProcessBuilder("docker", "rm", "--force", dockerName);
             Process process = processBuilder.start();
             int exitCode = process.waitFor();
             if (exitCode != 0) {
