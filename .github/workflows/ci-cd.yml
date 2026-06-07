@@ -95,4 +95,4 @@ jobs:
           host:     ${{ secrets.VPS_HOST }}
           username: hokkaydo
           key:      ${{ secrets.VPS_SSH_KEY }}
-          script:   cd docker/EPLBot && sh update.sh
+          script:   source ~/.profile && cd docker/EPLBot && sh update.sh
