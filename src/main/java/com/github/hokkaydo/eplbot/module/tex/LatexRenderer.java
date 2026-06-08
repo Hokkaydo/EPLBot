@@ -36,6 +36,7 @@ public class LatexRenderer {
             return "\\documentclass[preview,border=4pt]{standalone}\n" +
                    "\\usepackage{amsmath,amssymb,amsfonts,xcolor}\n" +
                    "\\begin{document}\n" +
+                   "\\Large\n" + 
                    "{\\color{white}" + content + "}\n" +
                    "\\end{document}\n";
         }
@@ -67,7 +68,7 @@ public class LatexRenderer {
                     "-c",
                     "cat > /tmp/input.tex && " +
                     "pdflatex -interaction=nonstopmode -output-directory=/tmp /tmp/input.tex && " +
-                    "gs -dBATCH -dNOPAUSE -dSAFER -sDEVICE=pngalpha -r600 -sOutputFile=/tmp/output.png /tmp/input.pdf && " +
+                    "gs -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -dBATCH -dNOPAUSE -dSAFER -sDEVICE=pngalpha -r600 -sOutputFile=/tmp/output.png /tmp/input.pdf && " +
                     "echo '" + PNG_MARKER + "' && " +
                     "base64 /tmp/output.png"
             );
