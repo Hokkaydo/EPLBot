@@ -23,6 +23,7 @@ import com.github.hokkaydo.eplbot.module.quote.QuoteModule;
 import com.github.hokkaydo.eplbot.module.ratio.RatioModule;
 import com.github.hokkaydo.eplbot.module.rss.RssModule;
 import com.github.hokkaydo.eplbot.module.preferences.PreferencesModule;
+import com.github.hokkaydo.eplbot.module.remindme.RemindMeModule;
 import com.github.hokkaydo.eplbot.module.tex.TexModule;
 import com.github.hokkaydo.eplbot.module.translation.TranslationModule;
 import net.dv8tion.jda.api.JDA;
@@ -168,7 +169,8 @@ public class Main {
             DataModule.class,
             TranslationModule.class,
             TexModule.class,
-            PreferencesModule.class
+            PreferencesModule.class,
+            RemindMeModule.class
     );
 
     public static void main(String[] args) throws InterruptedException, IOException {

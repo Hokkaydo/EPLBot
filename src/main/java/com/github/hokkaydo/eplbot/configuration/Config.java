@@ -182,6 +182,9 @@ public class Config {
                 "tex", MODULE_DISABLED.get(),
                 "preferences", MODULE_DISABLED.get()
         ));
+        DEFAULT_CONFIGURATION.putAll(Map.of(
+                "remindme", MODULE_DISABLED.get()
+        ));
     }
     private static final Map<Long, Map<String, Object>> GUILD_CONFIGURATION = new HashMap<>();
     private static final Map<Long, Map<String, Object>> GUILD_STATE = new HashMap<>();

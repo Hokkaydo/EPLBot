@@ -1,5 +1,15 @@
 {
 	"command": {
+		"remindme": {
+			"description": "Planifie un rappel par message privé",
+			"help": "Planifie un rappel par MP. Exemples de durée : 30m, 2h, 1d12h",
+			"option.when.description": "Durée avant le rappel (ex: 1h30m, 2d)",
+			"option.subject.description": "Sujet du rappel (max 100 caractères)",
+			"subject_too_long": "Le sujet doit faire au maximum 100 caractères.",
+			"invalid_duration": "Format de durée invalide. Exemples valides : 30m, 2h, 1d12h30m.",
+			"scheduled": "Rappel planifié pour <t:%d:F> !",
+			"dm": "⏰ Rappel : %s"
+		},
 		"bookmark": {
 			"description": "Permet de gérer les signets",
 			"help": "Permet de gérer les signets",
