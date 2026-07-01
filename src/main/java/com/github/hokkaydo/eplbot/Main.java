@@ -145,7 +145,8 @@ public class Main {
             Activity.playing("interpoler entre \"ça passe\" et \"c'est foutu\""),
             Activity.playing("résoudre un problème mal posé (comme d'hab)"),
             Activity.playing("estimer un ordre de grandeur au doigt mouillé"),
-            Activity.playing("coder vite, regretter lentement")
+            Activity.playing("coder vite, regretter lentement"),
+            Activity.playing("arroser Gazou")
     );
 
     private static final List<Class<? extends Module>> MODULES = Arrays.asList(
