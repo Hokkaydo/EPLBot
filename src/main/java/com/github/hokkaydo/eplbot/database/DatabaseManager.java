@@ -34,9 +34,7 @@ public class DatabaseManager {
             new TableModel("events", Map.of("timestamp", INTEGER, "event_type", TEXT, "user_id", INTEGER, "channel_id", INTEGER, "reaction_emoji", TEXT, "guild_id", INTEGER)),
             new TableModel("name_descriptions", Map.of("guild_id", INTEGER, "entity_id", INTEGER, "name", TEXT, "description", TEXT,  "lang", TEXT, "type", TEXT)),
             new TableModel("user_preferences", Map.of("user_id", INTEGER, "guild_id", INTEGER, "preference_key", TEXT, "value", TEXT)),
-            new TableModel("reminders", Map.of("user_id", INTEGER, "guild_id", INTEGER, "trigger_time", INTEGER, "subject", TEXT)),
-            new TableModel("contribution_files", Map.of("guild_id", INTEGER, "file_id", TEXT)),
-            new TableModel("contribution_remotes", Map.of("guild_id", INTEGER, "remote", TEXT))
+            new TableModel("reminders", Map.of("user_id", INTEGER, "guild_id", INTEGER, "trigger_time", INTEGER, "subject", TEXT))
     );
 
 

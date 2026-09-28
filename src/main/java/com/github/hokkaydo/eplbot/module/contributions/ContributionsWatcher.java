@@ -5,18 +5,16 @@ import com.github.hokkaydo.eplbot.MessageUtil;
 import com.github.hokkaydo.eplbot.Strings;
 import com.github.hokkaydo.eplbot.configuration.Config;
 import com.github.hokkaydo.eplbot.module.contributions.DriveLister.DriveFile;
-import com.github.hokkaydo.eplbot.module.contributions.model.ContributionFile;
-import com.github.hokkaydo.eplbot.module.contributions.repository.ContributionFileRepository;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -24,25 +22,24 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Periodically lists the Drive contributions folder and announces, one message per file,
- * the files that were never seen before in the Drive admin channel.
+ * the files uploaded since the last check in the Drive admin channel.
  * <br>
- * Files are identified by their Drive id, so a file moved out of the folder (e.g. when a contribution
- * is imported) triggers nothing. The first listing of a given remote only records the existing files
- * and sends a single summary message, so enabling the module or changing the remote does not flood the channel.
+ * Only the upload time of the most recent file is kept (guild state {@code CONTRIBUTIONS_LAST_UPLOAD}),
+ * so a file moved out of the folder (e.g. when a contribution is imported) triggers nothing. The first listing
+ * only records that time and sends a single summary message, so enabling the module does not flood the channel.
  * */
 class ContributionsWatcher {
 
     private static final int MAX_ERROR_LENGTH = 500;
+    private static final String LAST_UPLOAD_KEY = "CONTRIBUTIONS_LAST_UPLOAD";
 
     private final Long guildId;
-    private final ContributionFileRepository repository;
     private ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
     private ScheduledFuture<?> task;
     private String lastError;
 
-    ContributionsWatcher(Long guildId, ContributionFileRepository repository) {
+    ContributionsWatcher(Long guildId) {
         this.guildId = guildId;
-        this.repository = repository;
     }
 
     void launch() {
@@ -78,7 +75,7 @@ class ContributionsWatcher {
         Guild guild = Main.getJDA().getGuildById(guildId);
         if (guild == null) return;
         Optional<TextChannel> channel = getChannel(guild);
-        // In both cases, keep the files unseen: they will be announced once the channel is usable
+        // In both cases, keep the last upload time: the new files will be announced once the channel is usable
         if (channel.isEmpty()) {
             reportError(Strings.getString("drive_admin_channel_not_setup"));
             return;
@@ -88,12 +85,11 @@ class ContributionsWatcher {
             return;
         }
 
-        Set<String> known = repository.getFileIds(guildId);
-        List<DriveFile> newFiles = files.stream().filter(f -> !known.contains(f.id())).toList();
-        String remote = DriveLister.getRemote();
-        boolean seeded = repository.isSeeded(guildId, remote);
+        Instant lastUpload = Config.getGuildState(guildId, LAST_UPLOAD_KEY);
+        boolean firstListing = lastUpload.equals(Instant.MIN);
+        List<DriveFile> newFiles = files.stream().filter(f -> f.uploadTime().isAfter(lastUpload)).toList();
 
-        if (!seeded) {
+        if (firstListing) {
             send(channel.get(), Strings.getString("contributions.enabled").formatted(files.size()), null);
         } else if (!newFiles.isEmpty()) {
             // Only the first message of a batch mentions the role, so that a big contribution pings once
@@ -102,10 +98,10 @@ class ContributionsWatcher {
                 send(channel.get(), Strings.getString("contributions.new").formatted(newFiles.get(i).displayPath(), newFiles.get(i).displaySize()), i == 0 ? role : null);
         }
 
-        if (!newFiles.isEmpty())
-            repository.create(newFiles.stream().map(f -> new ContributionFile(guildId, f.id())).toArray(ContributionFile[]::new));
-        if (!seeded)
-            repository.markSeeded(guildId, remote);
+        // An empty folder at first listing still counts as listed, so that its first file gets announced
+        Instant newest = newFiles.stream().map(DriveFile::uploadTime).max(Instant::compareTo).orElse(firstListing ? Instant.EPOCH : lastUpload);
+        if (!newest.equals(lastUpload))
+            Config.updateValue(guildId, LAST_UPLOAD_KEY, newest);
         lastError = null;
     }
 
@@ -153,7 +149,7 @@ class ContributionsWatcher {
     private static String truncate(String message) {
         if (message == null) return "";
         // Keep the end: rclone's last lines hold the actual reason of the failure
-        return message.length() > MAX_ERROR_LENGTH ? "…" + message.substring(message.length() - MAX_ERROR_LENGTH) : message;
+        return message.length() > MAX_ERROR_LENGTH ? "..." + message.substring(message.length() - MAX_ERROR_LENGTH) : message;
     }
 
 }

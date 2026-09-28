@@ -7,10 +7,13 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -29,6 +32,8 @@ class DriveLister {
     private static final String REMOTE_ENV = "CONTRIBUTIONS_REMOTE";
     private static final long TIMEOUT_MINUTES = 10;
     private static final int ERROR_LINES = 3;
+    // Files permanently kept in the folder, which are not contributions
+    private static final Set<String> EXCLUDED_PATHS = Set.of("Contributions Drive EPL - EPL Drive Contribution System.pdf");
     // rclone prefixes each log line with "yyyy/MM/dd HH:mm:ss ", which would make identical errors look different
     private static final String LOG_DATE_PREFIX = "^\\d{4}/\\d{2}/\\d{2} \\d{2}:\\d{2}:\\d{2} ";
     // Both output streams must be drained concurrently, otherwise rclone blocks once a pipe buffer is full
@@ -45,7 +50,7 @@ class DriveLister {
     }
 
     /**
-     * Lists recursively all the files of the contributions folder, sorted by path
+     * Lists recursively all the files of the contributions folder, sorted by path, except the {@link #EXCLUDED_PATHS}
      * @return the list of files currently in the folder
      * @throws IOException if the remote is not set, if rclone fails or does not answer in time
      * */
@@ -54,7 +59,7 @@ class DriveLister {
         if (remote.isBlank() || remote.startsWith("-"))
             throw new IOException("Environment variable %s is not set".formatted(REMOTE_ENV));
 
-        Process process = new ProcessBuilder("rclone", "lsjson", "-R", "--files-only", remote).start();
+        Process process = new ProcessBuilder("rclone", "lsjson", "-R", "--files-only", "--metadata", remote).start();
         try {
             Future<String> stdout = READERS.submit(() -> readAll(process.getInputStream()));
             Future<String> stderr = READERS.submit(() -> readAll(process.getErrorStream()));
@@ -67,11 +72,16 @@ class DriveLister {
             List<DriveFile> files = new ArrayList<>();
             for (int i = 0; i < array.length(); i++) {
                 JSONObject object = array.getJSONObject(i);
-                files.add(new DriveFile(object.getString("ID"), object.getString("Path"), object.optLong("Size", -1)));
+                String path = object.getString("Path");
+                if (EXCLUDED_PATHS.contains(path)) continue;
+                // "utime" is set by OneDrive on upload, unlike ModTime which keeps the date of the uploader's computer
+                JSONObject metadata = object.optJSONObject("Metadata", new JSONObject());
+                Instant uploadTime = Instant.parse(metadata.optString("utime", object.getString("ModTime")));
+                files.add(new DriveFile(path, object.optLong("Size", -1), uploadTime));
             }
             files.sort(Comparator.comparing(DriveFile::path));
             return files;
-        } catch (JSONException e) {
+        } catch (JSONException | DateTimeParseException e) {
             throw new IOException("Invalid rclone output", e);
         } finally {
             process.destroyForcibly();
@@ -102,7 +112,7 @@ class DriveLister {
         }
     }
 
-    record DriveFile(String id, String path, long size) {
+    record DriveFile(String path, long size, Instant uploadTime) {
 
         /**
          * @return the path wrapped in inline code, safe to display on Discord
