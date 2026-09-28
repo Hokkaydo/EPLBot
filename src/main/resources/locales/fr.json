@@ -327,6 +327,19 @@
 		"no_permission": "Vous n'avez pas la permission d'utiliser cette commande."
 	},
 	"warning.rss_channel_id_invalid": "Identifiant de canal d'envoi de flux RSS invalide ! Utilisez /config pour le modifier",
+	"contributions": {
+		"enabled": "📥 Veille des contributions du Drive EPL activée : %d fichier(s) déjà présent(s). Utilisez /contributions pour les voir.",
+		"new": "📥 Nouvelle contribution : %s (%s)",
+		"listing_error": "Impossible de lister les contributions du Drive (`%s`) :\n```\n%s\n```\nSi le token OneDrive a expiré : `docker-compose run --rm --entrypoint rclone eplbot config reconnect <remote>:` sur le serveur.",
+		"channel_no_permission": "Le bot ne peut pas écrire dans %s (salon des admins du Drive) : les nouvelles contributions y seront annoncées dès que ce sera possible.",
+		"command": {
+			"description": "Liste les contributions du Drive EPL pas encore importées",
+			"help": "Liste les fichiers encore présents dans le dossier des contributions du Drive EPL, c'est-à-dire pas encore importés.",
+			"header": "📥 **%d fichier(s) en attente d'import :**",
+			"empty": "Aucune contribution en attente d'import.",
+			"error": "Impossible de lister les contributions du Drive. Consultez les logs du bot."
+		}
+	},
 	"warning.rss_feed_error": "Le flux RSS `%s` n'a pas pu être récupéré.",
 	"quote": {
 		"delete_not_allowed": "Vous n'êtes pas autorisé à supprimer ce message",
