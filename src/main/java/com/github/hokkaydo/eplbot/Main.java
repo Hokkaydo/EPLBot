@@ -10,6 +10,7 @@ import com.github.hokkaydo.eplbot.module.bookmark.BookMarkModule;
 import com.github.hokkaydo.eplbot.module.christmas.ChristmasModule;
 import com.github.hokkaydo.eplbot.module.code.CodeModule;
 import com.github.hokkaydo.eplbot.module.confession.ConfessionModule;
+import com.github.hokkaydo.eplbot.module.contributions.ContributionsModule;
 import com.github.hokkaydo.eplbot.module.data.DataModule;
 import com.github.hokkaydo.eplbot.module.eplcommand.EPLCommandModule;
 import com.github.hokkaydo.eplbot.module.globalcommand.GlobalCommandModule;
@@ -171,7 +172,8 @@ public class Main {
             TranslationModule.class,
             TexModule.class,
             PreferencesModule.class,
-            RemindMeModule.class
+            RemindMeModule.class,
+            ContributionsModule.class
     );
 
     public static void main(String[] args) throws InterruptedException, IOException {

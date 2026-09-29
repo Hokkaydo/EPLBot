@@ -38,11 +38,32 @@ Avant de commencer, assurez-vous d'avoir les éléments suivants :
     - `GITHUB_APPLICATION_ID`: Identifiant de l'application Github liée (permet de gérer les issues) *(Optionnel)*
     - `GITHUB_APPLICATION_INSTALLATION_ID`: Identifiant d'installation de l'application Github liée (permet de gérer les issues) *(Optionnel)*
     - `HASTEBIN_TOKEN`: Jeton d'identification auprès de l'API de Hastebin
+    - `CONTRIBUTIONS_REMOTE`: Dossier des contributions du Drive EPL au format rclone, ex. `onedrive:<Dossier partagé>/<Dossier des contributions>` *(Optionnel, module `contributions`)*
 
 5. Lancez le projet avec Docker :
     ```shell
     docker-compose up
     ```
+---
+# Veille des contributions du Drive EPL *(optionnel)*
+
+Le module `contributions` annonce chaque nouveau fichier du dossier des contributions dans le salon `DRIVE_ADMIN_CHANNEL_ID` (vérification toutes les heures, `CONTRIBUTIONS_UPDATE_PERIOD`), en mentionnant éventuellement le rôle `CONTRIBUTIONS_ROLE_ID`. La commande `/contributions` liste les fichiers pas encore importés ; elle est réservée aux membres ayant le rôle `DRIVE_ADMIN_ROLE_ID` et aux administrateurs. Le PDF de présentation du système de contributions, présent en permanence dans le dossier, est ignoré.
+
+Il lit le Drive via [rclone](https://rclone.org), inclus dans l'image Docker, dont la configuration est lue depuis `data/rclone.conf` :
+
+1. Sur une machine avec navigateur, créer un token en **lecture seule** :
+    ```shell
+    rclone authorize "onedrive" --onedrive-access-scopes "Files.Read Files.Read.All Sites.Read.All offline_access"
+    ```
+2. Sur le serveur, créer le remote avec ce token (type `onedrive`, même option `access_scopes`) via le rclone de l'image, qui écrit dans `data/rclone.conf` :
+    ```shell
+    docker-compose run --rm --entrypoint rclone eplbot config
+    ```
+    rclone crée ce fichier lisible uniquement par root (droits 600). Il donne accès au OneDrive du compte utilisé : ne jamais le committer ni le partager.
+3. Renseigner `CONTRIBUTIONS_REMOTE` dans `variables.env`, puis `/enable contributions`.
+
+Un fichier est considéré comme nouveau si sa date d'upload sur OneDrive est postérieure à celle du dernier fichier annoncé (état `CONTRIBUTIONS_LAST_UPLOAD`). Un fichier déplacé depuis un autre dossier du Drive garde sa date d'upload d'origine et peut donc ne pas être annoncé. Au premier passage, le bot enregistre la date du fichier le plus récent sans annoncer les fichiers existants un par un. Si `CONTRIBUTIONS_REMOTE` n'est pas définie, le module ne s'active pas et un avertissement est envoyé dans le salon administrateur. Si le token expire (90 jours sans usage, changement de mot de passe), une erreur est envoyée dans le salon administrateur : `docker-compose run --rm --entrypoint rclone eplbot config reconnect <remote>:`.
+
 ---
 # Configuration du bot Discord
 

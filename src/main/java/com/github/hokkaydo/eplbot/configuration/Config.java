@@ -112,7 +112,14 @@ public class Config {
             "EXAM_RETRIEVE_CHANNEL_ID", STRING_CONFIGURATION_VALUE.get(),
             "EXAM_ZIP_MESSAGE_ID", STRING_CONFIGURATION_VALUE.get(),
             "EARLY_BIRD_NEXT_MESSAGE", STRING_CONFIGURATION_VALUE.get(),
-            "NIGHT_BIRD_NEXT_MESSAGE", STRING_CONFIGURATION_VALUE.get()
+            "NIGHT_BIRD_NEXT_MESSAGE", STRING_CONFIGURATION_VALUE.get(),
+            // Instant.MIN means that the contributions folder has never been listed yet
+            "CONTRIBUTIONS_LAST_UPLOAD", new ConfigurationParser(
+                    () -> Instant.MIN,
+                    Object::toString,
+                    Instant::parse,
+                    "Date ISO-8601"
+            )
     );
     static {
         // Configuration keys
@@ -154,7 +161,10 @@ public class Config {
         DEFAULT_CONFIGURATION.putAll(Map.of(
                 "NIGHT_BIRD_UNICODE_REACT_EMOJI", STRING_CONFIGURATION_VALUE_DEFAULT.apply("🌙"),
                 "EARLY_BIRD_UNICODE_REACT_EMOJI", STRING_CONFIGURATION_VALUE_DEFAULT.apply("❤"),
-                "TRANSLATION_LANGUAGE", STRING_CONFIGURATION_VALUE_DEFAULT.apply("nl")
+                "TRANSLATION_LANGUAGE", STRING_CONFIGURATION_VALUE_DEFAULT.apply("nl"),
+                "CONTRIBUTIONS_ROLE_ID", STRING_CONFIGURATION_VALUE.get(),
+                "CONTRIBUTIONS_UPDATE_PERIOD", LONG_CONFIGURATION_VALUE.apply(60L),
+                "DRIVE_ADMIN_ROLE_ID", STRING_CONFIGURATION_VALUE.get()
         ));
 
         // Modules
@@ -183,7 +193,8 @@ public class Config {
                 "preferences", MODULE_DISABLED.get()
         ));
         DEFAULT_CONFIGURATION.putAll(Map.of(
-                "remindme", MODULE_DISABLED.get()
+                "remindme", MODULE_DISABLED.get(),
+                "contributions", MODULE_DISABLED.get()
         ));
     }
     private static final Map<Long, Map<String, Object>> GUILD_CONFIGURATION = new HashMap<>();

@@ -26,4 +26,8 @@ COPY --from=build /home/gradle/app/build/libs/*-all.jar app.jar
 
 COPY --from=docker:27-cli /usr/local/bin/docker /usr/local/bin/docker
 
+# rclone lists the EPL Drive for the contributions module, its config (and OneDrive token) lives in the persistence volume
+COPY --from=rclone/rclone:1 /usr/local/bin/rclone /usr/local/bin/rclone
+ENV RCLONE_CONFIG=/home/eplbot/persistence/rclone.conf
+
 ENTRYPOINT ["java", "--enable-preview", "--enable-native-access=ALL-UNNAMED", "-jar", "app.jar"]
